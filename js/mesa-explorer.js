@@ -52,6 +52,7 @@ file_manager = {
       if (file_manager.files_added == 1) {
         document.querySelector('a[data-file-id="0"]').click()
       }
+      d3.select('#file-prompt').remove();
     };
     fileReader.onerror = () => {
       alert(fileReader.error);
@@ -141,7 +142,12 @@ file_manager = {
 
 visualization = {
     setup: () => {
-      visualization.svg = d3.select('#plot')
+      visualization.svg = d3.select('#plot');
+      visualization.svg.style('height', visualization.width() / 1.618);
+      window.onresize = function() {
+        visualization.svg.style('height', visualization.width() / 1.618);
+        visualization.update_plot();
+      };
       // Load data for known history/profile columns
       d3.csv('data/history_columns.csv')
         .then(data => visualization.known_history_names = data);
@@ -161,8 +167,8 @@ visualization = {
           }
         });
     },
-    height: () => visualization.svg.attr('height'),
-    width: () => visualization.svg.attr('width'),
+    height: () => parseFloat(visualization.svg.style('height')),
+    width: () => parseFloat(visualization.svg.style('width')),
     x_margin: () => visualization.width() * visualization.margin_frac,
     y_margin: () => visualization.height() * visualization.margin_frac,
     x_name: undefined,
