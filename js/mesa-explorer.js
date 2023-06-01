@@ -49,14 +49,11 @@ file_manager = {
         }
       );
       file_manager.files_added += 1
-      // set this new file to the active file if it is the first one
-      if (file_manager.files_added == 1) {
-          file_manager.active_file = file_manager.files[0];
-          // for testing purposes only; delete this since it assumes plotted
-          // columns are already chosen
-          visualization.update_plot();
-      }
       file_manager.render_file_to_list(file_manager.files[0])
+      // automatically select this new file if it is the first one
+      if (file_manager.files_added == 1) {
+        document.querySelector('a[data-file-id="0"]').click()
+      }
     };
     fileReader.onerror = () => {
       alert(fileReader.error);
@@ -113,11 +110,24 @@ file_manager = {
     // create an anchor tag and add it to the list group.
     // inside will be an h4 that has an icon that depends on the file type
     // and the name of the file rendered in monospace
-    const h4 = d3.select('#file-list').append('a')
+    const a = d3.select('#file-list').append('a')
       .attr("class", "list-group-item list-group-item-action")
-      .append('h5');
-    h4.append("i").attr("class", `${file_manager.file_icon_class(file)} me-2`);
-    h4.append("span").attr('class', 'font-monospace').text(file.name);
+      .attr("data-file-id", file.id);
+    const h5 = a.append('h5');
+    h5.append("i").attr("class", `${file_manager.file_icon_class(file)} me-2`);
+    h5.append("span").attr('class', 'font-monospace').text(file.name);
+
+    a.on('click', function() {
+      // strip active status from other files
+      d3.select('#file-list')
+        .selectAll('a')
+        .attr("class", "list-group-item list-group-item-action");
+      // make this one appear active and update the active file
+      d3.select(this)
+        .attr("class", "list-group-item list-group-item-action active");
+      file_manager.active_file = file;
+      visualization.register_new_file();
+    });
   }
 }
 
@@ -129,13 +139,55 @@ visualization = {
   width: () => visualization.svg.attr('width'),
   x_margin: () => visualization.width() * visualization.margin_frac,
   y_margin: () => visualization.height() * visualization.margin_frac,
-  abscissa_name: 'model_number',
-  ordinate_name: 'num_zones',
+  abscissa_name: undefined,
+  ordinate_name: undefined,
   x_scale: undefined,
   y_scale: undefined,
   x_scale_type: 'linear',
   y_scale_type: 'linear',
   margin_frac: 0.1,
+  register_new_file: () => {
+    visualization.file = file_manager.active_file;
+    const names = visualization.file.data.bulk_names;
+    if (!names.includes(visualization.abscissa_name))  {
+      visualization.abscissa_name = undefined;
+      d3.select('#abscissa-label').text('Select Abscissa Quantity ');
+    }
+    if (!names.includes(visualization.ordinate_name))  {
+      visualization.ordinate_name = undefined;
+      d3.select('#ordinate-label').text('Select Ordinate Quantity ');
+    }
+    visualization.update_choices(names);
+    visualization.update_plot();
+  },
+  update_choices: (names) => {
+    d3.select('#abscissa-choices').selectAll('li').remove()
+    d3.select('#abscissa-choices').selectAll('li').data(names).enter()
+      .append("li").append("a")
+      .attr("class", "dropdown-item")
+      .attr("data-name", d => d)
+      .text(d => d)
+      .on('click', function() {
+        visualization.abscissa_name = d3.select(this).attr('data-name');
+        d3.select('#abscissa-label').text(d3.select(this).text());
+        visualization.update_plot();
+      });
+
+    d3.select('#ordinate-choices').selectAll('li').remove()
+    d3.select('#ordinate-choices').selectAll('li').data(names).enter()
+      .append("li").append("a")
+      .attr("class", "dropdown-item")
+      .attr("data-name", d => d)
+      .text(d => d)
+      .on('click', function() {
+        visualization.ordinate_name = d3.select(this).attr('data-name');
+        d3.select('#ordinate-label').text(d3.select(this).text());
+        visualization.update_plot();
+      });
+
+  },
+
+
   make_scales: (data) => {
     visualization.x_scale = d3.scaleLinear();
     if (visualization.x_scale_type == 'logarithmic') {
@@ -170,8 +222,8 @@ visualization = {
   clear_plot: () => {visualization.svg.selectAll("*").remove()},
   update_plot: () => {
     visualization.clear_plot();
-    if (file_manager.active_file && visualization.ordinate_name && visualization.abscissa_name) {
-      const data = file_manager.active_file.data.bulk;
+    if (visualization.file && visualization.ordinate_name && visualization.abscissa_name) {
+      const data = visualization.file.data.bulk;
       visualization.make_scales(data);
       visualization.plot_data_scatter(data);
       visualization.add_axes(data)
