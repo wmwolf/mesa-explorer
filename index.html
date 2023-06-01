@@ -31,26 +31,63 @@
       <div class="col-8">
         <h1>Visualization</h1>
         <svg id='plot' width=600 height=400 class='my-2 bg-light'></svg>
-        <div id="abscissa" class='my-4'>
-          <h2>Abscissa</h2>
-          <div class="dropdown">
-            <button id='abscissa-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Select Abscissa Quantity
-            </button>
-            <ul class="dropdown-menu" id="abscissa-choices">
+        <div id="x" class='my-4'>
+          <h2>Abscissa <small class="text-muted ">(<var>x</var>-axis)</small></h2>
+          <div class="row">
+            <div class="col">
+              <div class="dropdown">
+                <button id='x-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Select <var>x</var> quantity
+                </button>
+                <ul class="dropdown-menu" id="x-choices">
 
-            </ul>
+                </ul>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type='linear' checked>
+                <label class="form-check-label" for="x-scale-linear">
+                  Linear
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type='log'>
+                <label class="form-check-label" for="x-scale-log">
+                  Logarithmic
+                </label>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="ordinate">
-          <h2>Ordinate</h2>
-          <div class="dropdown">
-            <button id='ordinate-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Select Ordinate Quantity
-            </button>
-            <ul class="dropdown-menu" id="ordinate-choices">
+        <div id="y">
+          <h2>Ordinate <small class="text-muted">(<var>y</var>-axis)</small></h2>
+          <div class="row">
+            <div class="col">
+              <div class="dropdown">
+                <button id='y-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Select <var>y</var> quantity
+                </button>
+                <ul class="dropdown-menu" id="y-choices">
 
-            </ul>
+                </ul>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type='linear' checked>
+                <label class="form-check-label" for="y-scale-linear">
+                  Linear
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type='log'>
+                <label class="form-check-label" for="y-scale-log">
+                  Logarithmic
+                </label>
+              </div>
+              <p>(&nabla;<sub><var>T</var></sub> – &nabla;<sub><var>a</var></sub>)<sub>max</sub></p>
+            </div>
           </div>
         </div>
       </div>
