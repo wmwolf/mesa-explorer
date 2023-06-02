@@ -212,6 +212,10 @@ vis = {
   },
   // These variables and methods deal with the plot area and axis scaling,
   // irrespective of the actual data being plotted
+
+  // this variable allows stopping plot updates. Useful when multiple things
+  // may change at once; just be sure to set it back to false when done.
+  pause: false,
   height: () => parseFloat(vis.svg.style('height')),
   width: () => parseFloat(vis.svg.style('width')),
   axes: {
@@ -235,7 +239,19 @@ vis = {
     x: { rescale: 'linear', rezero: 0, absval: false, normalize: false },
     y: { rescale: 'linear', rezero: 0, absval: false, normalize: false }
   },
-  min_data: (axis) => vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis)),
+  // TODO: refactor this (and probably other functions) to allow flipping the
+  // axis. Right now this aggressively fixes the minimum. Need to do similar for y-axis.
+  min_data: (axis) => {
+    if (typeof(vis.axes[axis].max) == 'undefined') {
+      if (typeof(vis.axes[axis].min == 'undefined') || vis.axes[axis].min == '') {
+        return d3.min(vis.data, vis.accessor(axis));
+      } else {
+        return vis.axes[axis].min;
+      }
+    } else {
+      return Math.min(vis.axes[axis].min, vis.axes[axis].max);
+    }
+  },
   max_data: (axis) => vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis)),
   known_history_names: {},
   known_profile_names: {},
@@ -367,9 +383,16 @@ vis = {
 
         // Update interface: button label (remember what was clicked),
         // scale radio buttons and main plot
+        vis.pause = true
         d3.select(`#${axis}-label`).html(option.html());
         const selector = `#${axis}-scale-${option.datum().scale}`
         document.querySelector(selector).click()
+        if (option.datum().scale == 'log') {
+          document.querySelector(`#${axis}-data-trans-exp`).click();
+        } else {
+          document.querySelector(`#${axis}-data-trans-linear`).click();
+        }
+        vis.pause = false
         vis.update_plot();
       });
   },
@@ -422,6 +445,9 @@ vis = {
   },
   clear_plot: () => { vis.svg.selectAll("*").remove() },
   update_plot: () => {
+    if (vis.pause) {
+        return
+    }
     vis.clear_plot();
     if (vis.file && vis.names.y && vis.names.x) {
       vis.make_scales();
