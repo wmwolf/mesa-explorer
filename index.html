@@ -137,7 +137,119 @@
             </div>
           </form>
         </div>
-        <div id="y">
+        <div id="y" class='my-4'>
+          <h2>Ordinate <small class="text-muted ">(<var>y</var>-axis)</small></h2>
+          <div class="border rounded p-3">
+            <div class="row">
+              <div class="col-4">
+                <h3>Data</h3>
+              </div>
+              <div class="col-8">
+                <h3>Data Transformations</h3>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-4">
+                <!-- Data selection -->
+                <div class="dropdown">
+                  <button id='y-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select <var>y</var> quantity
+                  </button>
+                  <ul class="dropdown-menu" id="y-choices"></ul>
+                </div>
+              </div>
+              <div class="col-8">
+                <form id=y-data-controls>
+                  <div class="row">
+                    <div class="col">
+                      <fieldset>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-linear" data-axis="y" value='linear' checked>
+                          <label class="form-check-label" for="y-data-trans">
+                            Linear: <var>y</var>
+                          </label>
+                        </div>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-log" data-axis="y" value='log'>
+                          <label class="form-check-label" for="y-data-trans-log">
+                            Take log: log<sub>10</sub>(<var>y</var>)
+                          </label>
+                        </div>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-logabs" data-axis="y" value='logabs'>
+                          <label class="form-check-label" for="y-data-trans-logabs">
+                            Take log of |<var>y</var>|: log<sub>10</sub>(|<var>y</var>|)
+                          </label>
+                        </div>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-exp" data-axis="y" value='exp'>
+                          <label class="form-check-label" for="y-data-trans-exp">
+                            Exponentiate: 10<sup><var>y</var></sup>
+                          </label>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div class="col">
+                      <div class="form-floating mb-2 data-rezero">
+                        <input type="number" class="form-control" id='y-data-zero' aria-label="Zero point for y-data." value=0 data-axis="y">
+                        <label for='y-data-zero'>Zero-point</label>
+                      </div>
+                      <div class="form-check mb-2 data-absval">
+                        <input class="form-check-input" type="checkbox" value="" id="y-absval" data-axis="y">
+                        <label class="form-check-label" for="y-absval">
+                          Absolute Value
+                        </label>
+                      </div>
+                      <div class="form-check mb-2 data-normalize">
+                        <input class="form-check-input" type="checkbox" value="" id="y-normalize" data-axis="y">
+                        <label class="form-check-label" for="y-normalize">
+                          Normalize
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+          <form id='y-axis-controls'>
+            <div class="row">
+              <div class="col-4 axis-rescale">
+                <h3>Axis Scale</h3>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type='linear' checked>
+                  <label class="form-check-label" for="y-scale-linear">
+                    Linear
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type='log'>
+                  <label class="form-check-label" for="y-scale-log">
+                    Logarithmic
+                  </label>
+                </div>
+              </div>
+              <div class="col-8 limits">
+                <h3>Axis Limits</h3>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-floating">
+                      <input type="number" class="form-control" id='y-axis-left' data-axis="y" data-lim="min" aria-label="Left limit for y-axis">
+                      <label for='y-axis-left'>Left Limit</label>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-floating">
+                      <input type="number" class="form-control" id='y-axis-right' data-axis="y" data-lim="max" aria-label="Right limit for y-axis">
+                      <label for='y-axis-right'>Right Limit</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <!-- <div id="y">
           <h2>Ordinate <small class="text-muted">(<var>y</var>-axis)</small></h2>
           <div class="row">
             <div class="col">
@@ -167,7 +279,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>

@@ -91,23 +91,23 @@ cz_top_zone,linear,Convective Top Zone,
 cz_top_zone_logdq,log,Convective Top Zone Fractional Mass,
 cz_top_log_xa h1,log,Convective Top <sup>1</sup>H Mass Fraction,
 cz_top_log_xa he4,log,Convective Top <sup>4</sup>He Mass Fraction,
-power_h_burn,linear,Hydrogen-Burning Luminosity,L<sub>&#8857;</sub>
-power_he_burn,linear,Helium-Burning Luminosity,L<sub>&#8857;</sub>
-power_photo,linear,Photodisintegration Luminosity,L<sub>&#8857;</sub>
-power_z_burn,linear,Metal-Burning Luminosity,L<sub>&#8857;</sub>
-log_power_nuc_burn,log,Nuclear Fusion Luminosity (–photodisintegration),L<sub>&#8857;</sub>
-log_LH,log,Hydrogen-Burning Luminosity,L<sub>&#8857;</sub>
-log_LHe,log,Helium-Burning Luminosity,L<sub>&#8857;</sub>
-log_LZ,log,Metal-Burning Luminosity,L<sub>&#8857;</sub>
-log_Lnuc,log,Nuclear Fusion Luminosity,L<sub>&#8857;</sub>
-log_Lnuc_ergs_s,log,Nuclear Fusion Luminosity,erg/s
+power_h_burn,linear,<var>L</var><sub>H</sub>,L<sub>&#8857;</sub>
+power_he_burn,linear,<var>L</var><sub>He</sub>,L<sub>&#8857;</sub>
+power_photo,linear,<var>L</var><sub>photodisintegration</sub>,L<sub>&#8857;</sub>
+power_z_burn,linear,<var>L</var><sub>Z</sub>,L<sub>&#8857;</sub>
+log_power_nuc_burn,log,<var>L</var><sub>nuc – photodisintegration</sub>,L<sub>&#8857;</sub>
+log_LH,log,<var>L</var><sub>H</sub>,L<sub>&#8857;</sub>
+log_LHe,log,<var>L</var><sub>He</sub>,L<sub>&#8857;</sub>
+log_LZ,log,<var>L</var><sub>Z</sub>,L<sub>&#8857;</sub>
+log_Lnuc,log,<var>L</var><sub>nuc</sub>,L<sub>&#8857;</sub>
+log_Lnuc_ergs_s,log,<var>L</var><sub>nuc</sub>,erg/s
 log_Lnuc_sub_log_L,log,<var>L</var><sub>nuc</sub> – <var>L</var>,L<sub>&#8857;</sub>
-lnuc_photo,linear,Photodisintegration Luminosity,L<sub>&#8857;</sub>
-extra_L,linear,Extra Luminosity,L<sub>&#8857;</sub>
-log_extra_L,log,Extra Luminosity,L<sub>&#8857;</sub>
-log_Lneu,log,Neutrino Luminosity,L<sub>&#8857;</sub>,
-log_Lneu_nuc,log,Nuclear Neutrino Luminosity,L<sub>&#8857;</sub>
-log_Lneu_nonnuc,log,Thermal Neutrino Luminosity,<sub>&#8857;</sub>
+lnuc_photo,linear,P<var>L</var><sub>photodisintegration</sub>,L<sub>&#8857;</sub>
+extra_L,linear,<var>L</var><sub>extra</sub>,L<sub>&#8857;</sub>
+log_extra_L,log,<var>L</var><sub>extra</sub>,L<sub>&#8857;</sub>
+log_Lneu,log,<var>L</var><sub>neu</sub>,L<sub>&#8857;</sub>,
+log_Lneu_nuc,log,<var>L</var><sub>neu (nuc)</sub>,L<sub>&#8857;</sub>
+log_Lneu_nonnuc,log,<var>L</var><sub>neu (thermal)</sub>,<sub>&#8857;</sub>
 mass_loc_of_max_eps_nuc,linear,Mass at Peak Nuclear Burning,M<sub>&#8857;</sub>
 mass_ext_to_max_eps_nuc,linear,Mass exterior to peak nuclear burning,M<sub>&#8857;</sub>
 eps_grav_integral,linear,Integrated Gravitational Luminosity,L<sub>&#8857;</sub>
