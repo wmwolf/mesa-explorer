@@ -207,6 +207,7 @@ vis = {
       console.log('changed');
       elt = d3.select(this);
       vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
+      vis.update_plot();
     });
   },
   // These variables and methods deal with the plot area and axis scaling,
@@ -349,6 +350,9 @@ vis = {
         let res = `<samp>${d.key}</samp>`;
         if (d.html_name) {
           res = d.html_name;
+          if (d.scale == 'log') {
+            res = `log ${res}`;
+          }
           if (d.html_units) {
             res = `${res} <small class="text-muted">(${d.html_units})</span>`;
           }
