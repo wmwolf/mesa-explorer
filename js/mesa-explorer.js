@@ -1,10 +1,18 @@
+// Helper functions
+safe_log = (val) => {
+  if (val <= 0) {
+    return -99
+  } else {
+    return Math.log10(val)
+  }
+}
 // File manager object handles loading files, parsing data into javascript
 // objects, rendering the files to the file picker.
 
 // Right now, it also stores the current "active" file that is being plotted
 // This will need to rethought if we want to allow multiple series to be
 // plotted from multiple files. At that point, perhaps just exposing the
-// list of available files to the visualization pane in the form of
+// list of available files to the vis pane in the form of
 // dropdowns would work better
 file_manager = {
   setup: () => {
@@ -135,204 +143,291 @@ file_manager = {
       d3.select(this)
         .attr("class", "list-group-item list-group-item-action active");
       file_manager.active_file = file;
-      visualization.register_new_file();
+      vis.register_new_file();
     });
   }
 }
 
-visualization = {
-    setup: () => {
-      visualization.svg = d3.select('#plot');
-      visualization.svg.style('height', visualization.width() / 1.618);
-      window.onresize = function() {
-        visualization.svg.style('height', visualization.width() / 1.618);
-        visualization.update_plot();
-      };
-      // Load data for known history/profile columns
-      d3.csv('data/history_columns.csv')
-        .then(data => visualization.known_history_names = data);
-      d3.csv('data/profile_columns.csv')
-        .then(data => visualization.known_profile_names = data);
-      // Turn on handlers for linear/logarithmic radio toggles
-      d3.selectAll("div.form-check input.form-check-input")
-        .on("change", function() {
-          btn = d3.select(this);
-          if (btn.property("checked")) {
-            if (btn.attr('data-scale') == 'x') {
-              visualization.x_scale_type = btn.attr('data-scale-type');
-            } else if (btn.attr('data-scale') == 'y') {
-              visualization.y_scale_type = btn.attr('data-scale-type');
-            }
-            visualization.update_plot();
-          }
-        });
-    },
-    height: () => parseFloat(visualization.svg.style('height')),
-    width: () => parseFloat(visualization.svg.style('width')),
-    x_margin: () => visualization.width() * visualization.margin_frac,
-    y_margin: () => visualization.height() * visualization.margin_frac,
-    x_name: undefined,
-    y_name: undefined,
-    known_history_names: {},
-    known_profile_names: {},
-    x_scale: undefined,
-    y_scale: undefined,
-    x_scale_type: 'linear',
-    y_scale_type: 'linear',
-    x_data_type:'linear',
-    y_data_type:'linear',
-    x_accessor: () => {
-      if (visualization.x_data_type == 'log') {
-        return d => 10 ** d[visualization.x_name]
-      }
-      return d => d[visualization.x_name];
-    },
-    y_accessor: () => {
-      if (visualization.y_data_type == 'log') {
-        return d => 10 ** d[visualization.y_name]
-      }
-      return d => d[visualization.y_name];
-    },
-    margin_frac: 0.1,
-    register_new_file: () => {
-      visualization.file = file_manager.active_file;
+vis = {
+  setup: () => {
+    vis.svg = d3.select('#plot');
+    vis.svg.style('height', vis.width() / 1.618);
+    window.onresize = function() {
+      vis.svg.style('height', vis.width() / 1.618);
+      vis.update_plot();
+    };
+    // Load data for known history/profile columns
+    d3.csv('data/history_columns.csv')
+      .then(data => vis.known_history_names = data);
+    d3.csv('data/profile_columns.csv')
+      .then(data => vis.known_profile_names = data);
 
-      // Reset selections for abscissa and ordinate axes columns if they
-      // are no longer present in this file
-      const names = visualization.file.data.bulk_names.map(elt => elt.key);
-      const axes = ['x', 'y']
-      axes.forEach(axis => {
-        if (!names.includes(visualization[`${axis}_name`])) {
-          visualization[`${axis}_name`] = undefined;
-          d3.select(`#${axis}-label`).html(`Select <var>${axis}</var> quantity `);
+    // Set up handlers for data transformations
+    //   Data rescaling
+    d3.selectAll('.data-rescale input').on('click', function() {
+      elt = d3.select(this);
+      vis.data_trans[elt.attr('data-axis')]['rescale'] = elt.attr('value')
+      vis.update_plot();
+    });
+    //   Rezeroing
+    d3.selectAll('.data-rezero input').on('keyup', function() {
+      elt = d3.select(this);
+      vis.data_trans[elt.attr('data-axis')]['rezero'] = parseFloat(elt.property("value"));
+      vis.update_plot();
+    });
+    //   Absolute Value
+    d3.selectAll('.data-absval input').on('click', function() {
+      elt = d3.select(this);
+      vis.data_trans[elt.attr('data-axis')]['absval'] = elt.property("checked");
+      vis.update_plot();
+    });
+    //   Normalization
+    d3.selectAll('.data-normalize input').on('click', function() {
+      elt = d3.select(this);
+      vis.data_trans[elt.attr('data-axis')]['normalize'] = elt.property("checked");
+      vis.update_plot();
+    });
+
+    // Set up handlers for axis transformations
+    //   linear/logarithmic radio toggles
+    d3.selectAll("div.axis-rescale input")
+      .on("click", function() {
+        btn = d3.select(this);
+        if (btn.property("checked")) {
+          if (btn.attr('data-scale') == 'x') {
+            vis.axes.x.type = btn.attr('data-scale-type');
+          } else if (btn.attr('data-scale') == 'y') {
+            vis.axes.y.type = btn.attr('data-scale-type');
+          }
+          vis.update_plot();
         }
       });
+    //  "min" (left/bottom) and "max" (right/top) limits
+    d3.selectAll("div.limits input").on('keyup', function() {
+      console.log('changed');
+      elt = d3.select(this);
+      vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
+    });
+  },
+  // These variables and methods deal with the plot area and axis scaling,
+  // irrespective of the actual data being plotted
+  height: () => parseFloat(vis.svg.style('height')),
+  width: () => parseFloat(vis.svg.style('width')),
+  axes: {
+    x: {
+      scale: undefined,
+      type: 'linear',
+      min: undefined,
+      max: undefined
+    },
+    y: {
+      scale: undefined,
+      type: 'linear',
+      min: undefined,
+      max: undefined
+    }
+  },
 
-      // Set up the actual data that will be plotted
-      visualization.data = visualization.file.data.bulk
+  // These variables and methods deal with the data that can/will be plotted
+  names: { x: undefined, y: undefined },
+  data_trans: {
+    x: { rescale: 'linear', rezero: 0, absval: false, normalize: false },
+    y: { rescale: 'linear', rezero: 0, absval: false, normalize: false }
+  },
+  min_data: (axis) => vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis)),
+  max_data: (axis) => vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis)),
+  known_history_names: {},
+  known_profile_names: {},
+  data_type: { x: 'linear', y: 'linear' },
+  // functions that generates accessor functions based on the desired data
+  // transformation properties. Order of transformations should be thought
+  // through more thoroughly. *MUST* be a function that returns a function
+  // since transformation properties can and will change after instantiation.
 
-      // merge name data with more complete "known" data. Names are the columns
-      // of data files, but also the keys to each datum in `visualization.data`.
-      visualization.name_data = visualization.file.data.bulk_names.map((d) => {
-        let matches = visualization.known_names().filter(dk => dk.key == d.key);
-        // If we found this name, overwrite with "known" values. Should probably
-        // do this with destructuring so it is less brittle.
-        if (matches.length > 0) {
-          d.scale = matches[0].scale;
-          d.html_name = matches[0].html_name;
-          d.html_units = matches[0].html_units;
+  // Order is
+  //   1. rescale: linear (do nothing) log, log(abs), or exponentiate
+  //   2. rezero (defaults to doing nothing)
+  //   3. take absolute values (optional)
+  //   4. normalize (optional)
+
+  // Actually, we don't even do the normalization here, since that would
+  // require knowing the maximum value, and these functions only process
+  // one datum at a time. Instead, we'll rescale the axis object appropriately
+  accessor: (axis) => {
+    rescale = (d) => {
+      switch (vis.data_trans[axis].rescale) {
+        case 'log':
+          return safe_log(d[vis.names[axis]]);
+        case 'logabs':
+          return safe_log(Math.abs(d[vis.names[axis]]));
+        case 'exp':
+          return Math.pow(10, d[vis.names[axis]]);
+        default:
+          return d[vis.names[axis]]
+      }
+    }
+    rezero = val => val - vis.data_trans[axis].rezero
+    do_abs = val => vis.data_trans[axis].absval ? Math.abs(val) : val
+    return d => do_abs(rezero(rescale(d)))
+  },
+  tick_padding: 50,
+  data_padding: 20,
+  // pixel coordinates for left/bottom of data
+  min_display: (axis) => {
+    if (axis == 'x') {
+      return vis.tick_padding + vis.data_padding;
+    } else {
+      return vis.height() - vis.tick_padding - vis.data_padding;
+    }
+  },
+  // pixel coordinates for right/top of data
+  max_display: (axis) => {
+    if (axis == 'x') {
+      return vis.width() - vis.data_padding;
+    } else {
+      return vis.data_padding;
+    }
+  },
+  register_new_file: () => {
+    vis.file = file_manager.active_file;
+
+    // Reset selections for abscissa and ordinate axes columns if they
+    // are no longer present in this file
+    const names = vis.file.data.bulk_names.map(elt => elt.key);
+    const axes = ['x', 'y']
+    axes.forEach(axis => {
+      if (!names.includes(vis[`${axis}_name`])) {
+        vis[`${axis}_name`] = undefined;
+        d3.select(`#${axis}-label`).html(`Select <var>${axis}</var> quantity `);
+      }
+    });
+
+    // Set up the actual data that will be plotted
+    vis.data = vis.file.data.bulk
+
+    // merge name data with more complete "known" data. Names are the columns
+    // of data files, but also the keys to each datum in `vis.data`.
+    vis.name_data = vis.file.data.bulk_names.map((d) => {
+      let matches = vis.known_names().filter(dk => dk.key == d.key);
+      // If we found this name, overwrite with "known" values. Should probably
+      // do this with destructuring so it is less brittle.
+      if (matches.length > 0) {
+        d.scale = matches[0].scale;
+        d.html_name = matches[0].html_name;
+        d.html_units = matches[0].html_units;
+      }
+      return d;
+    });
+
+    // Refresh interface to reflect new data
+    axes.forEach(axis => vis.update_choices(axis));
+    vis.update_plot();
+  },
+  // helper function for grabbing the relevant "known" column name data
+  known_names: () => {
+    if (vis.file.type == 'history') {
+      return vis.known_history_names;
+    } else if (vis.file.type == 'profile') {
+      return vis.known_profile_names;
+    }
+  },
+  // Update  column selector dropdown menu
+  update_choices: (axis) => {
+    // Clear out existing choices and build from scratch
+    // Could make this smarter and detect [lack of] changes in refresh
+    // step, but this works for now.
+    d3.select(`#${axis}-choices`).selectAll('li').remove()
+
+    // Bind lis to available name data in file, which should be pre-merged
+    // with the known values. Set up pretty formatting and click handler, too.
+    d3.select(`#${axis}-choices`).selectAll('li')
+      .data(vis.name_data).enter()
+      .append("li").append("a")
+      .attr("class", "dropdown-item")
+      .attr("data-name", d => d.key)
+      .html(d => {
+        let res = `<samp>${d.key}</samp>`;
+        if (d.html_name) {
+          res = d.html_name;
+          if (d.html_units) {
+            res = `${res} <small class="text-muted">(${d.html_units})</span>`;
+          }
         }
-        return d;
+        return res;
+      })
+      .on('click', function() {
+        // set the column name and column scale in the data
+        option = d3.select(this)
+        vis.names[axis] = option.attr('data-name');
+        vis.data_type[axis] = option.datum().scale
+
+        // Update interface: button label (remember what was clicked),
+        // scale radio buttons and main plot
+        d3.select(`#${axis}-label`).html(option.html());
+        const selector = `#${axis}-scale-${option.datum().scale}`
+        document.querySelector(selector).click()
+        vis.update_plot();
       });
+  },
+  make_scale: (axis) => {
+    // set up right scaling
+    if (vis.axes[axis].type == 'log') {
+      vis.axes[axis].scale = d3.scaleLog();
+    } else {
+      vis.axes[axis].scale = d3.scaleLinear();
+    }
+    // console.log(`Created ${axis} axis`);
+    // now set domain and range using helper functions
+    vis.axes[axis].scale
+      .domain([vis.min_data(axis), vis.max_data(axis)])
+      .range([vis.min_display(axis), vis.max_display(axis)]).nice();
+    // console.log(`Calibrated ${axis} axis with domain of ${[vis.min_data(axis), vis.max_data(axis)]} and a range of ${}`);
+  },
+  make_scales: () => {
+    ['x', 'y'].forEach( axis => vis.make_scale(axis));
+  },
+  plot_data_scatter: () => {
+    vis.svg.selectAll('circle').data(vis.data).enter()
+      .append('circle')
+      .attr('r', 5)
+      .attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
+      .attr('cy', d => vis.axes.y.scale(vis.accessor('y')(d)))
+      .attr('fill', 'DodgerBlue');
+  },
+  plot_data_line: () => {
+    const x = vis.accessor('x');
+    const y = vis.accessor('y');
+    const line_maker = d3.line()
+      .defined(d => {
+        return vis.accessor('x')(d) >= vis.min_data('x') && vis.accessor('x')(d) <= vis.max_data('x') && vis.accessor('y')(d) >= vis.min_data('y') && vis.accessor('y')(d) <= vis.max_data('y');
+      })
+      .x(d => vis.axes.x.scale(vis.accessor('x')(d)))
+      .y(d => vis.axes.y.scale(vis.accessor('y')(d)))
+    vis.svg.append("g")
+      .append("path")
+      .attr("fill", "none")
+      .attr("d", line_maker(vis.data))
+      .attr("stroke", "DodgerBlue")
+      .attr("stroke-width", "2.0");
+  },
+  add_axes: () => {
+    vis.svg.append("g").call(d3.axisBottom(vis.axes.x.scale))
+      .attr("transform", `translate(0,${vis.min_display('y') + vis.data_padding})`);
+    vis.svg.append("g").call(d3.axisLeft(vis.axes.y.scale))
+      .attr("transform", `translate(${vis.tick_padding},0)`);
+  },
+  clear_plot: () => { vis.svg.selectAll("*").remove() },
+  update_plot: () => {
+    vis.clear_plot();
+    if (vis.file && vis.names.y && vis.names.x) {
+      vis.make_scales();
+      vis.plot_data_line();
+      vis.add_axes()
+    }
+  }
+};
 
-      // Refresh interface to reflect new data
-      axes.forEach(axis => visualization.update_choices(axis));
-      visualization.update_plot();
-    },
-    // helper function for grabbing the relevant "known" column name data
-    known_names: () => {
-      if (visualization.file.type == 'history') {
-        return visualization.known_history_names;
-      } else if (visualization.file.type == 'profile') {
-        return visualization.known_profile_names;
-      }
-    },
-    // Update  column selector dropdown menu
-    update_choices: (axis) => {
-      // Clear out existing choices and build from scratch
-      // Could make this smarter and detect [lack of] changes in refresh
-      // step, bu this works for now.
-      d3.select(`#${axis}-choices`).selectAll('li').remove()
-
-      // Bind lis to available name data in file, which should be pre-merged
-      // with the known values. Set up pretty formatting and click handler, too.
-      d3.select(`#${axis}-choices`).selectAll('li')
-        .data(visualization.name_data).enter()
-        .append("li").append("a")
-        .attr("class", "dropdown-item")
-        .attr("data-name", d => d.key)
-        .html(d => {
-          let res = `<samp>${d.key}</samp>`;
-          if (d.html_name) {
-            res = d.html_name;
-            if (d.html_units) {
-              res = `${res} <small class="text-muted">(${d.html_units})</span>`;
-            }
-          }
-          return res;
-        })
-        .on('click', function() {
-          // set the column name and column scale in the data
-          option = d3.select(this)
-          visualization[`${axis}_name`] = option.attr('data-name');
-          visualization[`${axis}_data_type`] = option.datum().scale
-
-          // Update interface: button label (remember what was clicked),
-          // scale radio buttons and main plot
-          d3.select(`#${axis}-label`).html(option.html());
-          const selector = `#${axis}-scale-${option.datum().scale}`
-          console.log(`attempting to click ${selector}`);
-          document.querySelector(selector).click()
-          // d3.select(selector).dispatch('click');
-          visualization.update_plot();
-        });
-    },
-    make_scales: () => {
-      // First select axis type, then set up some reasonable default values
-      // for domain and range
-      visualization.x_scale = d3.scaleLinear();
-      if (visualization.x_scale_type == 'log') {
-        visualization.x_scale = d3.scaleLog();
-      }
-      visualization.x_scale
-        .domain(d3.extent(visualization.data, visualization.x_accessor()))
-        .range([visualization.x_margin(), visualization.width() - visualization.x_margin()]).nice();
-
-      visualization.y_scale = d3.scaleLinear();
-      if (visualization.y_scale_type == 'log') {
-        visualization.y_scale = d3.scaleLog();
-      }
-      visualization.y_scale
-        .domain(d3.extent(visualization.data, visualization.y_accessor()))
-        .range([visualization.height() - visualization.y_margin(), visualization.y_margin()]).nice();
-    },
-    plot_data_scatter: () => {
-      visualization.svg.selectAll('circle').data(visualization.data).enter()
-        .append('circle')
-        .attr('r', 5)
-        .attr('cx', d => visualization.x_scale(visualization.x_accessor()(d)))
-        .attr('cy', d => visualization.y_scale(visualization.y_accessor()(d)))
-        .attr('fill', 'DodgerBlue');
-    },
-    plot_data_line: () => {
-      const line_maker = d3.line()
-        .x(d => visualization.x_scale(visualization.x_accessor()(d)))
-        .y(d => visualization.y_scale(visualization.y_accessor()(d)))
-      visualization.svg.append("g")
-        .append("path")
-        .attr("fill", "none")
-        .attr("d", line_maker(visualization.data))
-          .attr("stroke", "DodgerBlue")
-          .attr("stroke-width", "2.0");
-        },
-        add_axes: () => {
-          visualization.svg.append("g").call(d3.axisBottom(visualization.x_scale))
-            .attr("transform", `translate(0,${visualization.height() - visualization.y_margin() * 3 / 4})`);
-          visualization.svg.append("g").call(d3.axisLeft(visualization.y_scale))
-            .attr("transform", `translate(${visualization.x_margin() * 3 / 4},0)`);
-        },
-        clear_plot: () => { visualization.svg.selectAll("*").remove() },
-        update_plot: () => {
-          visualization.clear_plot();
-          if (visualization.file && visualization.y_name && visualization.x_name) {
-            visualization.make_scales();
-            visualization.plot_data_line();
-            visualization.add_axes()
-          }
-        }
-    };
-
-    setup = () => {
-      file_manager.setup();
-      visualization.setup();
-    };
+setup = () => {
+  file_manager.setup();
+  vis.setup();
+};

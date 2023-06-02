@@ -27,32 +27,115 @@
         <svg id='plot' width=100% class='my-2 bg-light'></svg>
         <div id="x" class='my-4'>
           <h2>Abscissa <small class="text-muted ">(<var>x</var>-axis)</small></h2>
-          <div class="row">
-            <div class="col">
-              <div class="dropdown">
-                <button id='x-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Select <var>x</var> quantity
-                </button>
-                <ul class="dropdown-menu" id="x-choices">
+          <div class="border rounded p-3">
+            <div class="row">
+              <div class="col-4">
+                <h3>Data</h3>
+              </div>
+              <div class="col-8">
+                <h3>Data Transformations</h3>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-4">
+                <!-- Data selection -->
+                <div class="dropdown">
+                  <button id='x-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select <var>x</var> quantity
+                  </button>
+                  <ul class="dropdown-menu" id="x-choices"></ul>
+                </div>
+              </div>
+              <div class="col-8">
+                <form id=x-data-controls>
+                  <div class="row">
+                    <div class="col">
+                      <fieldset>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-linear" data-axis="x" value='linear' checked>
+                          <label class="form-check-label" for="x-data-trans">
+                            Linear: <var>x</var>
+                          </label>
+                        </div>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-log" data-axis="x" value='log'>
+                          <label class="form-check-label" for="x-data-trans-log">
+                            Take log: log<sub>10</sub>(<var>x</var>)
+                          </label>
+                        </div>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-logabs" data-axis="x" value='logabs'>
+                          <label class="form-check-label" for="x-data-trans-logabs">
+                            Take log of |<var>x</var>|: log<sub>10</sub>(|<var>x</var>|)
+                          </label>
+                        </div>
+                        <div class="form-check mb-2 data-rescale">
+                          <input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-exp" data-axis="x" value='exp'>
+                          <label class="form-check-label" for="x-data-trans-exp">
+                            Exponentiate: 10<sup><var>x</var></sup>
+                          </label>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <div class="col">
+                      <div class="form-floating mb-2 data-rezero">
+                        <input type="number" class="form-control" id='x-data-zero' aria-label="Zero point for x-data." value=0 data-axis="x">
+                        <label for='x-data-zero'>Zero-point</label>
+                      </div>
+                      <div class="form-check mb-2 data-absval">
+                        <input class="form-check-input" type="checkbox" value="" id="x-absval" data-axis="x">
+                        <label class="form-check-label" for="x-absval">
+                          Absolute Value
+                        </label>
+                      </div>
+                      <div class="form-check mb-2 data-normalize">
+                        <input class="form-check-input" type="checkbox" value="" id="x-normalize" data-axis="x">
+                        <label class="form-check-label" for="x-normalize">
+                          Normalize
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
 
-                </ul>
+          <form id='x-axis-controls'>
+            <div class="row">
+              <div class="col-4 axis-rescale">
+                <h3>Axis Scale</h3>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type='linear' checked>
+                  <label class="form-check-label" for="x-scale-linear">
+                    Linear
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type='log'>
+                  <label class="form-check-label" for="x-scale-log">
+                    Logarithmic
+                  </label>
+                </div>
+              </div>
+              <div class="col-8 limits">
+                <h3>Axis Limits</h3>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-floating">
+                      <input type="number" class="form-control" id='x-axis-left' data-axis="x" data-lim="min" aria-label="Left limit for x-axis">
+                      <label for='x-axis-left'>Left Limit</label>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-floating">
+                      <input type="number" class="form-control" id='x-axis-right' data-axis="x" data-lim="max" aria-label="Right limit for x-axis">
+                      <label for='x-axis-right'>Right Limit</label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type='linear' checked>
-                <label class="form-check-label" for="x-scale-linear">
-                  Linear
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type='log'>
-                <label class="form-check-label" for="x-scale-log">
-                  Logarithmic
-                </label>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
         <div id="y">
           <h2>Ordinate <small class="text-muted">(<var>y</var>-axis)</small></h2>
@@ -67,6 +150,8 @@
                 </ul>
               </div>
             </div>
+          </div>
+          <div class="row">
             <div class="col">
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type='linear' checked>
