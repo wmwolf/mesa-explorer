@@ -18,13 +18,13 @@
           <label for="mesa-input" class="form-label" onchange="file_manager.load_file(this)">Input File (history or profile)</label>
           <input class="form-control form-control" id="mesa-input" type="file" />
         </div>
-        <p id='file-prompt'>No files imported yet. Use the file selector above to import a history or profile file.</p>
+        <p id='file-prompt' class='fst-italic'>No files imported yet. Use the file selector above to import a history or profile file.</p>
         <div class="list-group" id="file-list">
         </div>
       </div>
       <div class="col-8">
         <h1>Visualization</h1>
-        <svg id='plot' width=600 height=400 class='my-2 bg-light'></svg>
+        <svg id='plot' width=100% class='my-2 bg-light'></svg>
         <div id="x" class='my-4'>
           <h2>Abscissa <small class="text-muted ">(<var>x</var>-axis)</small></h2>
           <div class="row">
@@ -80,7 +80,6 @@
                   Logarithmic
                 </label>
               </div>
-              <p>(&nabla;<sub><var>T</var></sub> – &nabla;<sub><var>a</var></sub>)<sub>max</sub></p>
             </div>
           </div>
         </div>
