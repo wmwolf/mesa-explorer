@@ -271,6 +271,9 @@ vis = {
   // require knowing the maximum value, and these functions only process
   // one datum at a time. Instead, we'll rescale the axis object appropriately
   accessor: (axis) => {
+    let rescale;
+    let rezero;
+    let do_abs;
     rescale = (d) => {
       switch (vis.data_trans[axis].rescale) {
         case 'log':
@@ -407,7 +410,7 @@ vis = {
     // now set domain and range using helper functions
     vis.axes[axis].scale
       .domain([vis.min_data(axis), vis.max_data(axis)])
-      .range([vis.min_display(axis), vis.max_display(axis)]).nice();
+      .range([vis.min_display(axis), vis.max_display(axis)]);
     // console.log(`Calibrated ${axis} axis with domain of ${[vis.min_data(axis), vis.max_data(axis)]} and a range of ${}`);
   },
   make_scales: () => {
