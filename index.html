@@ -16,7 +16,7 @@
         <h1>Files</h1>
         <div class='my-2'>
           <label for="mesa-input" class="form-label" onchange="file_manager.load_file(this)">Input File (history or profile)</label>
-          <input class="form-control form-control" id="mesa-input" type="file" />
+          <input class="form-control form-control" id="mesa-input" type="file">
         </div>
         <p id='file-prompt' class='fst-italic'>No files imported yet. Use the file selector above to import a history or profile file.</p>
         <div class="list-group" id="file-list">
@@ -53,7 +53,7 @@
                       <fieldset>
                         <div class="form-check mb-2 data-rescale">
                           <input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-linear" data-axis="x" value='linear' checked>
-                          <label class="form-check-label" for="x-data-trans">
+                          <label class="form-check-label" for="x-data-trans-linear">
                             Linear: <var>x</var>
                           </label>
                         </div>
@@ -99,43 +99,43 @@
                 </form>
               </div>
             </div>
-
-          <form id='x-axis-controls'>
-            <div class="row">
-              <div class="col-4 axis-rescale">
-                <h3>Axis Scale</h3>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type='linear' checked>
-                  <label class="form-check-label" for="x-scale-linear">
-                    Linear
-                  </label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type='log'>
-                  <label class="form-check-label" for="x-scale-log">
-                    Logarithmic
-                  </label>
-                </div>
-              </div>
-              <div class="col-8 limits">
-                <h3>Axis Limits</h3>
-                <div class="row">
-                  <div class="col">
-                    <div class="form-floating">
-                      <input type="number" class="form-control" id='x-axis-left' data-axis="x" data-lim="min" aria-label="Left limit for x-axis">
-                      <label for='x-axis-left'>Left Limit</label>
-                    </div>
+            <form id='x-axis-controls'>
+              <div class="row">
+                <div class="col-4 axis-rescale">
+                  <h3>Axis Scale</h3>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type='linear' checked>
+                    <label class="form-check-label" for="x-scale-linear">
+                      Linear
+                    </label>
                   </div>
-                  <div class="col">
-                    <div class="form-floating">
-                      <input type="number" class="form-control" id='x-axis-right' data-axis="x" data-lim="max" aria-label="Right limit for x-axis">
-                      <label for='x-axis-right'>Right Limit</label>
-                    </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type='log'>
+                    <label class="form-check-label" for="x-scale-log">
+                      Logarithmic
+                    </label>
                   </div>
                 </div>
+                <div class="col-8 limits">
+                  <h3>Axis Limits</h3>
+                  <div class="row">
+                    <div class="col">
+                      <div class="form-floating">
+                        <input type="number" class="form-control" id='x-axis-left' data-axis="x" data-lim="min" aria-label="Left limit for x-axis">
+                        <label for='x-axis-left'>Left Limit</label>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-floating">
+                        <input type="number" class="form-control" id='x-axis-right' data-axis="x" data-lim="max" aria-label="Right limit for x-axis">
+                        <label for='x-axis-right'>Right Limit</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
         <div id="y" class='my-4'>
           <h2>Ordinate <small class="text-muted ">(<var>y</var>-axis)</small></h2>
@@ -165,7 +165,7 @@
                       <fieldset>
                         <div class="form-check mb-2 data-rescale">
                           <input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-linear" data-axis="y" value='linear' checked>
-                          <label class="form-check-label" for="y-data-trans">
+                          <label class="form-check-label" for="y-data-trans-linear">
                             Linear: <var>y</var>
                           </label>
                         </div>
@@ -212,22 +212,24 @@
               </div>
             </div>
 
-          <form id='y-axis-controls'>
-            <div class="row">
-              <div class="col-4 axis-rescale">
-                <h3>Axis Scale</h3>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type='linear' checked>
-                  <label class="form-check-label" for="y-scale-linear">
-                    Linear
-                  </label>
+            <form id='y-axis-controls'>
+              <div class="row">
+                <div class="col-4 axis-rescale">
+                  <h3>Axis Scale</h3>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type='linear' checked>
+                    <label class="form-check-label" for="y-scale-linear">
+                      Linear
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type='log'>
+                    <label class="form-check-label" for="y-scale-log">
+                      Logarithmic
+                    </label>
+                  </div>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type='log'>
-                  <label class="form-check-label" for="y-scale-log">
-                    Logarithmic
-                  </label>
-                </div>
+<<<<<<< HEAD
               </div>
               <div class="col-8 limits">
                 <h3>Axis Limits</h3>
@@ -242,50 +244,38 @@
                     <div class="form-floating">
                       <input type="number" class="form-control" id='y-axis-top' data-axis="y" data-lim="max" aria-label="Top limit for y-axis">
                       <label for='y-axis-top'>Top Limit</label>
+=======
+                <div class="col-8 limits">
+                  <h3>Axis Limits</h3>
+                  <div class="row">
+                    <div class="col">
+                      <div class="form-floating">
+                        <input type="number" class="form-control" id='y-axis-left' data-axis="y" data-lim="min" aria-label="Left limit for y-axis">
+                        <label for='y-axis-left'>Left Limit</label>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-floating">
+                        <input type="number" class="form-control" id='y-axis-right' data-axis="y" data-lim="max" aria-label="Right limit for y-axis">
+                        <label for='y-axis-right'>Right Limit</label>
+                      </div>
+>>>>>>> dev
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-        <!-- <div id="y">
-          <h2>Ordinate <small class="text-muted">(<var>y</var>-axis)</small></h2>
-          <div class="row">
-            <div class="col">
-              <div class="dropdown">
-                <button id='y-label' class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Select <var>y</var> quantity
-                </button>
-                <ul class="dropdown-menu" id="y-choices">
-
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type='linear' checked>
-                <label class="form-check-label" for="y-scale-linear">
-                  Linear
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type='log'>
-                <label class="form-check-label" for="y-scale-log">
-                  Logarithmic
-                </label>
-              </div>
-            </div>
-          </div>
-        </div> -->
       </div>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- Development -->
   <script src="/js/mesa-explorer.js"></script>
+  <!-- Production -->
+  <script src="/mesa-explorer/js/mesa-explorer.js"></script>
 </body>
 
 </html>
