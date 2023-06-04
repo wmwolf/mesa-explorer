@@ -204,7 +204,6 @@ vis = {
       });
     //  "min" (left/bottom) and "max" (right/top) limits
     d3.selectAll("div.limits input").on('keyup', function() {
-      console.log('changed');
       elt = d3.select(this);
       vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
       vis.update_plot();
@@ -388,8 +387,10 @@ vis = {
         // scale radio buttons and main plot
         vis.pause = true
         d3.select(`#${axis}-label`).html(option.html());
+        // Set scale to correspond with reported data type (log/linear)
         const selector = `#${axis}-scale-${option.datum().scale}`
         document.querySelector(selector).click()
+        // Exponentiate logarithmic data, but preserve linear data
         if (option.datum().scale == 'log') {
           document.querySelector(`#${axis}-data-trans-exp`).click();
         } else {
@@ -416,10 +417,26 @@ vis = {
   make_scales: () => {
     ['x', 'y'].forEach( axis => vis.make_scale(axis));
   },
+  make_clipPath: () => {
+    vis.svg.append("clipPath")
+      .attr("id", "clip")  // <-- we need to use the ID of clipPath
+      .append("rect")
+      .attr("width", vis.max_display('x') - vis.min_display('x'))
+      .attr("height", Math.abs(vis.max_display('y') - vis.min_display('y')))
+      .attr("fill", "blue")
+      .attr("transform", `translate(${vis.data_padding + vis.tick_padding},${vis.data_padding})`);
+    vis.svg.append("rect")
+      .attr("width", vis.max_display('x') - vis.min_display('x'))
+      .attr("height", Math.abs(vis.max_display('y') - vis.min_display('y')))
+      .attr("stroke", "blue")
+      .attr("fill", "none")
+      .attr("transform", `translate(${vis.data_padding + vis.tick_padding},${vis.data_padding})`);
+
+  },
   plot_data_scatter: () => {
     vis.svg.selectAll('circle').data(vis.data).enter()
       .append('circle')
-      .attr('r', 5)
+      .attr('r', 2)
       .attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
       .attr('cy', d => vis.axes.y.scale(vis.accessor('y')(d)))
       .attr('fill', 'DodgerBlue');
@@ -428,17 +445,19 @@ vis = {
     const x = vis.accessor('x');
     const y = vis.accessor('y');
     const line_maker = d3.line()
-      .defined(d => {
-        return vis.accessor('x')(d) >= vis.min_data('x') && vis.accessor('x')(d) <= vis.max_data('x') && vis.accessor('y')(d) >= vis.min_data('y') && vis.accessor('y')(d) <= vis.max_data('y');
-      })
-      .x(d => vis.axes.x.scale(vis.accessor('x')(d)))
-      .y(d => vis.axes.y.scale(vis.accessor('y')(d)))
+      // .defined(d => {
+      //   return x(d) >= vis.min_data('x') && x(d) <= vis.max_data('x') && y(d) >= vis.min_data('y') && y(d) <= vis.max_data('y');
+      // })
+      .x(d => vis.axes.x.scale(x(d)))
+      .y(d => vis.axes.y.scale(y(d)));
     vis.svg.append("g")
       .append("path")
       .attr("fill", "none")
       .attr("d", line_maker(vis.data))
       .attr("stroke", "DodgerBlue")
-      .attr("stroke-width", "2.0");
+      .attr("stroke-width", "2.0")
+      .attr("clip-path", "url(#clip)");
+    console.log('done plotting line');
   },
   add_axes: () => {
     vis.svg.append("g").call(d3.axisBottom(vis.axes.x.scale))
@@ -454,7 +473,9 @@ vis = {
     vis.clear_plot();
     if (vis.file && vis.names.y && vis.names.x) {
       vis.make_scales();
+      vis.make_clipPath();
       vis.plot_data_line();
+      // vis.plot_data_scatter();
       vis.add_axes()
     }
   }
