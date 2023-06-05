@@ -16,11 +16,11 @@ safe_log = (val) => {
 // dropdowns would work better
 file_manager = {
   setup: () => {
-    for (file of file_manager.files) {
-      file_manager.render_file_to_list(file);
-    }
+    // for (file of file_manager.files) {
+    //   file_manager.render_file_to_list(file);
+    // }
     document.querySelector("#mesa-input").addEventListener("change", (event) => {
-      file_manager.load_file(event.target);
+      file_manager.load_all_files(event.target);
     });
   },
   // Starts empty, but newest files are always added to the beginning when
@@ -31,40 +31,100 @@ file_manager = {
   files_added: 0,
   // The file that should be read from to do any plotting
   active_file: undefined,
-  // function called when a new file is selected. Loads all data into a file
-  // object and adds an entry to the file picker
-  load_file: async function(input) {
-    let file = input.files[0];
-    let fileReader = new FileReader();
-    fileReader.readAsText(file);
-    fileReader.onload = () => {
-      const contents = fileReader.result;
-      // TODO: should determine if file is an index or not here,
-      // but we'll get to that later. For now ,just look at beginning of file
-      const data = file_manager.process_data(contents);
+  load_all_files: async function(input) {
+    // grab all file data, but do not impact DOM
+    Promise.all([...input.files].map( (file) => {
       let type = 'unknown';
       if (file.name[0] == 'h') {
         type = 'history';
       } else if (file.name[0] == 'p') {
         type = 'profile';
       }
-      file_manager.files.unshift({
+      let file_obj = {
         name: file.name,
         type: type,
-        id: file_manager.files_added,
-        data: data
+      };
+      return file_manager.load_file(file, file_obj);
+    })).then((new_files) => {
+      // once data from the files have been ingested into each file object,
+      // save them to the global file manager object
+      // merge new files into existing files
+      file_manager.files = file_manager.files.concat(new_files);
+      
+      // order files appropriately (histories, then profiels, then other junk)
+      file_manager.files.sort( (d1, d2) => {
+        if (d1.type == "history" && d2.type != "history") {
+          return -1;
+        } else if (d1.type != "history" && d2.type == "history") {
+          return 1;
+        } else if (d1.type == 'profile' && d2.type == 'profile') {
+          // sort profiles by increasing *model* number, not profile number
+          return parseInt(d1.data.header.model_number) - parseInt(d2.data.header.model_number);
+        } else if (d1.type == "profile" && !['history', 'profile'].includes(d2.type)) {
+          // This and the next should make sure that profiles come before randos
+          return -1;
+        } else if (!['history', 'profile'].includes(d1.type) && d2.type == 'profile') {
+          return 1;
+        } else {
+          // multiple histories or multiple other files can have arbitrary order
+          return 0;
+        }
       });
-      file_manager.files_added += 1
-      file_manager.render_file_to_list(file_manager.files[0])
-      // automatically select this new file if it is the first one
-      if (file_manager.files_added == 1) {
-        document.querySelector('a[data-file-id="0"]').click()
+      
+      // Remove any existing files from picker (sorting them in place was just
+      // not working for some reason), and then build them back up, restoring
+      // any active state for pre-selected files
+      d3.select('#file-list').selectAll('a').remove();
+      // insert data into DOM
+      const as = d3.select('#file-list')
+        .selectAll('a')
+        .data(file_manager.files)
+        .enter().append('a')
+        .attr("class", (f) => {
+          if (file_manager.active_file == f) {
+            return "list-group-item list-group-item-action active";
+          } else {
+            return "list-group-item list-group-item-action";
+          }
+        })
+        // add click handler. Strips other files of active class, adds it to
+        // this one, and then sets the active files and phones over to the
+        // visualization side to pick up the new data
+        .on('click', function() {
+          d3.selectAll("#file-list a").attr("class", "list-group-item list-group-item-action");
+          d3.select(this).attr("class", "list-group-item list-group-item-action active");
+          file_manager.active_file = d3.select(this).datum();
+          vis.register_new_file();
+        });
+        
+      // Add in content to the file entries (icon and name of file)
+      as.append("i").attr("class", file_manager.file_icon_class);
+      as.append("span").attr("class", "ms-2").text(f => f.name);
+      
+      // Auto-select the first file if none are selected
+      if (!file_manager.active_file) {
+        d3.select('#file-list > a').dispatch("click");
       }
-      d3.select('#file-prompt').remove();
-    };
-    fileReader.onerror = () => {
-      alert(fileReader.error);
-    };
+    });
+  },
+  // function called when a new file is to be handled. Loads all data into an
+  // existing (and provided) file object and returns it
+  load_file: async function(file, file_obj) {
+    return new Promise((resolve, reject) => {
+      let fileReader = new FileReader();
+      fileReader.readAsText(file);
+      fileReader.onerror = () => {
+        reject(fileReader.error);
+      };
+      // handles data once the file reader has finished loading the data
+      fileReader.onload = () => {
+        const contents = fileReader.result;
+        if (file_obj.type != 'unkonwn') {
+          file_obj.data = file_manager.process_data(contents);
+        }
+        resolve(file_obj);
+      };
+    });
   },
   process_data: (file_contents) => {
     const headerNamesLine = 1;
@@ -130,6 +190,8 @@ file_manager = {
     const a = d3.select('#file-list').append('a')
       .attr("class", "list-group-item list-group-item-action")
       .attr("data-file-id", file.id);
+    // bind file data to list item
+    a.datum(file);
     const h5 = a.append('h5');
     h5.append("i").attr("class", `${file_manager.file_icon_class(file)} me-2`);
     h5.append("span").attr('class', 'font-monospace').text(file.name);
@@ -156,11 +218,9 @@ vis = {
       vis.svg.style('height', vis.width() / 1.618);
       vis.update_plot();
     };
-    // Load data for known history/profile columns
-    d3.csv('data/history_columns.csv')
-      .then(data => vis.known_history_names = data);
-    d3.csv('data/profile_columns.csv')
-      .then(data => vis.known_profile_names = data);
+    
+    // load knwon history and profile columns
+    vis.load_known_columns()
 
     // Set up handlers for data transformations
     //   Data rescaling
@@ -208,6 +268,13 @@ vis = {
       vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
       vis.update_plot();
     });
+  },
+  load_known_columns: () => {
+    // Load data for known history/profile columns
+    d3.csv('data/history_columns.csv')
+      .then(data => vis.known_history_names = data);
+    d3.csv('data/profile_columns.csv')
+      .then(data => vis.known_profile_names = data);
   },
   // These variables and methods deal with the plot area and axis scaling,
   // irrespective of the actual data being plotted
@@ -289,14 +356,14 @@ vis = {
     do_abs = val => vis.data_trans[axis].absval ? Math.abs(val) : val
     return d => do_abs(rezero(rescale(d)))
   },
-  tick_padding: 50,
+  tick_padding: {x: 40, y: 60},
   data_padding: 20,
   // pixel coordinates for left/bottom of data
   min_display: (axis) => {
     if (axis == 'x') {
-      return vis.tick_padding + vis.data_padding;
+      return vis.tick_padding.y + vis.data_padding;
     } else {
-      return vis.height() - vis.tick_padding - vis.data_padding;
+      return vis.height() - vis.tick_padding.x - vis.data_padding;
     }
   },
   // pixel coordinates for right/top of data
@@ -312,12 +379,22 @@ vis = {
 
     // Reset selections for abscissa and ordinate axes columns if they
     // are no longer present in this file
+    vis.pause = true;
     const names = vis.file.data.bulk_names.map(elt => elt.key);
-    const axes = ['x', 'y']
+    const axes = ['x', 'y'];
+    let refresh_plot = true;
     axes.forEach(axis => {
       if (!names.includes(vis[`${axis}_name`])) {
         vis[`${axis}_name`] = undefined;
         d3.select(`#${axis}-label`).html(`Select <var>${axis}</var> quantity `);
+        d3.select(`#${axis}-axis-label`).property('value', '');
+        refresh_plot = false;
+      }
+      vis.pause = false;
+      if (refresh_plot) {
+        vis.update_plot();
+      } else {
+        vis.clear_plot();
       }
     });
 
@@ -366,15 +443,18 @@ vis = {
       .attr("data-name", d => d.key)
       .html(d => {
         let res = `<samp>${d.key}</samp>`;
-        if (d.html_name) {
-          res = d.html_name;
-          if (d.scale == 'log') {
-            res = `log ${res}`;
-          }
-          if (d.html_units) {
-            res = `${res} <small class="text-muted">(${d.html_units})</span>`;
-          }
-        }
+        // Used to do fancy stuff with interpreting name and styling it. Lots
+        // of work to create this data, and we can't even use html in the svg
+        // pane, so skip it for now.
+        // if (d.html_name) {
+        //   res = d.html_name;
+        //   if (d.scale == 'log') {
+        //     res = `log ${res}`;
+        //   }
+        //   if (d.html_units) {
+        //     res = `${res} <small class="text-muted">(${d.html_units})</span>`;
+        //   }
+        // }
         return res;
       })
       .on('click', function() {
@@ -383,10 +463,12 @@ vis = {
         vis.names[axis] = option.attr('data-name');
         vis.data_type[axis] = option.datum().scale
 
-        // Update interface: button label (remember what was clicked),
+        // Update interface: button label (remember what was clicked), default
+        // axis label in text field,
         // scale radio buttons and main plot
         vis.pause = true
         d3.select(`#${axis}-label`).html(option.html());
+        d3.select(`#${axis}-axis-label`).property("value", option.text().replace('log', '').replace('_', ' '));
         // Set scale to correspond with reported data type (log/linear)
         const selector = `#${axis}-scale-${option.datum().scale}`
         document.querySelector(selector).click()
@@ -398,6 +480,7 @@ vis = {
         }
         vis.pause = false
         vis.update_plot();
+        window.scrollTo(0, 0);
       });
   },
   make_scale: (axis) => {
@@ -424,14 +507,7 @@ vis = {
       .attr("width", vis.max_display('x') - vis.min_display('x'))
       .attr("height", Math.abs(vis.max_display('y') - vis.min_display('y')))
       .attr("fill", "blue")
-      .attr("transform", `translate(${vis.data_padding + vis.tick_padding},${vis.data_padding})`);
-    vis.svg.append("rect")
-      .attr("width", vis.max_display('x') - vis.min_display('x'))
-      .attr("height", Math.abs(vis.max_display('y') - vis.min_display('y')))
-      .attr("stroke", "blue")
-      .attr("fill", "none")
-      .attr("transform", `translate(${vis.data_padding + vis.tick_padding},${vis.data_padding})`);
-
+      .attr("transform", `translate(${vis.data_padding + vis.tick_padding.y},${vis.data_padding})`);
   },
   plot_data_scatter: () => {
     vis.svg.selectAll('circle').data(vis.data).enter()
@@ -457,15 +533,50 @@ vis = {
       .attr("stroke", "DodgerBlue")
       .attr("stroke-width", "2.0")
       .attr("clip-path", "url(#clip)");
-    console.log('done plotting line');
   },
   add_axes: () => {
+    // axes themselves (spines, ticks, tick labels)
     vis.svg.append("g").call(d3.axisBottom(vis.axes.x.scale))
       .attr("transform", `translate(0,${vis.min_display('y') + vis.data_padding})`);
     vis.svg.append("g").call(d3.axisLeft(vis.axes.y.scale))
-      .attr("transform", `translate(${vis.tick_padding},0)`);
+      .attr("transform", `translate(${vis.tick_padding.y},0)`);
+      
+    // add or update axis labels
+    if (vis.have_axis_labels) {
+        vis.update_axis_labels();
+    } else {
+      vis.add_axis_labels();
+    }
   },
-  clear_plot: () => { vis.svg.selectAll("*").remove() },
+  add_axis_labels: () => {
+    vis.svg.append("text")
+      .attr("transform", `translate(${vis.min_display("x") + 0.5 * (vis.max_display("x") - vis.min_display("x"))}, ${vis.height() - 5})`)
+      .attr("dominant-baseline", "bottom")
+      .attr("text-anchor", "middle")
+      .attr("id", "svg-x-label")
+      .text(d3.select("#x-axis-label").property("value"));
+    vis.svg.append("text")
+      .attr("transform", `translate(5, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`)
+      .attr("dominant-baseline", "hanging")
+      .attr("text-anchor", "middle")
+      .attr("id", "svg-y-label")
+      .text(d3.select("#y-axis-label").property("value"));
+    // Set up handlers for axis label fields (should this live here?)
+    d3.selectAll(".axis-label-field").on('keyup', () => {
+      vis.update_axis_labels();
+    });
+    vis.have_axis_labels = true;
+  },
+  update_axis_labels: () => {
+    d3.select("#svg-x-label")
+      .text(d3.select("#x-axis-label").property("value"));
+    d3.select("#svg-y-label")
+      .text(d3.select("#y-axis-label").property("value"));
+  },
+  clear_plot: () => { 
+    vis.svg.selectAll("*").remove();
+    vis.have_axis_labels = false;
+   },
   update_plot: () => {
     if (vis.pause) {
         return

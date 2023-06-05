@@ -222,7 +222,7 @@ log_dt_div_min_dr_div_cs,log,,
 min_t_eddy,linear,,
 effective_T,linear,,
 Teff,linear,,
-log_Teff,log,,
+log_Teff,log,Effective Temperature,K
 photosphere_black_body_T,linear,,
 photosphere_cell_T,linear,,
 photosphere_cell_log_T,log,,
