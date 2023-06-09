@@ -50,7 +50,7 @@ file_manager = {
 			// merge new files into existing files
 			file_manager.files = file_manager.files.concat(new_files);
 
-			// order files appropriately (histories, then profiels, then other junk)
+			// order files appropriately (histories, then profiles, then other junk)
 			file_manager.files.sort((d1, d2) => {
 				if (d1.type == 'history' && d2.type != 'history') {
 					return -1;
@@ -375,7 +375,7 @@ vis = {
 			type: 'linear',
 			min: undefined,
 			max: undefined,
-			color: 'DodgerBlue',
+			color: d3.schemeCategory10[0],
 		},
 		yOther: {
 			generic_html: 'other <var>y</var>',
@@ -386,7 +386,7 @@ vis = {
 			type: 'linear',
 			min: undefined,
 			max: undefined,
-			color: 'GoldenRod',
+			color: d3.schemeCategory10[1],
 		},
 	},
 	// minimum and maximum data coordinates to display on plot
@@ -659,20 +659,26 @@ vis = {
 		if (vis.axes.x.data_name) {
 			vis.svg
 				.append('g')
-				.call(d3.axisBottom(vis.axes.x.scale))
-				.attr('transform', `translate(0,${vis.min_display('y') + vis.data_padding})`);
+				.call(d3.axisBottom(vis.axes.x.scale).tickSizeInner(3))
+				.attr('transform', `translate(0,${vis.min_display('y') + vis.data_padding})`)
+				.selectAll('text')
+				.attr('font-size', 14);
 		}
 		if (vis.axes.y.data_name) {
 			vis.svg
 				.append('g')
-				.call(d3.axisLeft(vis.axes.y.scale))
-				.attr('transform', `translate(${vis.tick_padding.y},0)`);
+				.call(d3.axisLeft(vis.axes.y.scale).tickSizeInner(3))
+				.attr('transform', `translate(${vis.tick_padding.y},0)`)
+				.selectAll('text')
+				.attr('font-size', 14);
 		}
 		if (vis.axes.yOther.data_name) {
 			vis.svg
 				.append('g')
-				.call(d3.axisRight(vis.axes.yOther.scale))
-				.attr('transform', `translate(${vis.max_display('x') + vis.data_padding},0)`);
+				.call(d3.axisRight(vis.axes.yOther.scale).tickSizeInner(3))
+				.attr('transform', `translate(${vis.max_display('x') + vis.data_padding},0)`)
+				.selectAll('text')
+				.attr('font-size', 14);
 		}
 
 		// add or update axis labels
