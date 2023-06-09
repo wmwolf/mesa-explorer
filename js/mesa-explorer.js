@@ -106,6 +106,8 @@ file_manager = {
 				.attr('class', 'ms-2')
 				.text(f => f.name);
 
+			d3.select('#file-prompt').classed('d-none', true);
+
 			// Auto-select the first file if none are selected
 			if (!file_manager.active_file) {
 				d3.select('#file-list > a').dispatch('click');
@@ -434,7 +436,7 @@ vis = {
 	// Stylistic choices; how much padding there is from the outside of the plot
 	// area to the axis lines (tick_padding) and from the axis lines to the data
 	// (data_padding)
-	tick_padding: { x: 40, y: 60 },
+	tick_padding: { x: 50, y: 70 },
 	data_padding: 20,
 	// pixel coordinates for left/bottom of data
 	min_display: axis => {
@@ -692,7 +694,7 @@ vis = {
 		if (vis.axes.x.data_name) {
 			vis.svg
 				.append('text')
-				.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 5})`)
+				.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 10})`)
 				.attr('dominant-baseline', 'bottom')
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-x-label')
