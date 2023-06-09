@@ -80,6 +80,33 @@
 									</div>
 								</div>
 							</div>
+							<div class="row" id="yOther-data">
+								<div class="col-sm-4 col-md-12">
+									<h3>Other <var>y</var>-axis</h3>
+								</div>
+								<div class="col-sm-8 col-md-6 mb-2">
+									<div class="dropdown">
+										<button id="yOther-label" class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select other <var>y</var> quantity</button>
+
+										<div class="dropdown-menu" id="y-choices">
+											<form>
+												<div class="form-floating mb-2 mx-2">
+													<input class="form-control" type="text" id="yOther-search" placeholder="Search" />
+													<label for="yOther-search">Search</label>
+												</div>
+											</form>
+											<hr class="dropdown-divider" />
+											<div id="yOther-choices"></div>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-6 mb-2">
+									<div class="form-floating">
+										<input type="text" class="form-control axis-label-field" id="yOther-axis-label" placeholder="Other <var>y</var>-axis label" />
+										<label for="yOther-axis-label">Other <var>y</var>-axis label</label>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div id="x" class="my-4">
@@ -177,7 +204,9 @@
 						</div>
 					</div>
 					<div id="y" class="my-4">
-						<h2>Ordinate <small class="text-muted ">(<var>y</var>-axis)</small></h2>
+						<h2>
+							Ordinate <small class="text-muted ">(Left <var>y</var>-axis)</small>
+						</h2>
 						<div class="border rounded p-3">
 							<div class="row">
 								<div class="col">
@@ -262,6 +291,102 @@
 												<div class="form-floating">
 													<input type="number" class="form-control" id="y-axis-top" data-axis="y" data-lim="max" aria-label="Top limit for y-axis" />
 													<label for="y-axis-top">Top Limit</label>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+					<div id="yOther" class="my-4">
+						<h2>
+							Other Ordinate <small class="text-muted ">(Right <var>y</var>-axis)</small>
+						</h2>
+						<div class="border rounded p-3">
+							<div class="row">
+								<div class="col">
+									<h3>Data Transformations</h3>
+								</div>
+							</div>
+							<form id="yOther-data-controls">
+								<div class="row mb-3">
+									<div class="col-md-6">
+										<fieldset>
+											<div class="form-check mb-2 data-rescale">
+												<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-linear" data-axis="yOther" value="linear" checked />
+												<label class="form-check-label" for="yOther-data-trans-linear"> Linear: <var>y</var> </label>
+											</div>
+											<div class="form-check mb-2 data-rescale">
+												<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-log" data-axis="yOther" value="log" />
+												<label class="form-check-label" for="yOther-data-trans-log">
+													Take log: log<sub>10</sub>(<var>y</var>)
+												</label>
+											</div>
+											<div class="form-check mb-2 data-rescale">
+												<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-logabs" data-axis="yOther" value="logabs" />
+												<label class="form-check-label" for="yOther-data-trans-logabs">
+													Take log of |<var>y</var>|: log<sub>10</sub>(|<var>y</var>|)
+												</label>
+											</div>
+											<div class="form-check mb-2 data-rescale">
+												<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-exp" data-axis="yOther" value="exp" />
+												<label class="form-check-label" for="yOther-data-trans-exp">
+													Exponentiate: 10<sup><var>y</var></sup>
+												</label>
+											</div>
+										</fieldset>
+									</div>
+									<div class="col-md-6">
+										<div class="form-floating mb-2 data-rezero">
+											<input type="number" class="form-control" id="yOther-data-zero" aria-label="Zero point for other y-data." value="0" data-axis="yOther" />
+											<label for="yOther-data-zero">Zero-point</label>
+										</div>
+										<div class="form-check mb-2 data-absval">
+											<input class="form-check-input" type="checkbox" value="" id="yOther-absval" data-axis="yOther" />
+											<label class="form-check-label" for="yOther-absval">
+												Absolute Value
+											</label>
+										</div>
+										<div class="form-check mb-2 data-normalize">
+											<input class="form-check-input" type="checkbox" value="" id="yOther-normalize" data-axis="yOther" />
+											<label class="form-check-label" for="yOther-normalize">
+												Normalize
+											</label>
+										</div>
+									</div>
+								</div>
+							</form>
+							<form id="yOther-axis-controls">
+								<div class="row">
+									<div class="col-md-4 axis-rescale">
+										<h3>Axis Scale</h3>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="yOther-scale" id="yOther-scale-linear" data-scale="yOther" data-scale-type="linear" checked />
+											<label class="form-check-label" for="yOther-scale-linear">
+												Linear
+											</label>
+										</div>
+										<div class="form-check">
+											<input class="form-check-input" type="radio" name="yOther-scale" id="yOther-scale-log" data-scale="yOther" data-scale-type="log" />
+											<label class="form-check-label" for="yOther-scale-log">
+												Logarithmic
+											</label>
+										</div>
+									</div>
+									<div class="col-md-8 limits">
+										<h3>Axis Limits</h3>
+										<div class="row">
+											<div class="col">
+												<div class="form-floating">
+													<input type="number" class="form-control" id="yOther-axis-bottom" data-axis="yOther" data-lim="min" aria-label="Bottom limit for y-axis" />
+													<label for="y-axis-bottom">Bottom Limit</label>
+												</div>
+											</div>
+											<div class="col">
+												<div class="form-floating">
+													<input type="number" class="form-control" id="yOther-axis-top" data-axis="yOther" data-lim="max" aria-label="Top limit for y-axis" />
+													<label for="yOther-axis-top">Top Limit</label>
 												</div>
 											</div>
 										</div>

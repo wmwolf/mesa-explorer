@@ -205,148 +205,77 @@ vis = {
 		// load known history and profile columns
 		vis.load_known_columns();
 		// Set up handlers for dropdown search
-		// Clicking on dropdown button should focus on the search field
-		d3.select('#x-label').on('click', function() {
-			d3.select('#x-search')
-				.node()
-				.focus();
-			// if search is already active, make sure it is active (fixes issue
-			// arising when we switch between compatible files
-			vis.apply_search('x');
-		});
-		d3.select('#y-label').on('click', function() {
-			d3.select('#y-search')
-				.node()
-				.focus();
-			vis.apply_search('y');
-		});
-		d3.select('#x-search').on('keyup', function(e) {
-			// ignore arrow keys; those control the active element via keydown
-			if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') return;
-			vis.apply_search('x');
-		});
-		d3.select('#y-search').on('keyup', function(e) {
-			// ignore arrow keys; those control the active element via keydown
-			if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') return;
-			vis.apply_search('y');
-		});
-
-		d3.select('#x-search').on('keydown', function(e) {
-			if (e.code === 'ArrowDown') {
-				e.preventDefault();
-				// if we push "down", we should highlight the next result, if it
-				// exists. ChatGPT helped with this solution, as it's difficult to
-				// get the next non-hidden sibling (it may not be an immediate sibling)
-				let active = d3.select('#x-choices').select('a.active');
-				let next = null;
-				// If there's nothing active yet, then we'll just highlight the first
-				// non-hidden element
-				if (active.empty()) {
-					d3.select('#x-choices')
-						.select('a:not(.d-none)')
-						.classed('active', true);
-					return;
-				}
-				active = active.node();
-				let sibling = active.nextElementSibling;
-				while (sibling) {
-					if (!sibling.classList.contains('d-none')) {
-						next = d3.select(sibling);
-						break;
+		Object.keys(vis.axes).forEach(axis => {
+			// Clicking on dropdown button should focus on the search field
+			d3.select(`#${axis}-label`).on('click', function() {
+				d3.select(`#${axis}-search`)
+					.node()
+					.focus();
+				vis.apply_search(axis);
+			});
+			d3.select(`#${axis}-search`).on('keyup', function(e) {
+				// ignore arrow keys; those control the active element via keydown
+				if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') return;
+				vis.apply_search(axis);
+			});
+			d3.select(`#${axis}-search`).on('keydown', function(e) {
+				if (e.code === 'ArrowDown') {
+					e.preventDefault();
+					// if we push "down", we should highlight the next result, if it
+					// exists. ChatGPT helped with this solution, as it's difficult to
+					// get the next non-hidden sibling (it may not be an immediate sibling)
+					let active = d3.select(`#${axis}-choices`).select('a.active');
+					let next = null;
+					// If there's nothing active yet, then we'll just highlight the first
+					// non-hidden element
+					if (active.empty()) {
+						d3.select(`#${axis}-choices`)
+							.select('a:not(.d-none)')
+							.classed('active', true);
+						return;
 					}
-					sibling = sibling.nextElementSibling;
-				}
-				if (next) {
-					d3.select(active).classed('active', false);
-					next.classed('active', true);
-				}
-			} else if (e.code === 'ArrowUp') {
-				e.preventDefault();
-				// if we push "up", we should highlight the previous result, if it
-				// exists. Finding that node is surprisingly hard since there is no
-				// "previous sibling" feature in CSS. ChatGPT to the rescue with this
-				// convoluted solution.
-				let prev = null;
-				let active = d3.select('#x-choices').select('a.active');
-				if (active.empty()) return;
-				active = active.node();
-				let sibling = active.previousElementSibling;
-				while (sibling) {
-					if (!sibling.classList.contains('d-none')) {
-						prev = sibling;
-						break;
+					active = active.node();
+					let sibling = active.nextElementSibling;
+					while (sibling) {
+						if (!sibling.classList.contains('d-none')) {
+							next = d3.select(sibling);
+							break;
+						}
+						sibling = sibling.nextElementSibling;
 					}
-					sibling = sibling.previousElementSibling;
-				}
-				// now prev should be the first a before the current active tag, or it
-				// null if there is no such anchor tag
-				if (prev) {
-					d3.select(active).classed('active', false);
-					d3.select(prev).classed('active', true);
-				}
-			} else if (e.code === 'Enter') {
-				// simulate click event on the active element if user hits enter
-				d3.select('#x-choices a.active').dispatch('click');
-			}
-		});
-
-		d3.select('#y-search').on('keydown', function(e) {
-			if (e.code === 'ArrowDown') {
-				e.preventDefault();
-				// if we push "down", we should highlight the next result, if it
-				// exists. ChatGPT helped with this solution, as it's difficult to
-				// get the next non-hidden sibling (it may not be an immediate sibling)
-				let active = d3.select('#y-choices').select('a.active');
-				let next = null;
-				// If there's nothing active yet, then we'll just highlight the first
-				// non-hidden element
-				if (active.empty()) {
-					d3.select('#y-choices')
-						.select('a:not(.d-none)')
-						.classed('active', true);
-					return;
-				}
-				active = active.node();
-				let sibling = active.nextElementSibling;
-				while (sibling) {
-					if (!sibling.classList.contains('d-none')) {
-						next = d3.select(sibling);
-						break;
+					if (next) {
+						d3.select(active).classed('active', false);
+						next.classed('active', true);
 					}
-					sibling = sibling.nextElementSibling;
-				}
-				if (next) {
-					d3.select(active).classed('active', false);
-					next.classed('active', true);
-				}
-			} else if (e.code === 'ArrowUp') {
-				e.preventDefault();
-				// if we push "up", we should highlight the previous result, if it
-				// exists. Finding that node is surprisingly hard since there is no
-				// "previous sibling" feature in CSS. ChatGPT to the rescue with this
-				// convoluted solution.
-				let prev = null;
-				let active = d3.select('#y-choices').select('a.active');
-				if (active.empty()) return;
-				active = active.node();
-				let sibling = active.previousElementSibling;
-				while (sibling) {
-					if (!sibling.classList.contains('d-none')) {
-						prev = sibling;
-						break;
+				} else if (e.code === 'ArrowUp') {
+					e.preventDefault();
+					// if we push "up", we should highlight the previous result, if it
+					// exists. Finding that node is surprisingly hard since there is no
+					// "previous sibling" feature in CSS. ChatGPT to the rescue with this
+					// convoluted solution.
+					let prev = null;
+					let active = d3.select(`#${axis}-choices`).select('a.active');
+					if (active.empty()) return;
+					active = active.node();
+					let sibling = active.previousElementSibling;
+					while (sibling) {
+						if (!sibling.classList.contains('d-none')) {
+							prev = sibling;
+							break;
+						}
+						sibling = sibling.previousElementSibling;
 					}
-					sibling = sibling.previousElementSibling;
+					// now prev should be the first a before the current active tag, or it
+					// null if there is no such anchor tag
+					if (prev) {
+						d3.select(active).classed('active', false);
+						d3.select(prev).classed('active', true);
+					}
+				} else if (e.code === 'Enter') {
+					// simulate click event on the active element if user hits enter
+					d3.select(`#${axis}-choices a.active`).dispatch('click');
 				}
-				// now prev should be the first a before the current active tag, or it
-				// null if there is no such anchor tag
-				if (prev) {
-					d3.select(active).classed('active', false);
-					d3.select(prev).classed('active', true);
-				}
-			} else if (e.code === 'Enter') {
-				// simulate click event on the active element if user hits enter
-				d3.select('#y-choices a.active').dispatch('click');
-			}
+			});
 		});
 
 		// Set up handlers for data transformations
@@ -380,11 +309,12 @@ vis = {
 		d3.selectAll('div.axis-rescale input').on('click', function() {
 			btn = d3.select(this);
 			if (btn.property('checked')) {
-				if (btn.attr('data-scale') == 'x') {
-					vis.axes.x.type = btn.attr('data-scale-type');
-				} else if (btn.attr('data-scale') == 'y') {
-					vis.axes.y.type = btn.attr('data-scale-type');
-				}
+				vis.axes[btn.attr('data-scale')].type = btn.attr('data-scale-type');
+				// if (btn.attr('data-scale') == 'x') {
+				// 	vis.axes.x.type = btn.attr('data-scale-type');
+				// } else if (btn.attr('data-scale') == 'y') {
+				// 	vis.axes.y.type = btn.attr('data-scale-type');
+				// }
 				vis.update_plot();
 			}
 		});
@@ -426,6 +356,7 @@ vis = {
 	width: () => parseFloat(vis.svg.style('width')),
 	axes: {
 		x: {
+			generic_html: '<var>x</var>',
 			data_name: undefined,
 			data_type: 'linear',
 			data_trans: { rescale: 'linear', rezero: 0, absval: false },
@@ -433,8 +364,10 @@ vis = {
 			type: 'linear',
 			min: undefined,
 			max: undefined,
+			color: 'Black',
 		},
 		y: {
+			generic_html: '<var>y</var>',
 			data_name: undefined,
 			data_type: 'linear',
 			data_trans: { rescale: 'linear', rezero: 0, absval: false },
@@ -442,16 +375,28 @@ vis = {
 			type: 'linear',
 			min: undefined,
 			max: undefined,
+			color: 'DodgerBlue',
+		},
+		yOther: {
+			generic_html: 'other <var>y</var>',
+			data_name: undefined,
+			data_type: 'linear',
+			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			scale: undefined,
+			type: 'linear',
+			min: undefined,
+			max: undefined,
+			color: 'GoldenRod',
 		},
 	},
-
-	// TODO: refactor this (and probably other functions) to allow flipping the
-	// axis. Right now this aggressively fixes the minimum. Need to do similar for y-axis.
+	// minimum and maximum data coordinates to display on plot
 	min_data: axis => vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis)),
 	max_data: axis => vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis)),
+
+	// Placeholders for known column names (useful for forcing quantities to be
+	// interpreted as logarithmic
 	known_history_names: {},
 	known_profile_names: {},
-	data_type: { x: 'linear', y: 'linear' },
 	// functions that generates accessor functions based on the desired data
 	// transformation properties. Order of transformations should be thought
 	// through more thoroughly. *MUST* be a function that returns a function
@@ -486,12 +431,19 @@ vis = {
 		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
 		return d => do_abs(rezero(rescale(d)));
 	},
+	// Stylistic choices; how much padding there is from the outside of the plot
+	// area to the axis lines (tick_padding) and from the axis lines to the data
+	// (data_padding)
 	tick_padding: { x: 40, y: 60 },
 	data_padding: 20,
 	// pixel coordinates for left/bottom of data
 	min_display: axis => {
 		if (axis == 'x') {
-			return vis.tick_padding.y + vis.data_padding;
+			if (vis.axes.y.data_name) {
+				return vis.tick_padding.y + vis.data_padding;
+			} else {
+				return vis.data_padding;
+			}
 		} else {
 			return vis.height() - vis.tick_padding.x - vis.data_padding;
 		}
@@ -499,7 +451,11 @@ vis = {
 	// pixel coordinates for right/top of data
 	max_display: axis => {
 		if (axis == 'x') {
-			return vis.width() - vis.data_padding;
+			if (vis.axes.yOther.data_name) {
+				return vis.width() - (vis.tick_padding.y + vis.data_padding);
+			} else {
+				return vis.width() - vis.data_padding;
+			}
 		} else {
 			return vis.data_padding;
 		}
@@ -511,19 +467,28 @@ vis = {
 		// are no longer present in this file
 		vis.pause = true;
 		const names = vis.file.data.bulk_names.map(elt => elt.key);
-		const axes = ['x', 'y'];
 		let refresh_plot = true;
-		axes.forEach(axis => {
+		Object.keys(vis.axes).forEach(axis => {
 			if (!names.includes(vis.axes[axis].data_name)) {
 				// this file doesn't have the same columns; reset the plot, axis
 				// labels, axis/data settings, and search field
 				vis.axes[axis].data_name = undefined;
-				d3.select(`#${axis}-label`).html(`Select <var>${axis}</var> quantity `);
+				d3.select(`#${axis}-label`).html(`Select ${vis.axes[axis].generic_html} quantity`);
 				d3.select(`#${axis}-axis-label`).property('value', '');
 				d3.select(`#${axis}-search`).property('value', '');
 				d3.select(`#${axis}-choices`)
 					.selectAll('a')
 					.classed('d-none', false);
+				// Reset axis limits
+				if (axis == 'x') {
+					d3.select(`#x-axis-left`).property('value', '');
+					d3.select(`#x-axis-right`).property('value', '');
+				} else {
+					d3.select(`#${axis}-axis-bottom`).property('value', '');
+					d3.select(`#${axis}-axis-top`).property('value', '');
+				}
+				vis.axes[axis].min = undefined;
+				vis.axes[axis].max = undefined;
 				refresh_plot = false;
 			}
 			vis.pause = false;
@@ -552,7 +517,7 @@ vis = {
 		});
 
 		// Refresh interface to reflect new data
-		axes.forEach(axis => vis.update_choices(axis));
+		Object.keys(vis.axes).forEach(axis => vis.update_choices(axis));
 		vis.update_plot();
 	},
 	// helper function for grabbing the relevant "known" column name data
@@ -637,18 +602,18 @@ vis = {
 	},
 	make_scale: axis => {
 		// set up right scaling
-		if (vis.axes[axis].type == 'log') {
-			vis.axes[axis].scale = d3.scaleLog();
-		} else {
-			vis.axes[axis].scale = d3.scaleLinear();
+		if (vis.axes[axis].data_name) {
+			if (vis.axes[axis].type == 'log') {
+				vis.axes[axis].scale = d3.scaleLog();
+			} else {
+				vis.axes[axis].scale = d3.scaleLinear();
+			}
+			// now set domain and range using helper functions
+			vis.axes[axis].scale.domain([vis.min_data(axis), vis.max_data(axis)]).range([vis.min_display(axis), vis.max_display(axis)]);
 		}
-		// console.log(`Created ${axis} axis`);
-		// now set domain and range using helper functions
-		vis.axes[axis].scale.domain([vis.min_data(axis), vis.max_data(axis)]).range([vis.min_display(axis), vis.max_display(axis)]);
-		// console.log(`Calibrated ${axis} axis with domain of ${[vis.min_data(axis), vis.max_data(axis)]} and a range of ${}`);
 	},
 	make_scales: () => {
-		['x', 'y'].forEach(axis => vis.make_scale(axis));
+		Object.keys(vis.axes).forEach(axis => vis.make_scale(axis));
 	},
 	make_clipPath: () => {
 		vis.svg
@@ -658,9 +623,9 @@ vis = {
 			.attr('width', vis.max_display('x') - vis.min_display('x') + 2)
 			.attr('height', Math.abs(vis.max_display('y') - vis.min_display('y')) + 2)
 			.attr('fill', 'blue')
-			.attr('transform', `translate(${vis.data_padding - 1 + vis.tick_padding.y},${vis.data_padding - 1})`);
+			.attr('transform', `translate(${vis.min_display('x') - 1},${vis.data_padding - 1})`);
 	},
-	plot_data_scatter: () => {
+	plot_data_scatter: yAxis => {
 		vis.svg
 			.selectAll('circle')
 			.data(vis.data)
@@ -668,38 +633,47 @@ vis = {
 			.append('circle')
 			.attr('r', 2)
 			.attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
-			.attr('cy', d => vis.axes.y.scale(vis.accessor('y')(d)))
-			.attr('fill', 'DodgerBlue');
+			.attr('cy', d => vis.axes[yAxis].scale(vis.accessor('y')(d)))
+			.attr('fill', vis.axes[yAxis].color);
 	},
-	plot_data_line: () => {
-		const x = vis.accessor('x');
-		const y = vis.accessor('y');
-		const line_maker = d3
-			.line()
-			// .defined(d => {
-			//   return x(d) >= vis.min_data('x') && x(d) <= vis.max_data('x') && y(d) >= vis.min_data('y') && y(d) <= vis.max_data('y');
-			// })
-			.x(d => vis.axes.x.scale(x(d)))
-			.y(d => vis.axes.y.scale(y(d)));
-		vis.svg
-			.append('g')
-			.append('path')
-			.attr('fill', 'none')
-			.attr('d', line_maker(vis.data))
-			.attr('stroke', 'DodgerBlue')
-			.attr('stroke-width', '2.0')
-			.attr('clip-path', 'url(#clip)');
+	plot_data_line: yAxis => {
+		if (vis.axes[yAxis].data_name) {
+			const x = vis.accessor('x');
+			const y = vis.accessor(yAxis);
+			const line_maker = d3
+				.line()
+				.x(d => vis.axes.x.scale(x(d)))
+				.y(d => vis.axes[yAxis].scale(y(d)));
+			vis.svg
+				.append('g')
+				.append('path')
+				.attr('fill', 'none')
+				.attr('d', line_maker(vis.data))
+				.attr('stroke', vis.axes[yAxis].color)
+				.attr('stroke-width', '2.0')
+				.attr('clip-path', 'url(#clip)');
+		}
 	},
 	add_axes: () => {
 		// axes themselves (spines, ticks, tick labels)
-		vis.svg
-			.append('g')
-			.call(d3.axisBottom(vis.axes.x.scale))
-			.attr('transform', `translate(0,${vis.min_display('y') + vis.data_padding})`);
-		vis.svg
-			.append('g')
-			.call(d3.axisLeft(vis.axes.y.scale))
-			.attr('transform', `translate(${vis.tick_padding.y},0)`);
+		if (vis.axes.x.data_name) {
+			vis.svg
+				.append('g')
+				.call(d3.axisBottom(vis.axes.x.scale))
+				.attr('transform', `translate(0,${vis.min_display('y') + vis.data_padding})`);
+		}
+		if (vis.axes.y.data_name) {
+			vis.svg
+				.append('g')
+				.call(d3.axisLeft(vis.axes.y.scale))
+				.attr('transform', `translate(${vis.tick_padding.y},0)`);
+		}
+		if (vis.axes.yOther.data_name) {
+			vis.svg
+				.append('g')
+				.call(d3.axisRight(vis.axes.yOther.scale))
+				.attr('transform', `translate(${vis.max_display('x') + vis.data_padding},0)`);
+		}
 
 		// add or update axis labels
 		if (vis.have_axis_labels) {
@@ -709,20 +683,36 @@ vis = {
 		}
 	},
 	add_axis_labels: () => {
-		vis.svg
-			.append('text')
-			.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 5})`)
-			.attr('dominant-baseline', 'bottom')
-			.attr('text-anchor', 'middle')
-			.attr('id', 'svg-x-label')
-			.text(d3.select('#x-axis-label').property('value'));
-		vis.svg
-			.append('text')
-			.attr('transform', `translate(5, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`)
-			.attr('dominant-baseline', 'hanging')
-			.attr('text-anchor', 'middle')
-			.attr('id', 'svg-y-label')
-			.text(d3.select('#y-axis-label').property('value'));
+		if (vis.axes.x.data_name) {
+			vis.svg
+				.append('text')
+				.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 5})`)
+				.attr('dominant-baseline', 'bottom')
+				.attr('text-anchor', 'middle')
+				.attr('id', 'svg-x-label')
+				.attr('fill', vis.axes.x.color)
+				.text(d3.select('#x-axis-label').property('value'));
+		}
+		if (vis.axes.y.data_name) {
+			vis.svg
+				.append('text')
+				.attr('transform', `translate(5, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`)
+				.attr('dominant-baseline', 'hanging')
+				.attr('text-anchor', 'middle')
+				.attr('id', 'svg-y-label')
+				.attr('fill', vis.axes.y.color)
+				.text(d3.select('#y-axis-label').property('value'));
+		}
+		if (vis.axes.yOther.data_name) {
+			vis.svg
+				.append('text')
+				.attr('transform', `translate(${vis.width() - 5}, ${vis.max_display('yOther') + 0.5 * (vis.min_display('yOther') - vis.max_display('yOther'))}) rotate(90)`)
+				.attr('dominant-baseline', 'hanging')
+				.attr('text-anchor', 'middle')
+				.attr('id', 'svg-yOther-label')
+				.attr('fill', vis.axes.yOther.color)
+				.text(d3.select('#yOther-axis-label').property('value'));
+		}
 		// Set up handlers for axis label fields (should this live here?)
 		d3.selectAll('.axis-label-field').on('keyup', () => {
 			vis.update_axis_labels();
@@ -734,6 +724,7 @@ vis = {
 	update_axis_labels: () => {
 		d3.select('#svg-x-label').text(d3.select('#x-axis-label').property('value'));
 		d3.select('#svg-y-label').text(d3.select('#y-axis-label').property('value'));
+		d3.select('#svg-yOther-label').text(d3.select('#yOther-axis-label').property('value'));
 	},
 	clear_plot: () => {
 		vis.svg.selectAll('*').remove();
@@ -744,10 +735,14 @@ vis = {
 			return;
 		}
 		vis.clear_plot();
-		if (vis.file && vis.axes.y.data_name && vis.axes.x.data_name) {
+		if (vis.file && vis.axes.x.data_name) {
 			vis.make_scales();
 			vis.make_clipPath();
-			vis.plot_data_line();
+			['y', 'yOther'].forEach(yAxis => {
+				if (vis.axes[yAxis].data_name) {
+					vis.plot_data_line(yAxis);
+				}
+			});
 			// vis.plot_data_scatter();
 			vis.add_axes();
 		}
