@@ -199,9 +199,16 @@ file_manager = {
 vis = {
 	setup: () => {
 		vis.svg = d3.select('#plot');
+		// Note: setting style changes how things are displayed. Changing the
+		// attribute will ensure that any downloaded figure will have the correct
+		// height and width.
 		vis.svg.style('height', vis.width() / 1.618);
+		vis.svg.attr('height', vis.svg.style('height'));
+		vis.svg.attr('width', vis.svg.style('width'));
 		window.onresize = function() {
 			vis.svg.style('height', vis.width() / 1.618);
+			vis.svg.attr('height', vis.avg.style('height'));
+			vis.svg.attr('width', vis.svg.style('width'));
 			vis.update_plot();
 		};
 		// load known history and profile columns
@@ -320,11 +327,17 @@ vis = {
 				vis.update_plot();
 			}
 		});
+
 		//  "min" (left/bottom) and "max" (right/top) limits
 		d3.selectAll('div.limits input').on('keyup', function() {
 			elt = d3.select(this);
 			vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
 			vis.update_plot();
+		});
+
+		// Set download button handler
+		d3.select('#download').on('click', () => {
+			downloadSVG('plot');
 		});
 	},
 	apply_search: axis => {
@@ -699,6 +712,8 @@ vis = {
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-x-label')
 				.attr('fill', vis.axes.x.color)
+				.attr('font-family', 'sans-serif')
+				.attr('font-size', 14)
 				.text(d3.select('#x-axis-label').property('value'));
 		}
 		if (vis.axes.y.data_name) {
@@ -709,6 +724,8 @@ vis = {
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-y-label')
 				.attr('fill', vis.axes.y.color)
+				.attr('font-family', 'sans-serif')
+				.attr('font-size', 14)
 				.text(d3.select('#y-axis-label').property('value'));
 		}
 		if (vis.axes.yOther.data_name) {
@@ -719,6 +736,8 @@ vis = {
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-yOther-label')
 				.attr('fill', vis.axes.yOther.color)
+				.attr('font-family', 'sans-serif')
+				.attr('font-size', 14)
 				.text(d3.select('#yOther-axis-label').property('value'));
 		}
 		// Set up handlers for axis label fields (should this live here?)
@@ -756,6 +775,138 @@ vis = {
 		}
 	},
 };
+
+// Downloads an SVG on the webpage, accessed by its class name
+// @param {String} svgClassName -- name of the SVG class (e.g. "amazingSVG")
+function downloadSVG(svgIDName) {
+	var doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+
+	window.URL = window.URL || window.webkitURL;
+
+	var body = document.body;
+
+	var prefix = {
+		xmlns: 'http://www.w3.org/2000/xmlns/',
+		xlink: 'http://www.w3.org/1999/xlink',
+		svg: 'http://www.w3.org/2000/svg',
+	};
+
+	initialize();
+
+	function initialize() {
+		var documents = [window.document],
+			SVGSources = [];
+		(iframes = document.querySelectorAll('iframe')), (objects = document.querySelectorAll('object'));
+
+		[].forEach.call(iframes, function(el) {
+			try {
+				if (el.contentDocument) {
+					documents.push(el.contentDocument);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		});
+
+		[].forEach.call(objects, function(el) {
+			try {
+				if (el.contentDocument) {
+					documents.push(el.contentDocument);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		});
+
+		documents.forEach(function(doc) {
+			var newSources = getSources(doc);
+			// because of prototype on NYT pages
+			for (var i = 0; i < newSources.length; i++) {
+				SVGSources.push(newSources[i]);
+			}
+		});
+		if (SVGSources.length > 1) {
+			console.log('too many options!');
+		} else if (SVGSources.length > 0) {
+			download(SVGSources[0]);
+		} else {
+			alert('The Crowbar couldnâ€™t find any SVG nodes.');
+		}
+	}
+
+	function cleanup() {
+		var crowbarElements = document.querySelectorAll('.svg-crowbar');
+
+		[].forEach.call(crowbarElements, function(el) {
+			el.parentNode.removeChild(el);
+		});
+	}
+
+	function getSources(doc) {
+		var svgInfo = [],
+			svg = doc.querySelector('#' + svgIDName);
+
+		svg.setAttribute('version', '1.1');
+
+		var defsEl = document.createElement('defs');
+		svg.insertBefore(defsEl, svg.firstChild); //TODO   .insert("defs", ":first-child")
+		// defsEl.setAttribute("class", "svg-crowbar");
+
+		// removing attributes so they aren't doubled up
+		svg.removeAttribute('xmlns');
+		svg.removeAttribute('xlink');
+
+		// These are needed for the svg
+		if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns')) {
+			svg.setAttributeNS(prefix.xmlns, 'xmlns', prefix.svg);
+		}
+
+		if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns:xlink')) {
+			svg.setAttributeNS(prefix.xmlns, 'xmlns:xlink', prefix.xlink);
+		}
+
+		var source = new XMLSerializer().serializeToString(svg);
+		var rect = svg.getBoundingClientRect();
+		svgInfo.push({
+			top: rect.top,
+			left: rect.left,
+			width: vis.width(),
+			height: vis.height(),
+			class: svg.getAttribute('class'),
+			id: svg.getAttribute('id'),
+			childElementCount: svg.childElementCount,
+			source: [doctype + source],
+		});
+
+		return svgInfo;
+	}
+
+	function download(source) {
+		var filename = 'untitled';
+
+		if (source.id) {
+			filename = source.id;
+		} else if (source.class) {
+			filename = source.class;
+		} else if (window.document.title) {
+			filename = window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+		}
+
+		var url = window.URL.createObjectURL(new Blob(source.source, { type: 'text/xml' }));
+
+		var a = document.createElement('a');
+		body.appendChild(a);
+		a.setAttribute('class', 'svg-crowbar');
+		a.setAttribute('download', filename + '.svg');
+		a.setAttribute('href', url);
+		a.style['display'] = 'none';
+		a.click();
+
+		setTimeout(function() {
+			window.URL.revokeObjectURL(url);
+		}, 10);
+	}
+}
 
 setup = () => {
 	// shut off form submission upon enter key
