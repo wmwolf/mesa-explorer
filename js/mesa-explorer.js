@@ -202,14 +202,16 @@ vis = {
 		// Note: setting style changes how things are displayed. Changing the
 		// attribute will ensure that any downloaded figure will have the correct
 		// height and width.
-		vis.svg.style('height', vis.width() / 1.618);
 		vis.svg.attr('height', vis.svg.style('height'));
-		vis.svg.attr('width', vis.svg.style('width'));
+		vis.svg.attr('width', vis.width());
+		vis.saved_bootstrap_size = vis.current_bootstrap_size();
 		window.onresize = function() {
-			vis.svg.style('height', vis.width() / 1.618);
-			vis.svg.attr('height', vis.avg.style('height'));
-			vis.svg.attr('width', vis.svg.style('width'));
-			vis.update_plot();
+			if (vis.current_bootstrap_size() != vis.saved_bootstrap_size) {
+				vis.svg.attr('height', vis.svg.style('height'));
+				vis.svg.attr('width', vis.width());
+				vis.saved_bootstrap_size = vis.current_bootstrap_size();
+				vis.update_plot();
+			}
 		};
 		// load known history and profile columns
 		vis.load_known_columns();
@@ -334,11 +336,28 @@ vis = {
 			vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
 			vis.update_plot();
 		});
-
+		
+		d3.select("#redraw").on('click', () => {
+			vis.update_plot();
+		});
 		// Set download button handler
 		d3.select('#download').on('click', () => {
 			downloadSVG('plot');
 		});
+	},
+	breakpoints: {
+		'sm': 576,
+		'md': 768,
+		'lg': 992,
+		'xl': 1200,
+		'xxl': 1400
+	},
+	current_bootstrap_size: () => {
+		const smaller =  Object.keys(vis.breakpoints).filter( key => 
+			+window.innerWidth >= vis.breakpoints[key]
+		)
+		if (smaller.length == 0) return 'xs';
+		else return smaller[smaller.length - 1];
 	},
 	apply_search: axis => {
 		let query = d3.select(`#${axis}-search`).property('value');
@@ -369,6 +388,16 @@ vis = {
 	pause: false,
 	height: () => parseFloat(vis.svg.style('height')),
 	width: () => parseFloat(vis.svg.style('width')),
+	font_size: () => {
+		if (vis.width() < 500) return 11;
+		else if (vis.width() < 700) return 14;
+		else return 16
+	},
+	tick_offset: () => {
+		if (vis.width() < 500) return 0;
+		else if (vis.width() < 700) return 1;
+		else return 3
+	},
 	axes: {
 		x: {
 			generic_html: '<var>x</var>',
@@ -671,13 +700,14 @@ vis = {
 	},
 	add_axes: () => {
 		// axes themselves (spines, ticks, tick labels)
-		if (vis.axes.x.data_name) {
+		if (vis.axes.x.data_name) {	
 			vis.svg
 				.append('g')
 				.call(d3.axisBottom(vis.axes.x.scale).tickSizeInner(3))
 				.attr('transform', `translate(0,${vis.min_display('y') + vis.data_padding})`)
 				.selectAll('text')
-				.attr('font-size', 14);
+				.attr('font-size', vis.font_size())
+				.attr("transform", `translate(0, ${vis.tick_offset()})`);;
 		}
 		if (vis.axes.y.data_name) {
 			vis.svg
@@ -685,7 +715,8 @@ vis = {
 				.call(d3.axisLeft(vis.axes.y.scale).tickSizeInner(3))
 				.attr('transform', `translate(${vis.tick_padding.y},0)`)
 				.selectAll('text')
-				.attr('font-size', 14);
+				.attr('font-size', vis.font_size())
+				.attr("transform", `translate(-${vis.tick_offset()}, 0)`);;
 		}
 		if (vis.axes.yOther.data_name) {
 			vis.svg
@@ -693,7 +724,8 @@ vis = {
 				.call(d3.axisRight(vis.axes.yOther.scale).tickSizeInner(3))
 				.attr('transform', `translate(${vis.max_display('x') + vis.data_padding},0)`)
 				.selectAll('text')
-				.attr('font-size', 14);
+				.attr('font-size', vis.font_size())
+				.attr("transform", `translate(${vis.tick_offset()}, 0)`);
 		}
 
 		// add or update axis labels
@@ -713,7 +745,7 @@ vis = {
 				.attr('id', 'svg-x-label')
 				.attr('fill', vis.axes.x.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', 14)
+				.attr('font-size', vis.font_size())
 				.text(d3.select('#x-axis-label').property('value'));
 		}
 		if (vis.axes.y.data_name) {
@@ -725,7 +757,7 @@ vis = {
 				.attr('id', 'svg-y-label')
 				.attr('fill', vis.axes.y.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', 14)
+				.attr('font-size', vis.font_size())
 				.text(d3.select('#y-axis-label').property('value'));
 		}
 		if (vis.axes.yOther.data_name) {
@@ -737,7 +769,7 @@ vis = {
 				.attr('id', 'svg-yOther-label')
 				.attr('fill', vis.axes.yOther.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', 14)
+				.attr('font-size', vis.font_size())
 				.text(d3.select('#yOther-axis-label').property('value'));
 		}
 		// Set up handlers for axis label fields (should this live here?)

@@ -11,7 +11,7 @@
 	<body onload="setup()">
 		<div class="container-md">
 			<div class="row">
-				<div class="col-4">
+				<div class="col-sm-4">
 					<h1>Files</h1>
 					<div class="my-2">
 						<label for="mesa-input" class="form-label" onchange="file_manager.load_file(this)">Input File (history or profile)</label>
@@ -26,14 +26,15 @@
 					</div>
 					<div class="list-group" id="file-list"></div>
 				</div>
-				<div class="col-8">
+				<div class="col-sm-8">
 					<h1>Visualization</h1>
-					<div class="p2 rounded border border-2">
-						<svg id="plot" width="100%" class="my-2"></svg>
+					<div class="p2 rounded border border-2 ratio object-fit-contain" style="--bs-aspect-ratio: 61.8%;">
+						<svg id="plot" class="object-fit-contain my-2" width="100%" height="100%"></svg>
 					</div>
 
 					<div class="text-center mt-4">
-						<button class="btn btn-success btn-lg" role="button" type="button" id="download">Download Plot</button>
+						<button class="btn btn-secondary btn-lg" type="button" id="redraw">Redraw</button>
+						<button class="btn btn-success btn-lg" type="button" id="download">Download SVG</button>
 					</div>
 
 					<div id="basics" class="my-4">
