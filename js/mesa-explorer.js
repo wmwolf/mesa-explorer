@@ -35,7 +35,7 @@ file_manager = {
 				let type = 'unknown';
 				if (file.name[0] == 'h') {
 					type = 'history';
-				} else if (file.name[0] == 'p') {
+				} else if (file.name.slice(0, 7) == 'profile' && file.name.slice(file.name.length-5, file.name.length) != 'index') {
 					type = 'profile';
 				}
 				let file_obj = {
@@ -84,7 +84,10 @@ file_manager = {
 				.enter()
 				.append('a')
 				.attr('class', f => {
-					if (file_manager.active_file == f) {
+					if (f.type == 'unknown') {
+						// console.log(`disabling ${file.name}`);
+						return 'list-group-item list-group-item-warning disabled'
+					} else if (file_manager.active_file == f) {
 						return 'list-group-item list-group-item-action active';
 					} else {
 						return 'list-group-item list-group-item-action';
@@ -94,8 +97,8 @@ file_manager = {
 				// this one, and then sets the active files and phones over to the
 				// visualization side to pick up the new data
 				.on('click', function() {
-					d3.selectAll('#file-list a').attr('class', 'list-group-item list-group-item-action');
-					d3.select(this).attr('class', 'list-group-item list-group-item-action active');
+					d3.selectAll('#file-list a').classed('active', false);
+					d3.select(this).classed('active', true);
 					file_manager.active_file = d3.select(this).datum();
 					vis.register_new_file();
 				});
@@ -118,19 +121,23 @@ file_manager = {
 	// existing (and provided) file object and returns it
 	load_file: async function(file, file_obj) {
 		return new Promise((resolve, reject) => {
-			let fileReader = new FileReader();
-			fileReader.readAsText(file);
-			fileReader.onerror = () => {
-				reject(fileReader.error);
-			};
-			// handles data once the file reader has finished loading the data
-			fileReader.onload = () => {
-				const contents = fileReader.result;
-				if (file_obj.type != 'unkonwn') {
-					file_obj.data = file_manager.process_data(contents);
-				}
-				resolve(file_obj);
-			};
+			if (file_obj.type == 'unknown') {
+				resolve(file_obj)
+			} else {
+				let fileReader = new FileReader();
+				fileReader.readAsText(file);
+				fileReader.onerror = () => {
+					reject(fileReader.error);
+				};
+				// handles data once the file reader has finished loading the data
+				fileReader.onload = () => {
+					const contents = fileReader.result;
+					if (file_obj.type != 'unkonwn') {
+						file_obj.data = file_manager.process_data(contents);
+					}
+					resolve(file_obj);
+				};
+			}
 		});
 	},
 	process_data: file_contents => {
@@ -206,7 +213,7 @@ vis = {
 		vis.svg.attr('width', vis.width());
 		vis.saved_bootstrap_size = vis.current_bootstrap_size();
 		window.onresize = function() {
-			if (vis.current_bootstrap_size() != vis.saved_bootstrap_size) {
+			if (vis.current_bootstrap_size() != vis.saved_bootstrap_size || vis.current_bootstrap_size() == 'xs') {
 				vis.svg.attr('height', vis.svg.style('height'));
 				vis.svg.attr('width', vis.width());
 				vis.saved_bootstrap_size = vis.current_bootstrap_size();
@@ -388,15 +395,18 @@ vis = {
 	pause: false,
 	height: () => parseFloat(vis.svg.style('height')),
 	width: () => parseFloat(vis.svg.style('width')),
-	font_size: () => {
-		if (vis.width() < 500) return 11;
-		else if (vis.width() < 700) return 14;
-		else return 16
+	font_size: {
+		'xs': 11,
+		'sm': 10,
+		'md': 14,
+		'lg': 14,
+		'xl': 16,
+		'xxl': 18,
 	},
 	tick_offset: () => {
-		if (vis.width() < 500) return 0;
-		else if (vis.width() < 700) return 1;
-		else return 3
+		if (vis.width() < 500) return 12;
+		else if (vis.width() < 700) return 12;
+		else return 12
 	},
 	axes: {
 		x: {
@@ -434,8 +444,38 @@ vis = {
 		},
 	},
 	// minimum and maximum data coordinates to display on plot
-	min_data: axis => vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis)),
-	max_data: axis => vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis)),
+	// TODO: make automatic margins work with logarithmic data/axes
+	// also add some padding to make sure tick labels don't get clipped
+	width_data: axis => {
+		const max = vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis));
+		const min = vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis));
+		return max - min;
+	},
+	width_log_data: axis => {
+		const max = vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis));
+		const min = vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis));
+		return safe_log(max) - safe_log(min);
+	},
+	min_data: axis => {
+		if (vis.axes[axis].min) {
+			return vis.axes[axis].min
+		} else if (vis.axes[axis].type == 'log') {
+			const log_min = safe_log(d3.min(vis.data, vis.accessor(axis)));
+			return Math.pow(10, log_min - 0.05 * vis.width_log_data(axis));
+		} else {
+			return d3.min(vis.data, vis.accessor(axis)) - 0.05 * vis.width_data(axis);
+		}
+	},
+	max_data: axis => {
+		if (vis.axes[axis].max) {
+			return vis.axes[axis].max
+		} else if (vis.axes[axis].type == 'log') {
+			const log_max = safe_log(d3.max(vis.data, vis.accessor(axis)));
+			return Math.pow(10, log_max + 0.05 * vis.width_log_data(axis));
+		} else {
+			return d3.max(vis.data, vis.accessor(axis)) + 0.05 * vis.width_data(axis);
+		}
+	},
 
 	// Placeholders for known column names (useful for forcing quantities to be
 	// interpreted as logarithmic
@@ -476,32 +516,47 @@ vis = {
 		return d => do_abs(rezero(rescale(d)));
 	},
 	// Stylistic choices; how much padding there is from the outside of the plot
-	// area to the axis lines (tick_padding) and from the axis lines to the data
-	// (data_padding)
-	tick_padding: { x: 50, y: 70 },
-	data_padding: 20,
+	// area to the axis lines. This depends on the width of the window
+	tick_padding: { 
+		x: {
+			'xs': 40,
+			'sm': 35,
+			'md': 40,
+			'lg': 40,
+			'xl': 50,
+			'xxl': 60
+		},
+		y: {
+			'xs': 60,
+			'sm': 50,
+			'md': 60,
+			'lg': 60,
+			'xl': 70,
+			'xxl': 90
+		}
+	},
 	// pixel coordinates for left/bottom of data
 	min_display: axis => {
 		if (axis == 'x') {
 			if (vis.axes.y.data_name) {
-				return vis.tick_padding.y + vis.data_padding;
+				return vis.tick_padding.y[vis.saved_bootstrap_size];
 			} else {
-				return vis.data_padding;
+				return 10
 			}
 		} else {
-			return vis.height() - vis.tick_padding.x - vis.data_padding;
+			return vis.height() - vis.tick_padding.x[vis.saved_bootstrap_size];
 		}
 	},
 	// pixel coordinates for right/top of data
 	max_display: axis => {
 		if (axis == 'x') {
 			if (vis.axes.yOther.data_name) {
-				return vis.width() - (vis.tick_padding.y + vis.data_padding);
+				return vis.width() - (vis.tick_padding.y[vis.saved_bootstrap_size]);
 			} else {
-				return vis.width() - vis.data_padding;
+				return vis.width() - 10;
 			}
 		} else {
-			return vis.data_padding;
+			return 10;
 		}
 	},
 	register_new_file: () => {
@@ -664,10 +719,10 @@ vis = {
 			.append('clipPath')
 			.attr('id', 'clip') // <-- we need to use the ID of clipPath
 			.append('rect')
-			.attr('width', vis.max_display('x') - vis.min_display('x') + 2)
-			.attr('height', Math.abs(vis.max_display('y') - vis.min_display('y')) + 2)
+			.attr('width', vis.max_display('x') - vis.min_display('x'))
+			.attr('height', Math.abs(vis.max_display('y') - vis.min_display('y')))
 			.attr('fill', 'blue')
-			.attr('transform', `translate(${vis.min_display('x') - 1},${vis.data_padding - 1})`);
+			.attr('transform', `translate(${vis.min_display('x')},${vis.max_display('y')})`);
 	},
 	plot_data_scatter: yAxis => {
 		vis.svg
@@ -703,28 +758,44 @@ vis = {
 		if (vis.axes.x.data_name) {	
 			vis.svg
 				.append('g')
-				.call(d3.axisBottom(vis.axes.x.scale).tickSizeInner(3))
-				.attr('transform', `translate(0,${vis.min_display('y') + vis.data_padding})`)
+				.call(d3.axisTop(vis.axes.x.scale).tickSizeOuter(0))
+				.attr('transform', `translate(0,${vis.min_display('y')})`)
 				.selectAll('text')
-				.attr('font-size', vis.font_size())
-				.attr("transform", `translate(0, ${vis.tick_offset()})`);;
+				.attr('text-anchor', 'top')
+				.attr('dominant-baseline', 'hanging')
+				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr("transform", `translate(0, ${vis.tick_offset()})`);
+			vis.svg
+				.append('g')
+				.call(d3.axisBottom(vis.axes.x.scale).tickSizeOuter(0))
+				.attr('transform', `translate(0,${vis.max_display('y')})`)
+				.selectAll('text').remove();				
 		}
 		if (vis.axes.y.data_name) {
 			vis.svg
 				.append('g')
-				.call(d3.axisLeft(vis.axes.y.scale).tickSizeInner(3))
-				.attr('transform', `translate(${vis.tick_padding.y},0)`)
+				.call(d3.axisRight(vis.axes.y.scale).tickSizeOuter(0))
+				.attr('transform', `translate(${vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
-				.attr('font-size', vis.font_size())
+				.attr('text-anchor', 'end')
+				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.attr("transform", `translate(-${vis.tick_offset()}, 0)`);;
+			if (vis.axes.yOther.data_name === undefined) {
+				vis.svg
+					.append('g')
+					.call(d3.axisLeft(vis.axes.y.scale).tickSizeOuter(0))
+					.attr('transform', `translate(${vis.width() - 10},0)`)
+					.selectAll('text').remove();
+			}
 		}
 		if (vis.axes.yOther.data_name) {
 			vis.svg
 				.append('g')
-				.call(d3.axisRight(vis.axes.yOther.scale).tickSizeInner(3))
-				.attr('transform', `translate(${vis.max_display('x') + vis.data_padding},0)`)
+				.call(d3.axisLeft(vis.axes.yOther.scale).tickSizeOuter(0))
+				.attr('transform', `translate(${vis.max_display('x')},0)`)
 				.selectAll('text')
-				.attr('font-size', vis.font_size())
+				.attr('text-anchor', 'start')
+				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.attr("transform", `translate(${vis.tick_offset()}, 0)`);
 		}
 
@@ -745,7 +816,7 @@ vis = {
 				.attr('id', 'svg-x-label')
 				.attr('fill', vis.axes.x.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.font_size())
+				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.text(d3.select('#x-axis-label').property('value'));
 		}
 		if (vis.axes.y.data_name) {
@@ -757,7 +828,7 @@ vis = {
 				.attr('id', 'svg-y-label')
 				.attr('fill', vis.axes.y.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.font_size())
+				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.text(d3.select('#y-axis-label').property('value'));
 		}
 		if (vis.axes.yOther.data_name) {
@@ -769,7 +840,7 @@ vis = {
 				.attr('id', 'svg-yOther-label')
 				.attr('fill', vis.axes.yOther.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.font_size())
+				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.text(d3.select('#yOther-axis-label').property('value'));
 		}
 		// Set up handlers for axis label fields (should this live here?)
