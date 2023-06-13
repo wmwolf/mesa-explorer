@@ -32,15 +32,15 @@ file_manager = {
 		// grab all file data, but do not impact DOM
 		Promise.all(
 			[...input.files].map(file => {
-				let type = 'unknown';
-				if (file.name[0] == 'h') {
-					type = 'history';
-				} else if (file.name.slice(0, 7) == 'profile' && file.name.slice(file.name.length-5, file.name.length) != 'index') {
-					type = 'profile';
-				}
+				// let type = 'unknown';
+				// if (file.name[0] == 'h') {
+				// type = 'history';
+				// } else if (file.name.slice(0, 7) == 'profile' && file.name.slice(file.name.length - 5, file.name.length) != 'index') {
+				// type = 'profile';
+				// }
 				let file_obj = {
 					name: file.name,
-					type: type,
+					// type: type,
 				};
 				return file_manager.load_file(file, file_obj);
 			})
@@ -50,23 +50,26 @@ file_manager = {
 			// merge new files into existing files
 			file_manager.files = file_manager.files.concat(new_files);
 
-			// order files appropriately (histories, then profiles, then other junk)
+			// order files appropriately (histories, then profiles, then gyre, and
+			// then other junk)
 			file_manager.files.sort((d1, d2) => {
 				if (d1.type == 'history' && d2.type != 'history') {
 					return -1;
 				} else if (d1.type != 'history' && d2.type == 'history') {
 					return 1;
+				} else if (d1.type == 'profile' && d2.type != 'profile') {
+					return -1;
+				} else if (d1.type != 'profile' && d2.type == 'profile') {
+					return 1;
 				} else if (d1.type == 'profile' && d2.type == 'profile') {
 					// sort profiles by increasing *model* number, not profile number
 					return parseInt(d1.data.header.model_number) - parseInt(d2.data.header.model_number);
-				} else if (d1.type == 'profile' && !['history', 'profile'].includes(d2.type)) {
-					// This and the next should make sure that profiles come before randos
+				} else if (d1.type == 'gyre' && d2.type != 'gyre') {
 					return -1;
-				} else if (!['history', 'profile'].includes(d1.type) && d2.type == 'profile') {
+				} else if (d1.type != 'gyre' && d2.type == 'gyre') {
 					return 1;
 				} else {
-					// multiple histories or multiple other files can have arbitrary order
-					return 0;
+					return d1.name < d2.name ? -1 : 1;
 				}
 			});
 
@@ -85,8 +88,7 @@ file_manager = {
 				.append('a')
 				.attr('class', f => {
 					if (f.type == 'unknown') {
-						// console.log(`disabling ${file.name}`);
-						return 'list-group-item list-group-item-warning disabled'
+						return 'list-group-item list-group-item-warning disabled';
 					} else if (file_manager.active_file == f) {
 						return 'list-group-item list-group-item-action active';
 					} else {
@@ -117,40 +119,55 @@ file_manager = {
 			}
 		});
 	},
+	// determine file type from contents rather than just name
+	get_file_type: lines => {
+		// read file contents into an array
+		if (lines.length < 7) {
+			return 'unknown';
+		} else {
+			const column_nums = lines[4].trim().split(/\s+/);
+			const columns = lines[5].trim().split(/\s+/);
+			if (lines[0].trim() === '') {
+				if (column_nums[0] === '1' && column_nums[1] === '2') {
+					return 'gyre';
+				} else return 'unknown';
+			} else {
+				if (columns.includes('model_number')) {
+					return 'history';
+				} else if (columns.includes('zone')) {
+					return 'profile';
+				} else return 'unknown';
+			}
+		}
+		return unknown;
+	},
 	// function called when a new file is to be handled. Loads all data into an
 	// existing (and provided) file object and returns it
 	load_file: async function(file, file_obj) {
 		return new Promise((resolve, reject) => {
-			if (file_obj.type == 'unknown') {
-				resolve(file_obj)
-			} else {
-				let fileReader = new FileReader();
-				fileReader.readAsText(file);
-				fileReader.onerror = () => {
-					reject(fileReader.error);
-				};
-				// handles data once the file reader has finished loading the data
-				fileReader.onload = () => {
-					const contents = fileReader.result;
-					if (file_obj.type != 'unkonwn') {
-						file_obj.data = file_manager.process_data(contents);
-					}
-					resolve(file_obj);
-				};
-			}
+			let fileReader = new FileReader();
+			fileReader.readAsText(file);
+			fileReader.onerror = () => {
+				reject(fileReader.error);
+			};
+			// handles data once the file reader has finished loading the data
+			fileReader.onload = () => {
+				const lines = fileReader.result.replace(/\s+$/, '').split('\n');
+				file_obj.type = file_manager.get_file_type(lines);
+				if (file_obj.type != 'unknown') {
+					file_obj.data = file_manager.process_data(lines);
+				}
+				resolve(file_obj);
+			};
 		});
 	},
-	process_data: file_contents => {
+	process_data: lines => {
 		const headerNamesLine = 1;
 		const headerValsLine = 2;
 		const bulkNamesLine = 5;
 		const bulkValsStart = bulkNamesLine + 1;
 		let headerData = {};
 		let bulkData = [];
-
-		// read file contents into an array
-		contents = file_contents.trim();
-		lines = contents.trim().split('\n');
 
 		// extract header data
 		lines[headerNamesLine]
@@ -198,6 +215,8 @@ file_manager = {
 			icon_class = 'bi bi-clock-fill';
 		} else if (file.type == 'profile') {
 			icon_class = 'bi bi-star-half';
+		} else if (file.type == 'gyre') {
+			icon_class = 'bi bi-broadcast';
 		}
 		return icon_class;
 	},
@@ -295,6 +314,26 @@ vis = {
 				}
 			});
 		});
+		// Set up handlers for line/scatter controls
+		d3.selectAll('input.plot-style').on('change', function() {
+			const elt = d3.select(this);
+			const axis = elt.attr('data-axis');
+			const style = elt.attr('data-style');
+			if (style == 'line') {
+				vis.do_line_plot[axis] = elt.property('checked');
+			} else if (style == 'scatter') {
+				vis.do_scatter_plot[axis] = elt.property('checked');
+				d3.select(`input.mark-every[data-axis=${axis}]`).property('disabled', !elt.property('checked'));
+			}
+			vis.update_plot();
+		});
+
+		d3.selectAll('input.mark-every').on('keyup', function() {
+			const elt = d3.select(this);
+			const axis = elt.attr('data-axis');
+			vis.marker_interval[axis] = Math.max(1, parseInt(elt.property('value')));
+			vis.update_plot();
+		});
 
 		// Set up handlers for data transformations
 		//   Data rescaling
@@ -343,8 +382,8 @@ vis = {
 			vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
 			vis.update_plot();
 		});
-		
-		d3.select("#redraw").on('click', () => {
+
+		d3.select('#redraw').on('click', () => {
 			vis.update_plot();
 		});
 		// Set download button handler
@@ -353,16 +392,26 @@ vis = {
 		});
 	},
 	breakpoints: {
-		'sm': 576,
-		'md': 768,
-		'lg': 992,
-		'xl': 1200,
-		'xxl': 1400
+		sm: 576,
+		md: 768,
+		lg: 992,
+		xl: 1200,
+		xxl: 1400,
+	},
+	do_line_plot: {
+		y: true,
+		yOther: true,
+	},
+	do_scatter_plot: {
+		y: false,
+		yOther: false,
+	},
+	marker_interval: {
+		y: 1,
+		yOther: 1,
 	},
 	current_bootstrap_size: () => {
-		const smaller =  Object.keys(vis.breakpoints).filter( key => 
-			+window.innerWidth >= vis.breakpoints[key]
-		)
+		const smaller = Object.keys(vis.breakpoints).filter(key => +window.innerWidth >= vis.breakpoints[key]);
 		if (smaller.length == 0) return 'xs';
 		else return smaller[smaller.length - 1];
 	},
@@ -396,17 +445,17 @@ vis = {
 	height: () => parseFloat(vis.svg.style('height')),
 	width: () => parseFloat(vis.svg.style('width')),
 	font_size: {
-		'xs': 11,
-		'sm': 10,
-		'md': 14,
-		'lg': 14,
-		'xl': 16,
-		'xxl': 18,
+		xs: 11,
+		sm: 10,
+		md: 14,
+		lg: 14,
+		xl: 16,
+		xxl: 18,
 	},
 	tick_offset: () => {
 		if (vis.width() < 500) return 12;
 		else if (vis.width() < 700) return 12;
-		else return 12
+		else return 12;
 	},
 	axes: {
 		x: {
@@ -458,7 +507,7 @@ vis = {
 	},
 	min_data: axis => {
 		if (vis.axes[axis].min) {
-			return vis.axes[axis].min
+			return vis.axes[axis].min;
 		} else if (vis.axes[axis].type == 'log') {
 			const log_min = safe_log(d3.min(vis.data, vis.accessor(axis)));
 			return Math.pow(10, log_min - 0.05 * vis.width_log_data(axis));
@@ -468,7 +517,7 @@ vis = {
 	},
 	max_data: axis => {
 		if (vis.axes[axis].max) {
-			return vis.axes[axis].max
+			return vis.axes[axis].max;
 		} else if (vis.axes[axis].type == 'log') {
 			const log_max = safe_log(d3.max(vis.data, vis.accessor(axis)));
 			return Math.pow(10, log_max + 0.05 * vis.width_log_data(axis));
@@ -517,23 +566,23 @@ vis = {
 	},
 	// Stylistic choices; how much padding there is from the outside of the plot
 	// area to the axis lines. This depends on the width of the window
-	tick_padding: { 
+	tick_padding: {
 		x: {
-			'xs': 40,
-			'sm': 35,
-			'md': 40,
-			'lg': 40,
-			'xl': 50,
-			'xxl': 60
+			xs: 40,
+			sm: 35,
+			md: 40,
+			lg: 40,
+			xl: 50,
+			xxl: 60,
 		},
 		y: {
-			'xs': 60,
-			'sm': 50,
-			'md': 60,
-			'lg': 60,
-			'xl': 70,
-			'xxl': 90
-		}
+			xs: 60,
+			sm: 50,
+			md: 60,
+			lg: 60,
+			xl: 70,
+			xxl: 90,
+		},
 	},
 	// pixel coordinates for left/bottom of data
 	min_display: axis => {
@@ -541,7 +590,7 @@ vis = {
 			if (vis.axes.y.data_name) {
 				return vis.tick_padding.y[vis.saved_bootstrap_size];
 			} else {
-				return 10
+				return 10;
 			}
 		} else {
 			return vis.height() - vis.tick_padding.x[vis.saved_bootstrap_size];
@@ -551,7 +600,7 @@ vis = {
 	max_display: axis => {
 		if (axis == 'x') {
 			if (vis.axes.yOther.data_name) {
-				return vis.width() - (vis.tick_padding.y[vis.saved_bootstrap_size]);
+				return vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size];
 			} else {
 				return vis.width() - 10;
 			}
@@ -625,7 +674,7 @@ vis = {
 			return vis.known_history_names;
 		} else if (vis.file.type == 'profile') {
 			return vis.known_profile_names;
-		}
+		} else return [];
 	},
 	// Update  column selector dropdown menu
 	update_choices: axis => {
@@ -726,14 +775,16 @@ vis = {
 	},
 	plot_data_scatter: yAxis => {
 		vis.svg
-			.selectAll('circle')
+			.selectAll(`circle.${yAxis}`)
 			.data(vis.data)
 			.enter()
 			.append('circle')
+			.classed(yAxis, true)
 			.attr('r', 2)
 			.attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
-			.attr('cy', d => vis.axes[yAxis].scale(vis.accessor('y')(d)))
-			.attr('fill', vis.axes[yAxis].color);
+			.attr('cy', d => vis.axes[yAxis].scale(vis.accessor(yAxis)(d)))
+			.attr('fill', vis.axes[yAxis].color)
+			.style('visibility', (d, i) => (i % vis.marker_interval[yAxis] == 0 ? 'visible' : 'hidden'));
 	},
 	plot_data_line: yAxis => {
 		if (vis.axes[yAxis].data_name) {
@@ -755,7 +806,7 @@ vis = {
 	},
 	add_axes: () => {
 		// axes themselves (spines, ticks, tick labels)
-		if (vis.axes.x.data_name) {	
+		if (vis.axes.x.data_name) {
 			vis.svg
 				.append('g')
 				.call(d3.axisTop(vis.axes.x.scale).tickSizeOuter(0))
@@ -764,12 +815,13 @@ vis = {
 				.attr('text-anchor', 'top')
 				.attr('dominant-baseline', 'hanging')
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
-				.attr("transform", `translate(0, ${vis.tick_offset()})`);
+				.attr('transform', `translate(0, ${vis.tick_offset()})`);
 			vis.svg
 				.append('g')
 				.call(d3.axisBottom(vis.axes.x.scale).tickSizeOuter(0))
 				.attr('transform', `translate(0,${vis.max_display('y')})`)
-				.selectAll('text').remove();				
+				.selectAll('text')
+				.remove();
 		}
 		if (vis.axes.y.data_name) {
 			vis.svg
@@ -779,13 +831,14 @@ vis = {
 				.selectAll('text')
 				.attr('text-anchor', 'end')
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
-				.attr("transform", `translate(-${vis.tick_offset()}, 0)`);;
+				.attr('transform', `translate(-${vis.tick_offset()}, 0)`);
 			if (vis.axes.yOther.data_name === undefined) {
 				vis.svg
 					.append('g')
 					.call(d3.axisLeft(vis.axes.y.scale).tickSizeOuter(0))
 					.attr('transform', `translate(${vis.width() - 10},0)`)
-					.selectAll('text').remove();
+					.selectAll('text')
+					.remove();
 			}
 		}
 		if (vis.axes.yOther.data_name) {
@@ -796,7 +849,7 @@ vis = {
 				.selectAll('text')
 				.attr('text-anchor', 'start')
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
-				.attr("transform", `translate(${vis.tick_offset()}, 0)`);
+				.attr('transform', `translate(${vis.tick_offset()}, 0)`);
 		}
 
 		// add or update axis labels
@@ -870,10 +923,11 @@ vis = {
 			vis.make_clipPath();
 			['y', 'yOther'].forEach(yAxis => {
 				if (vis.axes[yAxis].data_name) {
-					vis.plot_data_line(yAxis);
+					if (vis.do_line_plot[yAxis]) vis.plot_data_line(yAxis);
+					if (vis.do_scatter_plot[yAxis]) vis.plot_data_scatter(yAxis);
 				}
 			});
-			// vis.plot_data_scatter();
+
 			vis.add_axes();
 		}
 	},
