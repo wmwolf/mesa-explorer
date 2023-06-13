@@ -388,7 +388,24 @@ vis = {
 		});
 		// Set download button handler
 		d3.select('#download').on('click', () => {
+			// if in dark mode, need to tweak xaxis label color before exporting to
+			// svg. Kind of kludgy, but it works for now.
+
+			// get current x-axis color, conditionally change and redraw if needed
+			let dark_mode = false;
+			let x_color = vis.axes.x.color;
+			if (x_color != 'Black') {
+				dark_mode = true;
+				vis.axes.x.color = 'Black';
+				vis.update_plot();
+			}
 			downloadSVG('plot');
+
+			// restore x-axis color if needed
+			if (dark_mode) {
+				vis.axes.x.color = x_color;
+				vis.update_plot();
+			}
 		});
 	},
 	breakpoints: {
@@ -711,7 +728,8 @@ vis = {
 				// }
 				return res;
 			})
-			.on('click', function() {
+			.on('click', function(event) {
+				event.preventDefault();
 				// set the column name and column scale in the data
 				let option = d3.select(this);
 				let active_old = d3.select(`${axis}-choices`).selectAll('.active');
@@ -745,7 +763,6 @@ vis = {
 				}
 				vis.pause = false;
 				vis.update_plot();
-				window.scrollTo(0, 0);
 			});
 	},
 	make_scale: axis => {
@@ -815,7 +832,7 @@ vis = {
 				.attr('text-anchor', 'top')
 				.attr('dominant-baseline', 'hanging')
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
-				.attr('transform', `translate(0, ${vis.tick_offset()})`);
+				.attr('transform', `translate(0, ${vis.tick_offset() + 2})`);
 			vis.svg
 				.append('g')
 				.call(d3.axisBottom(vis.axes.x.scale).tickSizeOuter(0))
@@ -861,14 +878,14 @@ vis = {
 	},
 	add_axis_labels: () => {
 		if (vis.axes.x.data_name) {
-			vis.svg
+			const label = vis.svg
 				.append('text')
 				.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 10})`)
 				.attr('dominant-baseline', 'bottom')
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-x-label')
-				.attr('fill', vis.axes.x.color)
 				.attr('font-family', 'sans-serif')
+				.attr('fill', vis.axes.x.color)
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.text(d3.select('#x-axis-label').property('value'));
 		}
@@ -1080,6 +1097,40 @@ setup = () => {
 		},
 		true
 	);
+
+	// Activate dark mode / light mode toggler
+	d3.select('#dark-mode').on('click', function() {
+		d3.select('html').attr('data-bs-theme', 'dark');
+		d3.select('#theme-picker')
+			.select('i')
+			.classed('bi-sun', false)
+			.classed('bi-moon', true);
+		d3.select('#theme-picker')
+			.select('span')
+			.text('Dark');
+		vis.axes.x.color = 'rgb(170,176,183)';
+		vis.update_plot();
+		localStorage.setItem('colortheme', 'dark');
+	});
+	d3.select('#light-mode').on('click', function() {
+		d3.select('html').attr('data-bs-theme', 'light');
+		d3.select('#theme-picker')
+			.select('i')
+			.classed('bi-sun', true)
+			.classed('bi-moon', false);
+		d3.select('#theme-picker')
+			.select('span')
+			.text('Light');
+		vis.axes.x.color = 'Black';
+		vis.update_plot();
+		localStorage.setItem('colortheme', 'light');
+	});
+
+	// Select dark mode if in localStorage
+	if (localStorage.getItem('colortheme') == 'dark') {
+		d3.select('#dark-mode').dispatch('click');
+	}
+
 	file_manager.setup();
 	vis.setup();
 };
