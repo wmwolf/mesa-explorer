@@ -343,10 +343,12 @@ vis = {
 			vis.update_plot();
 		});
 		//   Rezeroing
-		d3.selectAll('.data-rezero input').on('keyup', function() {
+		d3.selectAll('.data-rezero input').on('keyup', function(event) {
+			event.preventDefault();
 			elt = d3.select(this);
 			vis.axes[elt.attr('data-axis')].data_trans.rezero = parseFloat(elt.property('value'));
 			vis.update_plot();
+			return false;
 		});
 		//   Absolute Value
 		d3.selectAll('.data-absval input').on('click', function() {
@@ -711,7 +713,7 @@ vis = {
 			.append('a')
 			.attr('class', 'dropdown-item')
 			.attr('data-name', d => d.key)
-			.attr('href', '#')
+			.attr('href', 'javascript: void(0)')
 			.html(d => {
 				let res = `<samp>${d.key}</samp>`;
 				// Used to do fancy stuff with interpreting name and styling it. Lots
@@ -732,7 +734,6 @@ vis = {
 				event.preventDefault();
 				// set the column name and column scale in the data
 				let option = d3.select(this);
-				let active_old = d3.select(`${axis}-choices`).selectAll('.active');
 				d3.select(`#${axis}-choices`)
 					.selectAll('.active')
 					.classed('active', false);
@@ -763,6 +764,7 @@ vis = {
 				}
 				vis.pause = false;
 				vis.update_plot();
+				return false;
 			});
 	},
 	make_scale: axis => {
