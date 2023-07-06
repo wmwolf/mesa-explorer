@@ -1103,6 +1103,7 @@ setup = () => {
 	// Activate dark mode / light mode toggler
 	d3.select('#dark-mode').on('click', function() {
 		d3.select('html').attr('data-bs-theme', 'dark');
+		d3.select('a.navbar-brand').select('svg').selectAll('path').attr('fill', 'white');
 		d3.select('#theme-picker')
 			.select('i')
 			.classed('bi-sun', false)
@@ -1116,6 +1117,7 @@ setup = () => {
 	});
 	d3.select('#light-mode').on('click', function() {
 		d3.select('html').attr('data-bs-theme', 'light');
+		d3.select('a.navbar-brand').select('svg').selectAll('path').attr('fill', 'black');
 		d3.select('#theme-picker')
 			.select('i')
 			.classed('bi-sun', true)
