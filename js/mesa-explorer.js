@@ -350,6 +350,14 @@ vis = {
 			vis.update_plot();
 			return false;
 		});
+		//   Modulo
+		d3.selectAll('.data-modulo input').on('keyup', function(event) {
+			event.preventDefault();
+			elt = d3.select(this);
+			vis.axes[elt.attr('data-axis')].data_trans.divisor = parseFloat(elt.property('value'));
+			vis.update_plot();
+			return false;
+		});
 		//   Absolute Value
 		d3.selectAll('.data-absval input').on('click', function() {
 			elt = d3.select(this);
@@ -481,7 +489,7 @@ vis = {
 			generic_html: '<var>x</var>',
 			data_name: undefined,
 			data_type: 'linear',
-			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			data_trans: { rescale: 'linear', rezero: 0, divisor: 0,  absval: false },
 			scale: undefined,
 			type: 'linear',
 			min: undefined,
@@ -492,7 +500,7 @@ vis = {
 			generic_html: '<var>y</var>',
 			data_name: undefined,
 			data_type: 'linear',
-			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			data_trans: { rescale: 'linear', rezero: 0, divisor: 0,  absval: false },
 			scale: undefined,
 			type: 'linear',
 			min: undefined,
@@ -503,7 +511,7 @@ vis = {
 			generic_html: 'other <var>y</var>',
 			data_name: undefined,
 			data_type: 'linear',
-			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			data_trans: { rescale: 'linear', rezero: 0, divisor: 0,  absval: false },
 			scale: undefined,
 			type: 'linear',
 			min: undefined,
@@ -566,6 +574,7 @@ vis = {
 	accessor: axis => {
 		let rescale;
 		let rezero;
+		let modulo;
 		let do_abs;
 		rescale = d => {
 			switch (vis.axes[axis].data_trans.rescale) {
@@ -580,8 +589,12 @@ vis = {
 			}
 		};
 		rezero = val => val - vis.axes[axis].data_trans.rezero;
+		modulo = val => val
+		if (vis.axes[axis].data_trans.divisor != 0) {
+			modulo = val => val % vis.axes[axis].data_trans.divisor
+		}
 		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
-		return d => do_abs(rezero(rescale(d)));
+		return d => do_abs(modulo(rezero(rescale(d))));
 	},
 	// Stylistic choices; how much padding there is from the outside of the plot
 	// area to the axis lines. This depends on the width of the window
