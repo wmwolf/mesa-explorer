@@ -414,7 +414,7 @@ vis = {
 			if (x_color != 'Black') {
 				dark_mode = true;
 				vis.axes.x.color = 'Black';
-				vis.update_plot();
+				vis.update_plot(force_light = true);
 			}
 			downloadSVG('plot');
 
@@ -860,7 +860,7 @@ vis = {
 				.attr('clip-path', 'url(#clip)');
 		}
 	},
-	add_axes: () => {
+	add_axes: (force_light = false) => {
 		// axes themselves (spines, ticks, tick labels)
 		if (vis.axes.x.data_name) {
 			vis.svg
@@ -910,12 +910,17 @@ vis = {
 
 		// add or update axis labels
 		if (vis.have_axis_labels) {
-			vis.update_axis_labels();
+			vis.update_axis_labels(force_light);
 		} else {
-			vis.add_axis_labels();
+			vis.add_axis_labels(force_light);
 		}
 	},
-	add_axis_labels: () => {
+	add_axis_labels: (force_light = false) => {
+		if (!force_light && document.documentElement.getAttribute('data-bs-theme') == 'dark') {
+			vis.axes.x.color = 'rgb(223,226,230)';
+		} else {
+			vis.axes.x.color = 'Black';
+		}
 		if (vis.axes.x.data_name) {
 			const label = vis.svg
 				.append('text')
@@ -969,7 +974,7 @@ vis = {
 		vis.svg.selectAll('*').remove();
 		vis.have_axis_labels = false;
 	},
-	update_plot: () => {
+	update_plot: (force_light = false) => {
 		if (vis.pause) {
 			return;
 		}
@@ -984,7 +989,7 @@ vis = {
 				}
 			});
 
-			vis.add_axes();
+			vis.add_axes(force_light);
 		}
 	},
 };
