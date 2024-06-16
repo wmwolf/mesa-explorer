@@ -1098,39 +1098,6 @@ setup = () => {
 		true
 	);
 
-	// Activate dark mode / light mode toggler
-	d3.select('#dark-mode').on('click', function() {
-		d3.select('html').attr('data-bs-theme', 'dark');
-		d3.select('#theme-picker')
-			.select('i')
-			.classed('bi-sun', false)
-			.classed('bi-moon', true);
-		d3.select('#theme-picker')
-			.select('span')
-			.text('Dark');
-		vis.axes.x.color = 'rgb(170,176,183)';
-		vis.update_plot();
-		localStorage.setItem('colortheme', 'dark');
-	});
-	d3.select('#light-mode').on('click', function() {
-		d3.select('html').attr('data-bs-theme', 'light');
-		d3.select('#theme-picker')
-			.select('i')
-			.classed('bi-sun', true)
-			.classed('bi-moon', false);
-		d3.select('#theme-picker')
-			.select('span')
-			.text('Light');
-		vis.axes.x.color = 'Black';
-		vis.update_plot();
-		localStorage.setItem('colortheme', 'light');
-	});
-
-	// Select dark mode if in localStorage
-	if (localStorage.getItem('colortheme') == 'dark') {
-		d3.select('#dark-mode').dispatch('click');
-	}
-
 	file_manager.setup();
 	vis.setup();
 };
