@@ -5,11 +5,11 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>MESA Explorer</title>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous" />
-	</head>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">	</head>
+	<script src="/js/color-modes.js"></script>
 
 	<body onload="setup()">
-		<nav class="navbar navbar-expand-lg border-bottom border-bottom-dark">
+		<nav class="navbar navbar-expand-lg border-bottom border-bottom-dark z-index-3">
 			<div class="container">
 				<a class="navbar-brand" href="#">MESA Explorer</a>
 				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,18 +31,38 @@
 							</ul>
 						</li>
 					</ul>
-					<div class="dropdown">
-						<a class="nav-link dropdown-toggle" id='theme-picker' href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-							<i class="bi bi-sun"></i>
-							<span>Light</span>
-						</a>
-						<ul class="dropdown-menu">
-							<li><a href="#" class="dropdown-item" id='light-mode'><i class="bi bi-sun"></i> Light Mode</a></li>
-							<li><a href="#" class="dropdown-item" id='dark-mode'><i class="bi bi-moon"></i> Dark Mode</a></li>
-						</ul>
-					</div>
-
-
+					<!-- adapted color theme switcher from bootstrap docs/website. Using bootstrap icons instead of svg -->
+					<ul class="navbar-nav ms-auto mb-2 mg-lg-0">
+						<li class="nav-item dropdown dropstart">
+							<button class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" data-bs-display="static" aria-label="Toggle theme (light)">
+							  <i class = "bi theme-icon-active"></i>
+							  <span class="d-lg-none ms-2" id="bd-theme-text">Toggle theme</span>
+							</button>
+							<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme-text">
+							  <li>
+									<button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="light" aria-pressed="true">
+										<i class = "bi bi-sun-fill"></i>
+										<span class='ms-2'>Light</span>
+										<i class="bi bi-check2 d-none"></i>
+									</button>
+							  </li>
+							  <li>
+									<button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+										<i class = "bi bi-moon-stars-fill"></i>	
+										<span class='ms-2'>Dark</span>
+										<i class="bi bi-check2 d-none"></i>
+									</button>
+							  </li>
+							  <li>
+									<button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="auto" aria-pressed="false">
+										<i class="bi bi-circle-half"></i>
+										<span class='ms-2'>Auto</span>
+										<i class="bi ms-auto d-none bi-check2"></i>
+									</button>
+							  </li>
+							</ul>
+						</li>
+					</ul>
 				</div>
 			</div>
 		</nav>
@@ -65,8 +85,8 @@
 				</div>
 				<div class="col-sm-8">
 					<h1>Visualization</h1>
-					<div class="bg-body py-2 rounded border border-2 ratio object-fit-contain sticky-top my-2" style="--bs-aspect-ratio: 61.8%;">
-						<svg id="plot" class="object-fit-contain" width="100%" height="100%"></svg>
+					<div class="bg-body py-2 rounded border border-2 ratio object-fit-contain sticky-top mb-2" style="--bs-aspect-ratio: 61.8%;">
+						<svg id="plot" class="object-fit-contain pt-2" width="100%" height="100%"></svg>
 					</div>
 
 					<div class="text-center mt-4">
@@ -490,6 +510,6 @@
 		<!-- Development -->
 		<script src="/js/mesa-explorer.js"></script>
 		<!-- Production -->
-		<script src="/mesa-explorer/js/mesa-explorer.js"></script>
+		<!-- <script src="/mesa-explorer/js/mesa-explorer.js"></script> -->
 	</body>
 </html>
