@@ -207,6 +207,22 @@ file_manager = {
 			bulkData.push(line_data);
 		});
 
+		// if "model_number" is a column, ensure that the value decreases
+		// monotonically as we go back in time (i.e., from the end of the list to
+		// the beginning). As we encounter lines that violate this condition, we
+		// remove them from the data.
+		if (bulkNames.map(d => d.key).includes('model_number')) {
+			let model_numbers = bulkData.map(d => d.model_number);
+			let last = model_numbers[model_numbers.length - 1];
+			for (let i = model_numbers.length - 2; i >= 0; i--) {
+				if (model_numbers[i] >= last) {
+					bulkData.splice(i, 1);
+				} else {
+					last = model_numbers[i];
+				}
+			}
+		}
+
 		return { header: headerData, bulk: bulkData, bulk_names: bulkNames };
 	},
 	file_icon_class: file => {
@@ -321,7 +337,8 @@ vis = {
 			const style = elt.attr('data-style');
 			if (style == 'line') {
 				vis.do_line_plot[axis] = elt.property('checked');
-			} else if (style == 'scatter') {
+			}
+			if (style == 'scatter') {
 				vis.do_scatter_plot[axis] = elt.property('checked');
 				d3.select(`input.mark-every[data-axis=${axis}]`).property('disabled', !elt.property('checked'));
 			}
@@ -780,6 +797,7 @@ vis = {
 	make_scales: () => {
 		Object.keys(vis.axes).forEach(axis => vis.make_scale(axis));
 	},
+
 	make_clipPath: () => {
 		vis.svg
 			.append('clipPath')
@@ -790,20 +808,41 @@ vis = {
 			.attr('fill', 'blue')
 			.attr('transform', `translate(${vis.min_display('x')},${vis.max_display('y')})`);
 	},
+	reduced_data: yAxis => {
+		const x_min = vis.min_data('x');
+		const x_max = vis.max_data('x');
+		const y_min = vis.min_data(yAxis);
+		const y_max = vis.max_data(yAxis);
+
+		return vis.data.filter((d, i) => {
+			const x = vis.accessor('x')(d);
+			const y = vis.accessor(yAxis)(d);
+			let res = i % vis.marker_interval[yAxis] == 0;
+			res = res && x >= x_min && x <= x_max;
+			res = res && y >= y_min && y <= y_max;
+			return res;
+		});
+	},
 	plot_data_scatter: yAxis => {
-		vis.svg
+		// Use reduced data since there's no point carrying about points
+		// outside the desired region, and they don't get easily clipped
+		// otherwise
+		if (vis.axes[yAxis].data_name) {
+			vis.svg
 			.selectAll(`circle.${yAxis}`)
-			.data(vis.data)
+			.data(vis.reduced_data(yAxis))
 			.enter()
 			.append('circle')
 			.classed(yAxis, true)
 			.attr('r', 2)
 			.attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
 			.attr('cy', d => vis.axes[yAxis].scale(vis.accessor(yAxis)(d)))
-			.attr('fill', vis.axes[yAxis].color)
-			.style('visibility', (d, i) => (i % vis.marker_interval[yAxis] == 0 ? 'visible' : 'hidden'));
+			.attr('fill', vis.axes[yAxis].color);
+		}
 	},
 	plot_data_line: yAxis => {
+		// note: we don't use the clipped data here because points off the plot
+		// area will still be connected by lines. This is a feature, not a bug.
 		if (vis.axes[yAxis].data_name) {
 			const x = vis.accessor('x');
 			const y = vis.accessor(yAxis);
