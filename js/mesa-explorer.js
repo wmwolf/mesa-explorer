@@ -360,10 +360,20 @@ vis = {
 			vis.update_plot();
 		});
 		//   Rezeroing
-		d3.selectAll('.data-rezero input').on('keyup', function() {
+		d3.selectAll('.data-rezero input').on('keyup', function(event) {
+			event.preventDefault();
 			elt = d3.select(this);
 			vis.axes[elt.attr('data-axis')].data_trans.rezero = parseFloat(elt.property('value'));
 			vis.update_plot();
+			return false;
+		});
+		//   Modulo
+		d3.selectAll('.data-modulo input').on('keyup', function(event) {
+			event.preventDefault();
+			elt = d3.select(this);
+			vis.axes[elt.attr('data-axis')].data_trans.divisor = parseFloat(elt.property('value'));
+			vis.update_plot();
+			return false;
 		});
 		//   Absolute Value
 		d3.selectAll('.data-absval input').on('click', function() {
@@ -583,7 +593,7 @@ vis = {
 			generic_html: '<var>x</var>',
 			data_name: undefined,
 			data_type: 'linear',
-			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			data_trans: { rescale: 'linear', rezero: 0, divisor: 0,  absval: false },
 			scale: undefined,
 			type: 'linear',
 			min: undefined,
@@ -594,7 +604,7 @@ vis = {
 			generic_html: '<var>y</var>',
 			data_name: undefined,
 			data_type: 'linear',
-			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			data_trans: { rescale: 'linear', rezero: 0, divisor: 0,  absval: false },
 			scale: undefined,
 			type: 'linear',
 			min: undefined,
@@ -605,7 +615,7 @@ vis = {
 			generic_html: 'other <var>y</var>',
 			data_name: undefined,
 			data_type: 'linear',
-			data_trans: { rescale: 'linear', rezero: 0, absval: false },
+			data_trans: { rescale: 'linear', rezero: 0, divisor: 0,  absval: false },
 			scale: undefined,
 			type: 'linear',
 			min: undefined,
@@ -668,6 +678,7 @@ vis = {
 	accessor: axis => {
 		let rescale;
 		let rezero;
+		let modulo;
 		let do_abs;
 		rescale = d => {
 			switch (vis.axes[axis].data_trans.rescale) {
@@ -682,8 +693,12 @@ vis = {
 			}
 		};
 		rezero = val => val - vis.axes[axis].data_trans.rezero;
+		modulo = val => val
+		if (vis.axes[axis].data_trans.divisor != 0) {
+			modulo = val => val % vis.axes[axis].data_trans.divisor
+		}
 		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
-		return d => do_abs(rezero(rescale(d)));
+		return d => do_abs(modulo(rezero(rescale(d))));
 	},
 	// Inverse accessor function. Given an axis, this generates returns a function
 	// that maps pixel coordinates on that axis back to data coordinates. This is
@@ -822,7 +837,7 @@ vis = {
 			.append('a')
 			.attr('class', 'dropdown-item')
 			.attr('data-name', d => d.key)
-			.attr('href', '#')
+			.attr('href', 'javascript: void(0)')
 			.html(d => {
 				let res = `<samp>${d.key}</samp>`;
 				// Used to do fancy stuff with interpreting name and styling it. Lots
@@ -843,7 +858,6 @@ vis = {
 				event.preventDefault();
 				// set the column name and column scale in the data
 				let option = d3.select(this);
-				let active_old = d3.select(`${axis}-choices`).selectAll('.active');
 				d3.select(`#${axis}-choices`)
 					.selectAll('.active')
 					.classed('active', false);
@@ -874,6 +888,7 @@ vis = {
 				}
 				vis.pause = false;
 				vis.update_plot();
+				return false;
 			});
 	},
 	make_scale: axis => {
