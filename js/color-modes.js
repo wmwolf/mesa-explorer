@@ -27,6 +27,10 @@
         theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
       document.documentElement.setAttribute('data-bs-theme', theme)
+      // if vis exists, do something
+      if (typeof vis !== 'undefined') {
+        vis.update_plot();
+      }
     }
   
     setTheme(getPreferredTheme())

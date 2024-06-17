@@ -424,7 +424,94 @@ vis = {
 				vis.update_plot();
 			}
 		});
+
+		// In-plot mouse controls
+		vis.svg.mouse_x_pixel = null;
+		vis.svg.mouse_y_pixel = null;
+		Object.keys(vis.axes).forEach(axis => {
+			vis.axes[axis].mouse_val = null;
+		});
+
+		vis.svg.attr('cursor', 'crosshair')
+			.on('mousemove', function(event) {
+			[vis.svg.mouse_x_pixel, vis.svg.mouse_y_pixel] = d3.pointer(event, vis.svg.node());
+			// console.log(`x: ${vis.svg.mouse_x_pixel}, y: ${vis.svg.mouse_y_pixel}`)
+			label_data = []
+			Object.keys(vis.axes).forEach(axis => {
+				if (vis.axes[axis].data_name && vis.svg[`mouse_${axis[0]}_pixel`] != null) {
+					vis.axes[axis].mouse_val = vis.axes[axis].scale.invert(vis.svg[`mouse_${axis[0]}_pixel`]);
+					label_data.push({axis: vis.axes[axis], val: vis.axes[axis].mouse_val});
+					if (vis.axes[axis].mouse_val >= 10000 || vis.axes[axis].mouse_val <= 0.001) {
+						// Use exponential notation with 3 decimal places
+						label_data[label_data.length - 1].val = label_data[label_data.length - 1].val.toExponential(3);
+					} else {
+						// Convert number to string with 4 significant digits
+						const str = label_data[label_data.length - 1].val.toPrecision(4);
+		
+						// Remove trailing zeros after decimal point
+						const formatted = parseFloat(str).toString();
+		
+						label_data[label_data.length - 1].val = formatted;
+				}					
+					// console.log(`${vis.axes[axis].data_name}: ${vis.axes[axis].mouse_val}`)
+				} else {
+					vis.axes[axis].mouse_val = null;
+				}
+				// create text element for data from mouseover in lower left of vis.svg
+			});
+			if (label_data.length > 0) {
+				// create or update text element with this text. element is a member of vis.svg,
+				// has id "mouse-text", and text is left and bottom justifed at 10px from the
+				// bottom and left edges of the plot.
+				let mouse_text = vis.svg.select('#mouse-text');
+				if (mouse_text.empty()) {
+					mouse_text = vis.svg.append('text')
+						.attr('id', 'mouse-text')
+						.attr('x', vis.svg.mouse_x_pixel + 20)
+						.attr('y', vis.svg.mouse_y_pixel + 35)
+						.attr('text-anchor', 'start')
+						.attr('dominant-baseline', 'baseline')
+						.attr('fill', vis.axes.x.color)
+						.attr('font-size', vis.font_size[vis.saved_bootstrap_size]);
+				}
+				// add tspans for each text/val pair
+				mouse_text.selectAll('tspan').remove();
+				mouse_text.selectAll('tspan')
+					.data(label_data)
+					.enter()
+					.append('tspan')
+					.attr('x', vis.svg.mouse_x_pixel + 20)
+					.attr('y', vis.svg.mouse_y_pixel + 35)
+					.attr('dy', (d, i) => (i * 1.2).toString() + 'em')
+					.attr('fill', (d) => d.axis.color)
+					.text(d => `${d['axis'].data_name.replace('_', ' ').replace(/log\s*/g, '')}: ${d['val']}`);
+				// Calculate the bounding box of the text, then adjust for margin
+				let bbox = mouse_text.node().getBBox();
+				let margin = 5;
+				let rect = vis.svg.select('#mouse-text-bg');
+				if (rect.empty()) {
+					rect = vis.svg.insert('rect', () => mouse_text.node())
+						.attr('id', 'mouse-text-bg');;
+				}
+
+				rect.attr('x', bbox.x - margin)
+						.attr('y', bbox.y - margin)
+						.attr('width', bbox.width + 2 * margin)
+						.attr('height', bbox.height + 2 * margin)
+						.attr('fill', vis.axes.x.color == 'Black' ? 'white' : 'rgb(34,37,41)')
+						.attr('stroke', vis.axes.x.color == 'Black' ? 'black' : 'rgb(223,226,230)')
+						.attr('stroke-width', 2)
+						.attr('rx', 10);
+			}
+		});
+		// destroy #mouse-text upon leaving plot area
+		vis.svg.on('mouseleave', function() {
+			vis.svg.select('#mouse-text').remove();
+			vis.svg.select('#mouse-text-bg').remove();
+		});
+		
 	},
+
 	breakpoints: {
 		sm: 576,
 		md: 768,
@@ -597,6 +684,13 @@ vis = {
 		rezero = val => val - vis.axes[axis].data_trans.rezero;
 		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
 		return d => do_abs(rezero(rescale(d)));
+	},
+	// Inverse accessor function. Given an axis, this generates returns a function
+	// that maps pixel coordinates on that axis back to data coordinates. This is
+	// useful for things like mouseover events, where we want to know the data
+	// value at a particular pixel location.
+	inverse_accessor: axis => {
+		return coord => vis.axes[axis].scale.invert(coord);
 	},
 	// Stylistic choices; how much padding there is from the outside of the plot
 	// area to the axis lines. This depends on the width of the window
