@@ -815,8 +815,13 @@ vis = {
 
 		if (vis.files.length === 0) {
 			vis.clear_plot();
+			vis.show_right_axis_controls(true); // Show controls when no files
 			return;
 		}
+
+		// Determine if we should show right axis controls (only for single file)
+		const isMultiFile = vis.files.length > 1;
+		vis.show_right_axis_controls(!isMultiFile);
 
 		// Find intersection of column names across all selected files
 		vis.pause = true;
@@ -826,25 +831,29 @@ vis = {
 		
 		let refresh_plot = true;
 		Object.keys(vis.axes).forEach(axis => {
-			if (!commonColumns.includes(vis.axes[axis].data_name)) {
-				// Reset axis if current column is not available in all files
-				vis.axes[axis].data_name = undefined;
-				d3.select(`#${axis}-label`).html(`Select ${vis.axes[axis].generic_html} quantity`);
-				d3.select(`#${axis}-axis-label`).property('value', '');
-				d3.select(`#${axis}-search`).property('value', '');
-				d3.select(`#${axis}-choices`)
-					.selectAll('a')
-					.classed('d-none', false);
-				// Reset axis limits
-				if (axis == 'x') {
-					d3.select(`#x-axis-left`).property('value', '');
-					d3.select(`#x-axis-right`).property('value', '');
-				} else {
-					d3.select(`#${axis}-axis-bottom`).property('value', '');
-					d3.select(`#${axis}-axis-top`).property('value', '');
+			// For multi-file mode, also reset yOther axis even if columns exist
+			if (!commonColumns.includes(vis.axes[axis].data_name) || (isMultiFile && axis === 'yOther')) {
+				// Reset axis if current column is not available in all files or if hiding yOther
+				if (!(isMultiFile && axis === 'yOther')) {
+					// Don't reset yOther data in multi-file mode - preserve the state
+					vis.axes[axis].data_name = undefined;
+					d3.select(`#${axis}-label`).html(`Select ${vis.axes[axis].generic_html} quantity`);
+					d3.select(`#${axis}-axis-label`).property('value', '');
+					d3.select(`#${axis}-search`).property('value', '');
+					d3.select(`#${axis}-choices`)
+						.selectAll('a')
+						.classed('d-none', false);
+					// Reset axis limits
+					if (axis == 'x') {
+						d3.select(`#x-axis-left`).property('value', '');
+						d3.select(`#x-axis-right`).property('value', '');
+					} else {
+						d3.select(`#${axis}-axis-bottom`).property('value', '');
+						d3.select(`#${axis}-axis-top`).property('value', '');
+					}
+					vis.axes[axis].min = undefined;
+					vis.axes[axis].max = undefined;
 				}
-				vis.axes[axis].min = undefined;
-				vis.axes[axis].max = undefined;
 				refresh_plot = false;
 			}
 		});
@@ -880,6 +889,38 @@ vis = {
 		// Refresh interface to reflect new data
 		Object.keys(vis.axes).forEach(axis => vis.update_choices(axis));
 		vis.update_plot();
+	},
+	// Show or hide right y-axis controls and manage axis colors
+	show_right_axis_controls: (show) => {
+		const yOtherElements = [
+			'#yOther-data',
+			'#yOther-detail', 
+			'#yOther-detail-pane'
+		];
+		
+		yOtherElements.forEach(selector => {
+			const element = d3.select(selector);
+			if (show) {
+				element.classed('d-none', false);
+			} else {
+				element.classed('d-none', true);
+			}
+		});
+		
+		// Update axis colors based on mode
+		if (show) {
+			// Single file mode: restore original colors
+			vis.axes.y.color = d3.schemeCategory10[0]; // blue
+			vis.axes.yOther.color = d3.schemeCategory10[1]; // orange
+		} else {
+			// Multi-file mode: neutral color for y-axis
+			vis.axes.y.color = vis.axes.x.color; // same as x-axis (black)
+		}
+		
+		// Force plot refresh to update axis colors
+		if (!vis.pause) {
+			vis.update_plot();
+		}
 	},
 	// helper function for grabbing the relevant "known" column name data
 	known_names: () => {
@@ -978,7 +1019,13 @@ vis = {
 		}
 	},
 	make_scales: () => {
-		Object.keys(vis.axes).forEach(axis => vis.make_scale(axis));
+		Object.keys(vis.axes).forEach(axis => {
+			// Skip yOther if controls are hidden (multi-file mode)
+			if (axis === 'yOther' && d3.select('#yOther-data').classed('d-none')) {
+				return;
+			}
+			vis.make_scale(axis);
+		});
 	},
 
 	make_clipPath: () => {
@@ -1026,7 +1073,7 @@ vis = {
 					.attr('r', 2)
 					.attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
 					.attr('cy', d => vis.axes[yAxis].scale(vis.accessor(yAxis)(d)))
-					.attr('fill', series.color);
+					.attr('fill', vis.series.length === 1 ? vis.axes[yAxis].color : series.color);
 			});
 		}
 	},
@@ -1045,7 +1092,7 @@ vis = {
 					.append('path')
 					.attr('fill', 'none')
 					.attr('d', line_maker(series.data))
-					.attr('stroke', series.color)
+					.attr('stroke', vis.series.length === 1 ? vis.axes[yAxis].color : series.color)
 					.attr('stroke-width', '2.0')
 					.attr('clip-path', 'url(#clip)');
 			});
@@ -1079,16 +1126,20 @@ vis = {
 				.attr('text-anchor', 'end')
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.attr('transform', `translate(-${vis.tick_offset()}, 0)`);
-			if (vis.axes.yOther.data_name === undefined) {
+			// Always draw right spine - either with yOther scale or y scale
+			if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
+				// yOther is active: this will be handled below
+			} else {
+				// yOther is hidden or undefined: draw right spine with y scale, no labels
 				vis.svg
 					.append('g')
 					.call(d3.axisLeft(vis.axes.y.scale).tickSizeOuter(0))
-					.attr('transform', `translate(${vis.width() - 10},0)`)
+					.attr('transform', `translate(${vis.max_display('x')},0)`)
 					.selectAll('text')
 					.remove();
 			}
 		}
-		if (vis.axes.yOther.data_name) {
+		if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
 			vis.svg
 				.append('g')
 				.call(d3.axisLeft(vis.axes.yOther.scale).tickSizeOuter(0))
@@ -1136,7 +1187,7 @@ vis = {
 				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
 				.text(d3.select('#y-axis-label').property('value'));
 		}
-		if (vis.axes.yOther.data_name) {
+		if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
 			vis.svg
 				.append('text')
 				.attr('transform', `translate(${vis.width() - 5}, ${vis.max_display('yOther') + 0.5 * (vis.min_display('yOther') - vis.max_display('yOther'))}) rotate(90)`)
@@ -1169,19 +1220,21 @@ vis = {
 			color: series.color
 		}));
 		
-		// Position legend in top-right corner
-		const legendX = vis.max_display('x') - 20;
-		const legendY = vis.max_display('y') + 20;
+		// Position legend in top-right corner of plot area
 		const lineHeight = 18;
+		const legendWidth = 150;
+		const legendHeight = legendData.length * lineHeight + 10;
+		// Legend rectangle extends leftward from anchor, so anchor should be at right edge
+		const legendX = vis.max_display('x');
+		// Legend rectangle extends downward from anchor-5, so anchor should account for that
+		const legendY = vis.max_display('y') + 5;
 		
 		const legend = vis.svg.append('g')
 			.attr('id', 'legend')
-			.attr('transform', `translate(${legendX}, ${legendY})`);
+			.attr('transform', `translate(${legendX}, ${legendY})`)
+			.style('cursor', 'move');
 		
 		// Add background rectangle
-		const legendHeight = legendData.length * lineHeight + 10;
-		const legendWidth = 150;
-		
 		legend.append('rect')
 			.attr('x', -legendWidth)
 			.attr('y', -5)
@@ -1191,6 +1244,42 @@ vis = {
 			.attr('stroke', vis.axes.x.color == 'Black' ? 'black' : 'rgb(223,226,230)')
 			.attr('stroke-width', 1)
 			.attr('rx', 5);
+		
+		// Add drag behavior
+		const drag = d3.drag()
+			.on('start', function() {
+				d3.select(this).style('cursor', 'grabbing');
+			})
+			.on('drag', function(event) {
+				// Get current transform
+				const currentTransform = d3.select(this).attr('transform');
+				const translate = currentTransform.match(/translate\(([^,]+),([^)]+)\)/);
+				if (!translate) return;
+				
+				let currentX = parseFloat(translate[1]);
+				let currentY = parseFloat(translate[2]);
+				
+				// Apply drag delta
+				const newX = currentX + event.dx;
+				const newY = currentY + event.dy;
+				
+				// Constrain to plot bounds (within the spine rectangle)
+				// Legend rectangle extends from (x-legendWidth, y-5) to (x, y+legendHeight-5)
+				const minX = vis.min_display('x') + legendWidth; // Left edge doesn't go past left spine
+				const maxX = vis.max_display('x'); // Right edge doesn't go past right spine
+				const minY = vis.max_display('y') + 5; // Top edge doesn't go past top spine
+				const maxY = vis.min_display('y') - legendHeight + 5; // Bottom edge doesn't go past bottom spine
+				
+				const constrainedX = Math.max(minX, Math.min(maxX, newX));
+				const constrainedY = Math.max(minY, Math.min(maxY, newY));
+				
+				d3.select(this).attr('transform', `translate(${constrainedX}, ${constrainedY})`);
+			})
+			.on('end', function() {
+				d3.select(this).style('cursor', 'move');
+			});
+		
+		legend.call(drag);
 		
 		// Add legend entries
 		const entries = legend.selectAll('.legend-entry')
@@ -1232,6 +1321,10 @@ vis = {
 			vis.make_scales();
 			vis.make_clipPath();
 			['y', 'yOther'].forEach(yAxis => {
+				// Skip yOther if controls are hidden (multi-file mode)
+				if (yAxis === 'yOther' && d3.select('#yOther-data').classed('d-none')) {
+					return;
+				}
 				if (vis.axes[yAxis].data_name) {
 					if (vis.do_line_plot[yAxis]) vis.plot_data_line(yAxis);
 					if (vis.do_scatter_plot[yAxis]) vis.plot_data_scatter(yAxis);
