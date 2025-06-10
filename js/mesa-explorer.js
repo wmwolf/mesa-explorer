@@ -26,8 +26,8 @@ file_manager = {
 	// Keeps track of how many files have been added, so each file can have a
 	// unique id, even if they get deleted later.
 	files_added: 0,
-	// The file that should be read from to do any plotting
-	active_file: undefined,
+	// The files that should be read from to do any plotting (array for multi-selection)
+	active_files: [],
 	load_all_files: async function(input) {
 		// grab all file data, but do not impact DOM
 		Promise.all(
@@ -40,6 +40,8 @@ file_manager = {
 				// }
 				let file_obj = {
 					name: file.name,
+					local_name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for default local name
+					selected: false,
 					// type: type,
 				};
 				return file_manager.load_file(file, file_obj);
@@ -73,49 +75,69 @@ file_manager = {
 				}
 			});
 
-			// Remove any existing files from picker (sorting them in place was just
-			// not working for some reason), and then build them back up, restoring
-			// any active state for pre-selected files
+			// Remove any existing files from picker and rebuild with new multi-select structure
 			d3.select('#file-list')
-				.selectAll('a')
+				.selectAll('.file-item')
 				.remove();
-			// insert data into DOM
-			const as = d3
+			
+			// Create file items with checkboxes and editable names
+			const fileItems = d3
 				.select('#file-list')
-				.selectAll('a')
+				.selectAll('.file-item')
 				.data(file_manager.files)
 				.enter()
-				.append('a')
+				.append('div')
 				.attr('class', f => {
 					if (f.type == 'unknown') {
-						return 'list-group-item list-group-item-warning disabled';
-					} else if (file_manager.active_file == f) {
-						return 'list-group-item list-group-item-action active';
+						return 'list-group-item file-item list-group-item-warning';
 					} else {
-						return 'list-group-item list-group-item-action';
+						return 'list-group-item file-item';
 					}
-				})
-				// add click handler. Strips other files of active class, adds it to
-				// this one, and then sets the active files and phones over to the
-				// visualization side to pick up the new data
-				.on('click', function() {
-					d3.selectAll('#file-list a').classed('active', false);
-					d3.select(this).classed('active', true);
-					file_manager.active_file = d3.select(this).datum();
-					vis.register_new_file();
 				});
 
-			// Add in content to the file entries (icon and name of file)
-			as.append('i').attr('class', file_manager.file_icon_class);
-			as.append('span')
-				.attr('class', 'ms-2')
-				.text(f => f.name);
+			// Add checkbox for each file
+			fileItems.append('input')
+				.attr('type', 'checkbox')
+				.attr('class', 'form-check-input me-2')
+				.property('checked', f => f.selected)
+				.property('disabled', f => f.type == 'unknown')
+				.on('change', function(event, d) {
+					d.selected = this.checked;
+					file_manager.handle_file_selection(d);
+				});
+
+			// Add file type icon
+			fileItems.append('i')
+				.attr('class', file_manager.file_icon_class);
+
+			// Add editable local name input
+			fileItems.append('input')
+				.attr('type', 'text')
+				.attr('class', 'form-control form-control-sm d-inline-block ms-2 me-2 file-name-input')
+				.style('width', '200px')
+				.property('value', f => f.local_name)
+				.property('disabled', f => f.type == 'unknown')
+				.on('input', function(event, d) {
+					d.local_name = this.value;
+				});
+
+			// Add original filename as small text
+			fileItems.append('small')
+				.attr('class', 'text-muted ms-2')
+				.text(f => f.name != f.local_name ? `(${f.name})` : '');
 
 			d3.select('#file-prompt').classed('d-none', true);
 
-			// Auto-select the first file if none are selected
-			if (!file_manager.active_file) {
-				d3.select('#file-list > a').dispatch('click');
+			// Auto-select the first valid file if none are selected
+			if (file_manager.active_files.length === 0) {
+				const firstValidFile = file_manager.files.find(f => f.type !== 'unknown');
+				if (firstValidFile) {
+					firstValidFile.selected = true;
+					file_manager.handle_file_selection(firstValidFile);
+					// Update checkbox state in DOM
+					d3.selectAll('.file-item input[type="checkbox"]')
+						.property('checked', f => f.selected);
+				}
 			}
 		});
 	},
@@ -235,6 +257,32 @@ file_manager = {
 			icon_class = 'bi bi-broadcast';
 		}
 		return icon_class;
+	},
+	// Handle file selection with type constraints
+	handle_file_selection: function(changedFile) {
+		if (changedFile.selected) {
+			// If selecting a file, check type constraints
+			const selectedFiles = file_manager.files.filter(f => f.selected);
+			const selectedTypes = [...new Set(selectedFiles.map(f => f.type))];
+			
+			// If we have mixed types, unselect files that don't match the changed file's type
+			if (selectedTypes.length > 1) {
+				file_manager.files.forEach(f => {
+					if (f !== changedFile && f.type !== changedFile.type) {
+						f.selected = false;
+					}
+				});
+				// Update checkboxes in DOM
+				d3.selectAll('.file-item input[type="checkbox"]')
+					.property('checked', f => f.selected);
+			}
+		}
+		
+		// Update active files array
+		file_manager.active_files = file_manager.files.filter(f => f.selected);
+		
+		// Notify visualization
+		vis.register_new_files();
 	},
 };
 
@@ -626,34 +674,45 @@ vis = {
 	// minimum and maximum data coordinates to display on plot
 	// TODO: make automatic margins work with logarithmic data/axes
 	// also add some padding to make sure tick labels don't get clipped
+	// Get combined data from all series for extent calculations
+	get_all_data: () => {
+		if (!vis.series || vis.series.length === 0) return [];
+		return vis.series.flatMap(series => series.data);
+	},
 	width_data: axis => {
-		const max = vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis));
-		const min = vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis));
+		const allData = vis.get_all_data();
+		const max = vis.axes[axis].max || d3.max(allData, vis.accessor(axis));
+		const min = vis.axes[axis].min || d3.min(allData, vis.accessor(axis));
 		return max - min;
 	},
 	width_log_data: axis => {
-		const max = vis.axes[axis].max || d3.max(vis.data, vis.accessor(axis));
-		const min = vis.axes[axis].min || d3.min(vis.data, vis.accessor(axis));
+		const allData = vis.get_all_data();
+		const max = vis.axes[axis].max || d3.max(allData, vis.accessor(axis));
+		const min = vis.axes[axis].min || d3.min(allData, vis.accessor(axis));
 		return safe_log(max) - safe_log(min);
 	},
 	min_data: axis => {
 		if (vis.axes[axis].min) {
 			return vis.axes[axis].min;
 		} else if (vis.axes[axis].type == 'log') {
-			const log_min = safe_log(d3.min(vis.data, vis.accessor(axis)));
+			const allData = vis.get_all_data();
+			const log_min = safe_log(d3.min(allData, vis.accessor(axis)));
 			return Math.pow(10, log_min - 0.05 * vis.width_log_data(axis));
 		} else {
-			return d3.min(vis.data, vis.accessor(axis)) - 0.05 * vis.width_data(axis);
+			const allData = vis.get_all_data();
+			return d3.min(allData, vis.accessor(axis)) - 0.05 * vis.width_data(axis);
 		}
 	},
 	max_data: axis => {
 		if (vis.axes[axis].max) {
 			return vis.axes[axis].max;
 		} else if (vis.axes[axis].type == 'log') {
-			const log_max = safe_log(d3.max(vis.data, vis.accessor(axis)));
+			const allData = vis.get_all_data();
+			const log_max = safe_log(d3.max(allData, vis.accessor(axis)));
 			return Math.pow(10, log_max + 0.05 * vis.width_log_data(axis));
 		} else {
-			return d3.max(vis.data, vis.accessor(axis)) + 0.05 * vis.width_data(axis);
+			const allData = vis.get_all_data();
+			return d3.max(allData, vis.accessor(axis)) + 0.05 * vis.width_data(axis);
 		}
 	},
 
@@ -751,18 +810,24 @@ vis = {
 			return 10;
 		}
 	},
-	register_new_file: () => {
-		vis.file = file_manager.active_file;
+	register_new_files: () => {
+		vis.files = file_manager.active_files;
 
-		// Reset selections for abscissa and ordinate axes columns if they
-		// are no longer present in this file
+		if (vis.files.length === 0) {
+			vis.clear_plot();
+			return;
+		}
+
+		// Find intersection of column names across all selected files
 		vis.pause = true;
-		const names = vis.file.data.bulk_names.map(elt => elt.key);
+		const allColumnNames = vis.files.map(f => f.data.bulk_names.map(elt => elt.key));
+		const commonColumns = allColumnNames.length > 0 ? 
+			allColumnNames.reduce((a, b) => a.filter(c => b.includes(c))) : [];
+		
 		let refresh_plot = true;
 		Object.keys(vis.axes).forEach(axis => {
-			if (!names.includes(vis.axes[axis].data_name)) {
-				// this file doesn't have the same columns; reset the plot, axis
-				// labels, axis/data settings, and search field
+			if (!commonColumns.includes(vis.axes[axis].data_name)) {
+				// Reset axis if current column is not available in all files
 				vis.axes[axis].data_name = undefined;
 				d3.select(`#${axis}-label`).html(`Select ${vis.axes[axis].generic_html} quantity`);
 				d3.select(`#${axis}-axis-label`).property('value', '');
@@ -782,30 +847,35 @@ vis = {
 				vis.axes[axis].max = undefined;
 				refresh_plot = false;
 			}
-			vis.pause = false;
-			if (refresh_plot) {
-				vis.update_plot();
-			} else {
-				vis.clear_plot();
-			}
 		});
 
-		// Set up the actual data that will be plotted
-		vis.data = vis.file.data.bulk;
+		// Create series data for each file
+		vis.series = vis.files.map((file, index) => ({
+			file: file,
+			data: file.data.bulk,
+			color: d3.schemeCategory10[index % d3.schemeCategory10.length],
+			name: file.local_name
+		}));
 
-		// merge name data with more complete "known" data. Names are the columns
-		// of data files, but also the keys to each datum in `vis.data`.
-		vis.name_data = vis.file.data.bulk_names.map(d => {
-			let matches = vis.known_names().filter(dk => dk.key == d.key);
-			// If we found this name, overwrite with "known" values. Should probably
-			// do this with destructuring so it is less brittle.
-			if (matches.length > 0) {
-				d.scale = matches[0].scale;
-				d.html_name = matches[0].html_name;
-				d.html_units = matches[0].html_units;
-			}
-			return d;
-		});
+		// Use first file's column structure for interface (since all have same columns due to intersection)
+		vis.name_data = vis.files[0].data.bulk_names
+			.filter(d => commonColumns.includes(d.key))
+			.map(d => {
+				let matches = vis.known_names().filter(dk => dk.key == d.key);
+				if (matches.length > 0) {
+					d.scale = matches[0].scale;
+					d.html_name = matches[0].html_name;
+					d.html_units = matches[0].html_units;
+				}
+				return d;
+			});
+
+		vis.pause = false;
+		if (refresh_plot) {
+			vis.update_plot();
+		} else {
+			vis.clear_plot();
+		}
 
 		// Refresh interface to reflect new data
 		Object.keys(vis.axes).forEach(axis => vis.update_choices(axis));
@@ -813,11 +883,15 @@ vis = {
 	},
 	// helper function for grabbing the relevant "known" column name data
 	known_names: () => {
-		if (vis.file.type == 'history') {
-			return vis.known_history_names;
-		} else if (vis.file.type == 'profile') {
-			return vis.known_profile_names;
-		} else return [];
+		if (vis.files && vis.files.length > 0) {
+			const fileType = vis.files[0].type; // All files have same type due to constraints
+			if (fileType == 'history') {
+				return vis.known_history_names;
+			} else if (fileType == 'profile') {
+				return vis.known_profile_names;
+			}
+		}
+		return [];
 	},
 	// Update  column selector dropdown menu
 	update_choices: axis => {
@@ -918,12 +992,19 @@ vis = {
 			.attr('transform', `translate(${vis.min_display('x')},${vis.max_display('y')})`);
 	},
 	reduced_data: yAxis => {
+		// For backward compatibility, use first series if available
+		if (vis.series && vis.series.length > 0) {
+			return vis.reduced_data_for_series(yAxis, vis.series[0]);
+		}
+		return [];
+	},
+	reduced_data_for_series: (yAxis, series) => {
 		const x_min = vis.min_data('x');
 		const x_max = vis.max_data('x');
 		const y_min = vis.min_data(yAxis);
 		const y_max = vis.max_data(yAxis);
 
-		return vis.data.filter((d, i) => {
+		return series.data.filter((d, i) => {
 			const x = vis.accessor('x')(d);
 			const y = vis.accessor(yAxis)(d);
 			let res = i % vis.marker_interval[yAxis] == 0;
@@ -933,40 +1014,41 @@ vis = {
 		});
 	},
 	plot_data_scatter: yAxis => {
-		// Use reduced data since there's no point carrying about points
-		// outside the desired region, and they don't get easily clipped
-		// otherwise
-		if (vis.axes[yAxis].data_name) {
-			vis.svg
-			.selectAll(`circle.${yAxis}`)
-			.data(vis.reduced_data(yAxis))
-			.enter()
-			.append('circle')
-			.classed(yAxis, true)
-			.attr('r', 2)
-			.attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
-			.attr('cy', d => vis.axes[yAxis].scale(vis.accessor(yAxis)(d)))
-			.attr('fill', vis.axes[yAxis].color);
+		if (vis.axes[yAxis].data_name && vis.series) {
+			vis.series.forEach((series, seriesIndex) => {
+				const reducedData = vis.reduced_data_for_series(yAxis, series);
+				vis.svg
+					.selectAll(`circle.${yAxis}-series-${seriesIndex}`)
+					.data(reducedData)
+					.enter()
+					.append('circle')
+					.classed(`${yAxis} series-${seriesIndex}`, true)
+					.attr('r', 2)
+					.attr('cx', d => vis.axes.x.scale(vis.accessor('x')(d)))
+					.attr('cy', d => vis.axes[yAxis].scale(vis.accessor(yAxis)(d)))
+					.attr('fill', series.color);
+			});
 		}
 	},
 	plot_data_line: yAxis => {
-		// note: we don't use the clipped data here because points off the plot
-		// area will still be connected by lines. This is a feature, not a bug.
-		if (vis.axes[yAxis].data_name) {
-			const x = vis.accessor('x');
-			const y = vis.accessor(yAxis);
-			const line_maker = d3
-				.line()
-				.x(d => vis.axes.x.scale(x(d)))
-				.y(d => vis.axes[yAxis].scale(y(d)));
-			vis.svg
-				.append('g')
-				.append('path')
-				.attr('fill', 'none')
-				.attr('d', line_maker(vis.data))
-				.attr('stroke', vis.axes[yAxis].color)
-				.attr('stroke-width', '2.0')
-				.attr('clip-path', 'url(#clip)');
+		if (vis.axes[yAxis].data_name && vis.series) {
+			vis.series.forEach((series, seriesIndex) => {
+				const x = vis.accessor('x');
+				const y = vis.accessor(yAxis);
+				const line_maker = d3
+					.line()
+					.x(d => vis.axes.x.scale(x(d)))
+					.y(d => vis.axes[yAxis].scale(y(d)));
+				vis.svg
+					.append('g')
+					.classed(`series-${seriesIndex}`, true)
+					.append('path')
+					.attr('fill', 'none')
+					.attr('d', line_maker(series.data))
+					.attr('stroke', series.color)
+					.attr('stroke-width', '2.0')
+					.attr('clip-path', 'url(#clip)');
+			});
 		}
 	},
 	add_axes: (force_light = false) => {
@@ -1079,6 +1161,64 @@ vis = {
 		d3.select('#svg-y-label').text(d3.select('#y-axis-label').property('value'));
 		d3.select('#svg-yOther-label').text(d3.select('#yOther-axis-label').property('value'));
 	},
+	add_legend: () => {
+		if (!vis.series || vis.series.length <= 1) return; // No legend needed for single series
+		
+		const legendData = vis.series.map(series => ({
+			name: series.name,
+			color: series.color
+		}));
+		
+		// Position legend in top-right corner
+		const legendX = vis.max_display('x') - 20;
+		const legendY = vis.max_display('y') + 20;
+		const lineHeight = 18;
+		
+		const legend = vis.svg.append('g')
+			.attr('id', 'legend')
+			.attr('transform', `translate(${legendX}, ${legendY})`);
+		
+		// Add background rectangle
+		const legendHeight = legendData.length * lineHeight + 10;
+		const legendWidth = 150;
+		
+		legend.append('rect')
+			.attr('x', -legendWidth)
+			.attr('y', -5)
+			.attr('width', legendWidth)
+			.attr('height', legendHeight)
+			.attr('fill', vis.axes.x.color == 'Black' ? 'white' : 'rgb(34,37,41)')
+			.attr('stroke', vis.axes.x.color == 'Black' ? 'black' : 'rgb(223,226,230)')
+			.attr('stroke-width', 1)
+			.attr('rx', 5);
+		
+		// Add legend entries
+		const entries = legend.selectAll('.legend-entry')
+			.data(legendData)
+			.enter()
+			.append('g')
+			.attr('class', 'legend-entry')
+			.attr('transform', (d, i) => `translate(-${legendWidth - 15}, ${i * lineHeight + 10})`);
+		
+		// Add colored lines
+		entries.append('line')
+			.attr('x1', 0)
+			.attr('x2', 20)
+			.attr('y1', 0)
+			.attr('y2', 0)
+			.attr('stroke', d => d.color)
+			.attr('stroke-width', 2);
+		
+		// Add text labels
+		entries.append('text')
+			.attr('x', 25)
+			.attr('y', 0)
+			.attr('dy', '0.35em')
+			.attr('fill', vis.axes.x.color)
+			.attr('font-family', 'sans-serif')
+			.attr('font-size', vis.font_size[vis.saved_bootstrap_size] - 2)
+			.text(d => d.name);
+	},
 	clear_plot: () => {
 		vis.svg.selectAll('*').remove();
 		vis.have_axis_labels = false;
@@ -1088,7 +1228,7 @@ vis = {
 			return;
 		}
 		vis.clear_plot();
-		if (vis.file && vis.axes.x.data_name) {
+		if (vis.series && vis.series.length > 0 && vis.axes.x.data_name) {
 			vis.make_scales();
 			vis.make_clipPath();
 			['y', 'yOther'].forEach(yAxis => {
@@ -1099,6 +1239,7 @@ vis = {
 			});
 
 			vis.add_axes(force_light);
+			vis.add_legend();
 		}
 	},
 };
