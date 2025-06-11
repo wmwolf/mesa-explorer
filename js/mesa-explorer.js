@@ -194,6 +194,11 @@ file_manager = {
 			
 			// Update select all checkbox state
 			file_manager.update_select_all_state();
+			
+			// Update files summary if panel is hidden
+			if (files_panel_hidden && typeof update_files_summary === 'function') {
+				update_files_summary();
+			}
 		});
 	},
 	// determine file type from contents rather than just name
@@ -419,6 +424,11 @@ file_manager = {
 				selectAllCheckbox.indeterminate = true;
 			}
 		}
+		
+		// Update files summary if panel is hidden
+		if (files_panel_hidden && typeof update_files_summary === 'function') {
+			update_files_summary();
+		}
 	},
 	// Remove a file from the files array and update UI
 	remove_file: function(fileToRemove) {
@@ -443,6 +453,11 @@ file_manager = {
 		
 		// Update select all checkbox state
 		file_manager.update_select_all_state();
+		
+		// Update files summary if panel is hidden
+		if (files_panel_hidden && typeof update_files_summary === 'function') {
+			update_files_summary();
+		}
 		
 		// If we removed the last selected file, auto-select the first available file
 		if (file_manager.active_files.length === 0 && file_manager.files.length > 0) {
@@ -488,6 +503,11 @@ file_manager = {
 		// Update UI and visualization
 		file_manager.update_ui_for_mode();
 		vis.register_new_files();
+		
+		// Update files summary if panel is hidden
+		if (files_panel_hidden && typeof update_files_summary === 'function') {
+			update_files_summary();
+		}
 	},
 	// Switch to multi-file mode
 	switch_to_multi_mode: function() {
@@ -508,6 +528,11 @@ file_manager = {
 		// Update UI and visualization
 		file_manager.update_ui_for_mode();
 		vis.register_new_files();
+		
+		// Update files summary if panel is hidden
+		if (files_panel_hidden && typeof update_files_summary === 'function') {
+			update_files_summary();
+		}
 	},
 	// Update UI elements based on current mode
 	update_ui_for_mode: function() {
@@ -2251,4 +2276,92 @@ setup = () => {
 	file_manager.setup();
 	vis.setup();
 	vis.setup_style_handlers();
+	
+	// Setup files panel hide/show toggle
+	setup_files_panel_toggle();
+};
+
+// Track if files panel is hidden
+let files_panel_hidden = false;
+
+// Setup files panel toggle functionality
+setup_files_panel_toggle = () => {
+	const hideToggle = document.getElementById('files-hide-toggle');
+	const showToggle = document.getElementById('files-show-toggle');
+	
+	hideToggle.addEventListener('click', hide_files_panel);
+	showToggle.addEventListener('click', show_files_panel);
+};
+
+// Hide the files panel and expand visualization
+hide_files_panel = () => {
+	const filesColumn = document.getElementById('files-column');
+	const vizColumn = document.getElementById('visualization-column');
+	const summaryBar = document.getElementById('files-summary-bar');
+	
+	// Hide files column
+	filesColumn.style.display = 'none';
+	
+	// Expand visualization column to full width
+	vizColumn.classList.remove('col-sm-8');
+	vizColumn.classList.add('col-12');
+	
+	// Show summary bar
+	summaryBar.classList.remove('d-none');
+	
+	// Update summary text
+	update_files_summary();
+	
+	files_panel_hidden = true;
+};
+
+// Show the files panel and restore layout
+show_files_panel = () => {
+	const filesColumn = document.getElementById('files-column');
+	const vizColumn = document.getElementById('visualization-column');
+	const summaryBar = document.getElementById('files-summary-bar');
+	
+	// Show files column
+	filesColumn.style.display = 'block';
+	
+	// Restore visualization column width
+	vizColumn.classList.remove('col-12');
+	vizColumn.classList.add('col-sm-8');
+	
+	// Hide summary bar
+	summaryBar.classList.add('d-none');
+	
+	files_panel_hidden = false;
+};
+
+// Update the files summary text
+update_files_summary = () => {
+	const summaryText = document.getElementById('files-summary-text');
+	
+	if (file_manager.files.length === 0) {
+		summaryText.textContent = 'No files loaded';
+		return;
+	}
+	
+	if (file_manager.current_mode === 'single') {
+		if (file_manager.active_file) {
+			const activeFile = file_manager.files.find(f => f.id === file_manager.active_file);
+			const displayName = activeFile ? (activeFile.custom_name || activeFile.name) : 'Unknown file';
+			summaryText.textContent = `Plotting: ${displayName}`;
+		} else {
+			summaryText.textContent = `${file_manager.files.length} file(s) available`;
+		}
+	} else {
+		// Multi-file mode
+		const selectedCount = file_manager.active_files.length;
+		if (selectedCount === 0) {
+			summaryText.textContent = `${file_manager.files.length} files available (none selected)`;
+		} else if (selectedCount === 1) {
+			const selectedFile = file_manager.active_files[0];
+			const displayName = selectedFile.custom_name || selectedFile.name;
+			summaryText.textContent = `Plotting: ${displayName}`;
+		} else {
+			summaryText.textContent = `Plotting ${selectedCount} files`;
+		}
+	}
 };
