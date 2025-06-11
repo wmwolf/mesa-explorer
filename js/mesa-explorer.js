@@ -15,10 +15,27 @@ safe_log = val => {
 // list of available files to the vis pane in the form of
 // dropdowns would work better
 file_manager = {
+	// Track current mode: 'single' or 'multi'
+	current_mode: 'multi',
+	// Track active file in single mode
+	active_file: null,
 	setup: () => {
 		document.querySelector('#mesa-input').addEventListener('change', event => {
 			file_manager.load_all_files(event.target);
 		});
+		document.querySelector('#select-all-files').addEventListener('change', event => {
+			file_manager.handle_select_all(event.target);
+		});
+		document.querySelector('#single-file-mode').addEventListener('click', () => {
+			file_manager.switch_to_single_mode();
+		});
+		document.querySelector('#multi-file-mode').addEventListener('click', () => {
+			file_manager.switch_to_multi_mode();
+		});
+		// Hide select all checkbox initially
+		file_manager.update_select_all_state();
+		// Setup keyboard navigation
+		file_manager.setup_keyboard_navigation();
 	},
 	// Starts empty, but newest files are always added to the beginning when
 	// the user selects a new file
@@ -93,6 +110,20 @@ file_manager = {
 					} else {
 						return 'list-group-item file-item';
 					}
+				})
+				.on('click', function(event, d) {
+					// Handle clicks based on current mode
+					if (file_manager.current_mode === 'single') {
+						// Don't trigger if clicking on checkbox, input, or button
+						if (event.target.type === 'checkbox' || 
+							event.target.type === 'text' || 
+							event.target.type === 'button' ||
+							event.target.tagName === 'BUTTON' ||
+							event.target.tagName === 'I') {
+							return;
+						}
+						file_manager.handle_single_file_click(d);
+					}
 				});
 
 			// Add checkbox for each file
@@ -114,7 +145,7 @@ file_manager = {
 			fileItems.append('input')
 				.attr('type', 'text')
 				.attr('class', 'form-control form-control-sm d-inline-block ms-2 me-2 file-name-input')
-				.style('width', '200px')
+				.style('width', '150px')
 				.property('value', f => f.local_name)
 				.property('disabled', f => f.type == 'unknown')
 				.on('input', function(event, d) {
@@ -125,6 +156,17 @@ file_manager = {
 			fileItems.append('small')
 				.attr('class', 'text-muted ms-2')
 				.text(f => f.name != f.local_name ? `(${f.name})` : '');
+
+			// Add remove button
+			fileItems.append('button')
+				.attr('type', 'button')
+				.attr('class', 'btn btn-outline-danger btn-sm ms-auto')
+				.style('float', 'right')
+				.html('<i class="bi bi-trash"></i>')
+				.attr('title', 'Remove file')
+				.on('click', function(event, d) {
+					file_manager.remove_file(d);
+				});
 
 			d3.select('#file-prompt').classed('d-none', true);
 
@@ -139,6 +181,19 @@ file_manager = {
 						.property('checked', f => f.selected);
 				}
 			}
+			
+			// Auto-detect default mode based on file count
+			const validFiles = file_manager.files.filter(f => f.type !== 'unknown');
+			if (validFiles.length === 1) {
+				// Single file - switch to single mode
+				file_manager.switch_to_single_mode();
+			} else if (validFiles.length > 1) {
+				// Multiple files - ensure we're in multi mode and update UI
+				file_manager.update_ui_for_mode();
+			}
+			
+			// Update select all checkbox state
+			file_manager.update_select_all_state();
 		});
 	},
 	// determine file type from contents rather than just name
@@ -281,8 +336,290 @@ file_manager = {
 		// Update active files array
 		file_manager.active_files = file_manager.files.filter(f => f.selected);
 		
+		// Update select all checkbox state
+		file_manager.update_select_all_state();
+		
 		// Notify visualization
 		vis.register_new_files();
+	},
+	// Handle select all checkbox
+	handle_select_all: function(selectAllCheckbox) {
+		const selectableFiles = file_manager.files.filter(f => f.type !== 'unknown');
+		
+		if (selectAllCheckbox.checked) {
+			// Get the type of currently selected files
+			const currentlySelected = file_manager.files.filter(f => f.selected);
+			let targetType = null;
+			
+			if (currentlySelected.length > 0) {
+				// Use the type of the currently selected files
+				targetType = currentlySelected[0].type;
+			} else if (selectableFiles.length > 0) {
+				// If no files are selected, use the first selectable file type
+				targetType = selectableFiles[0].type;
+			}
+			
+			if (targetType) {
+				selectableFiles.forEach(f => {
+					if (f.type === targetType) {
+						f.selected = true;
+					}
+				});
+			}
+		} else {
+			// Deselect all files
+			file_manager.files.forEach(f => {
+				f.selected = false;
+			});
+		}
+		
+		// Update checkboxes in DOM
+		d3.selectAll('.file-item input[type="checkbox"]')
+			.property('checked', f => f.selected);
+		
+		// Update active files array
+		file_manager.active_files = file_manager.files.filter(f => f.selected);
+		
+		// Notify visualization
+		vis.register_new_files();
+	},
+	// Update the select all checkbox state based on current selections
+	update_select_all_state: function() {
+		const selectAllCheckbox = document.querySelector('#select-all-files');
+		const selectAllContainer = selectAllCheckbox.closest('.mb-2');
+		const selectableFiles = file_manager.files.filter(f => f.type !== 'unknown');
+		
+		// Hide checkbox if no files are uploaded or in single file mode
+		if (selectableFiles.length === 0 || file_manager.current_mode === 'single') {
+			selectAllContainer.style.display = 'none';
+			return;
+		} else {
+			selectAllContainer.style.display = 'block';
+		}
+		
+		const selectedFiles = selectableFiles.filter(f => f.selected);
+		
+		if (selectedFiles.length === 0) {
+			// No files selected - unchecked state
+			selectAllCheckbox.checked = false;
+			selectAllCheckbox.indeterminate = false;
+		} else {
+			// Get the type of currently selected files to determine what "all" means
+			const selectedType = selectedFiles[0].type;
+			const filesOfSameType = selectableFiles.filter(f => f.type === selectedType);
+			const selectedFilesOfSameType = selectedFiles.filter(f => f.type === selectedType);
+			
+			if (selectedFilesOfSameType.length === filesOfSameType.length) {
+				// All files of the same type are selected - checked state
+				selectAllCheckbox.checked = true;
+				selectAllCheckbox.indeterminate = false;
+			} else {
+				// Some files of the same type selected - indeterminate state
+				selectAllCheckbox.checked = false;
+				selectAllCheckbox.indeterminate = true;
+			}
+		}
+	},
+	// Remove a file from the files array and update UI
+	remove_file: function(fileToRemove) {
+		// Remove from files array
+		const fileIndex = file_manager.files.findIndex(f => f === fileToRemove);
+		if (fileIndex !== -1) {
+			file_manager.files.splice(fileIndex, 1);
+		}
+		
+		// Update active files array to remove this file if it was selected
+		file_manager.active_files = file_manager.active_files.filter(f => f !== fileToRemove);
+		
+		// Remove the DOM element
+		d3.selectAll('.file-item')
+			.filter(d => d === fileToRemove)
+			.remove();
+		
+		// Show the "no files" prompt if no files remain
+		if (file_manager.files.length === 0) {
+			d3.select('#file-prompt').classed('d-none', false);
+		}
+		
+		// Update select all checkbox state
+		file_manager.update_select_all_state();
+		
+		// If we removed the last selected file, auto-select the first available file
+		if (file_manager.active_files.length === 0 && file_manager.files.length > 0) {
+			const firstValidFile = file_manager.files.find(f => f.type !== 'unknown');
+			if (firstValidFile) {
+				firstValidFile.selected = true;
+				file_manager.handle_file_selection(firstValidFile);
+				// Update checkbox state in DOM
+				d3.selectAll('.file-item input[type="checkbox"]')
+					.property('checked', f => f.selected);
+			}
+		}
+		
+		// Notify visualization to update
+		vis.register_new_files();
+	},
+	// Switch to single file mode
+	switch_to_single_mode: function() {
+		file_manager.current_mode = 'single';
+		
+		// Update button states
+		document.querySelector('#single-file-mode').classList.add('active');
+		document.querySelector('#multi-file-mode').classList.remove('active');
+		
+		// Hide checkboxes and select all
+		file_manager.update_ui_for_mode();
+		
+		// Convert from multi-file selection to single file
+		const selectedFiles = file_manager.files.filter(f => f.selected);
+		if (selectedFiles.length > 0) {
+			// Keep the topmost (first) selected file
+			file_manager.active_file = selectedFiles[0];
+			// Clear all selections
+			file_manager.files.forEach(f => f.selected = false);
+		} else if (file_manager.files.length > 0) {
+			// No files selected, pick first valid file
+			file_manager.active_file = file_manager.files.find(f => f.type !== 'unknown');
+		}
+		
+		// Update active files for visualization
+		file_manager.active_files = file_manager.active_file ? [file_manager.active_file] : [];
+		
+		// Update UI and visualization
+		file_manager.update_ui_for_mode();
+		vis.register_new_files();
+	},
+	// Switch to multi-file mode
+	switch_to_multi_mode: function() {
+		file_manager.current_mode = 'multi';
+		
+		// Update button states
+		document.querySelector('#multi-file-mode').classList.add('active');
+		document.querySelector('#single-file-mode').classList.remove('active');
+		
+		// Convert from single file to multi-file selection
+		if (file_manager.active_file) {
+			file_manager.active_file.selected = true;
+		}
+		
+		// Update active files
+		file_manager.active_files = file_manager.files.filter(f => f.selected);
+		
+		// Update UI and visualization
+		file_manager.update_ui_for_mode();
+		vis.register_new_files();
+	},
+	// Update UI elements based on current mode
+	update_ui_for_mode: function() {
+		const selectAllContainer = document.querySelector('#select-all-files').closest('.mb-2');
+		
+		if (file_manager.current_mode === 'single') {
+			// Hide select all checkbox and checkboxes
+			selectAllContainer.style.display = 'none';
+			d3.selectAll('.file-item input[type="checkbox"]').style('display', 'none');
+			
+			// Hide delete button only on the currently active file
+			d3.selectAll('.file-item button')
+				.style('display', d => d === file_manager.active_file ? 'none' : 'inline-block');
+			
+			// Update active states on list items and fix text visibility
+			d3.selectAll('.file-item')
+				.classed('active', d => d === file_manager.active_file);
+			
+			// Make original filename text white when active in light mode for better visibility
+			d3.selectAll('.file-item')
+				.selectAll('small')
+				.classed('text-white', d => d === file_manager.active_file);
+		} else {
+			// Show select all checkbox and checkboxes if there are files
+			if (file_manager.files.length > 0) {
+				selectAllContainer.style.display = 'block';
+			}
+			d3.selectAll('.file-item input[type="checkbox"]').style('display', 'inline-block');
+			
+			// Show all delete buttons in multi mode
+			d3.selectAll('.file-item button').style('display', 'inline-block');
+			
+			// Clear active states and update checkbox states
+			d3.selectAll('.file-item')
+				.classed('active', false);
+			d3.selectAll('.file-item input[type="checkbox"]')
+				.property('checked', f => f.selected);
+			
+			// Remove white text class from all small elements
+			d3.selectAll('.file-item small')
+				.classed('text-white', false);
+		}
+		
+		// Update select all state
+		file_manager.update_select_all_state();
+	},
+	// Handle file click in single mode
+	handle_single_file_click: function(file) {
+		if (file.type === 'unknown') return;
+		
+		file_manager.active_file = file;
+		file_manager.active_files = [file];
+		
+		// Update UI
+		d3.selectAll('.file-item')
+			.classed('active', d => d === file);
+		
+		// Update text visibility for active state
+		d3.selectAll('.file-item')
+			.selectAll('small')
+			.classed('text-white', d => d === file);
+		
+		// Hide delete button only on the currently active file
+		d3.selectAll('.file-item button')
+			.style('display', d => d === file ? 'none' : 'inline-block');
+		
+		// Notify visualization
+		vis.register_new_files();
+	},
+	// Setup keyboard navigation
+	setup_keyboard_navigation: function() {
+		document.addEventListener('keydown', function(event) {
+			// Only handle arrow keys in single file mode
+			if (file_manager.current_mode !== 'single') return;
+			
+			// Check if user is interacting with an input or dropdown
+			const activeElement = document.activeElement;
+			const isInputFocused = activeElement && (
+				activeElement.tagName === 'INPUT' ||
+				activeElement.tagName === 'TEXTAREA' ||
+				activeElement.tagName === 'SELECT' ||
+				activeElement.isContentEditable
+			);
+			
+			// Check if any Bootstrap dropdown is open
+			const isDropdownOpen = document.querySelector('.dropdown-menu.show');
+			
+			// If input is focused or dropdown is open, let default behavior handle it
+			if (isInputFocused || isDropdownOpen) return;
+			
+			// Handle arrow keys for file navigation
+			if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+				event.preventDefault();
+				file_manager.navigate_files(event.key === 'ArrowUp' ? -1 : 1);
+			}
+		});
+	},
+	// Navigate through files with arrow keys
+	navigate_files: function(direction) {
+		const selectableFiles = file_manager.files.filter(f => f.type !== 'unknown');
+		if (selectableFiles.length === 0) return;
+		
+		let currentIndex = selectableFiles.findIndex(f => f === file_manager.active_file);
+		if (currentIndex === -1) currentIndex = 0;
+		
+		// Calculate new index with wrapping
+		let newIndex = currentIndex + direction;
+		if (newIndex < 0) newIndex = selectableFiles.length - 1;
+		if (newIndex >= selectableFiles.length) newIndex = 0;
+		
+		// Switch to new file
+		file_manager.handle_single_file_click(selectableFiles[newIndex]);
 	},
 };
 
