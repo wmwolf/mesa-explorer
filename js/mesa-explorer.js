@@ -903,7 +903,7 @@ vis = {
 						.attr('text-anchor', 'start')
 						.attr('dominant-baseline', 'baseline')
 						.attr('fill', vis.axes.x.color)
-						.attr('font-size', vis.font_size[vis.saved_bootstrap_size]);
+						.attr('font-size', vis.styles.global.font_size);
 				}
 				// add tspans for each text/val pair
 				mouse_text.selectAll('tspan').remove();
@@ -1054,7 +1054,8 @@ vis = {
 			color_scheme: 'tableau10',
 			default_line_width: 2.0,
 			default_marker_size: 4,
-			default_opacity: 1.0
+			default_opacity: 1.0,
+			font_size: 12
 		},
 		
 		// Available color schemes
@@ -1471,6 +1472,13 @@ vis = {
 			}
 		});
 		
+		d3.select('#globalFontSize').on('input', function() {
+			vis.styles.global.font_size = parseInt(this.value);
+			d3.select('#globalFontSizeValue').text(this.value + 'px');
+			// Apply immediately to plot
+			vis.update_plot();
+		});
+		
 		d3.select('#applyGlobalStyles').on('click', () => {
 			vis.apply_global_style_changes();
 		});
@@ -1507,6 +1515,8 @@ vis = {
 		d3.select('#defaultMarkerSize').property('value', vis.styles.global.default_marker_size);
 		d3.select('#defaultOpacity').property('value', vis.styles.global.default_opacity);
 		d3.select('#defaultOpacityValue').text(vis.styles.global.default_opacity.toFixed(1));
+		d3.select('#globalFontSize').property('value', vis.styles.global.font_size);
+		d3.select('#globalFontSizeValue').text(vis.styles.global.font_size + 'px');
 		
 		// Generate individual series controls
 		const container = d3.select('#seriesStylesList');
@@ -1907,7 +1917,7 @@ vis = {
 				.selectAll('text')
 				.attr('text-anchor', 'top')
 				.attr('dominant-baseline', 'hanging')
-				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr('font-size', vis.styles.global.font_size)
 				.attr('transform', `translate(0, ${vis.tick_offset() + 2})`);
 			vis.svg
 				.append('g')
@@ -1923,7 +1933,7 @@ vis = {
 				.attr('transform', `translate(${vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'end')
-				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr('font-size', vis.styles.global.font_size)
 				.attr('transform', `translate(-${vis.tick_offset()}, 0)`);
 			// Always draw right spine - either with yOther scale or y scale
 			if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
@@ -1945,7 +1955,7 @@ vis = {
 				.attr('transform', `translate(${vis.max_display('x')},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'start')
-				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr('font-size', vis.styles.global.font_size)
 				.attr('transform', `translate(${vis.tick_offset()}, 0)`);
 		}
 
@@ -1971,7 +1981,7 @@ vis = {
 				.attr('id', 'svg-x-label')
 				.attr('font-family', 'sans-serif')
 				.attr('fill', vis.axes.x.color)
-				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr('font-size', vis.styles.global.font_size)
 				.text(d3.select('#x-axis-label').property('value'));
 		}
 		if (vis.axes.y.data_name) {
@@ -1983,7 +1993,7 @@ vis = {
 				.attr('id', 'svg-y-label')
 				.attr('fill', vis.axes.y.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr('font-size', vis.styles.global.font_size)
 				.text(d3.select('#y-axis-label').property('value'));
 		}
 		if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
@@ -1995,7 +2005,7 @@ vis = {
 				.attr('id', 'svg-yOther-label')
 				.attr('fill', vis.axes.yOther.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.font_size[vis.saved_bootstrap_size])
+				.attr('font-size', vis.styles.global.font_size)
 				.text(d3.select('#yOther-axis-label').property('value'));
 		}
 		// Set up handlers for axis label fields (should this live here?)
@@ -2104,7 +2114,7 @@ vis = {
 			.attr('dy', '0.35em')
 			.attr('fill', vis.axes.x.color)
 			.attr('font-family', 'sans-serif')
-			.attr('font-size', vis.font_size[vis.saved_bootstrap_size] - 2)
+			.attr('font-size', Math.max(8, vis.styles.global.font_size - 2))
 			.text(d => d.name);
 	},
 	clear_plot: () => {
