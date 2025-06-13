@@ -171,6 +171,22 @@
 						<svg id="plot" class="object-fit-contain pt-2" width="100%" height="100%"></svg>
 					</div>
 					
+					<!-- Tool Palette for Plot Interaction -->
+					<div class="btn-group w-100 mt-2" role="group" aria-label="Plot interaction tools" id="plot-tools">
+						<button type="button" class="btn btn-outline-secondary active" id="inspector-tool">
+							<i class="bi bi-info-circle"></i> Inspector
+						</button>
+						<button type="button" class="btn btn-outline-secondary" id="pan-tool">
+							<i class="bi bi-arrows-move"></i> Pan
+						</button>
+						<button type="button" class="btn btn-outline-secondary" id="box-zoom-tool">
+							<i class="bi bi-zoom-in"></i> Box Zoom
+						</button>
+						<button type="button" class="btn btn-outline-secondary" id="reset-view-tool">
+							<i class="bi bi-arrow-counterclockwise"></i> Reset View
+						</button>
+					</div>
+					
 					<!-- Miniature floating plot -->
 					<div id="mini-plot-container" class="position-fixed bg-body border border-2 rounded shadow" style="top: 20px; right: 20px; width: 300px; height: 185px; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
 						<svg id="mini-plot" width="100%" height="100%"></svg>
@@ -237,37 +253,28 @@
 								<h3>Left <var>y</var>-axis</h3>
 							</div>
 							<form action="javascript:void(0);">
-								<div class="row align-items-end" id="y-data">
-									<div class="col-md-8">
-										<div class="dropdown d-grid mt-2">
-											<button id="y-label" class="btn btn-primary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select <var>y</var> quantity</button>
-
-											<div class="dropdown-menu" id="y-choices">
-												<div class="form-floating mb-2 mx-2">
-													<input class="form-control" type="text" id="y-search" placeholder="Search" />
-													<label for="y-search">Search</label>
-												</div>
-												<hr class="dropdown-divider" />
-												<div id="y-choices"></div>
+								<div id="y-data">
+									<!-- Axis Label (separate from series) -->
+									<div class="row mb-3">
+										<div class="col-12">
+											<div class="form-floating">
+												<input type="text" class="form-control axis-label-field" id="y-axis-label" placeholder="Left y-axis label" />
+												<label for="y-axis-label">Left <var>y</var>-axis label</label>
 											</div>
 										</div>
-										<div class="form-floating mt-2">
-											<input type="text" class="form-control axis-label-field" id="y-axis-label" placeholder="<var>y</var>-axis label" />
-											<label for="y-axis-label"><var>y</var>-axis label</label>
-										</div>
 									</div>
-									<div class="col-md-4">
-										<div class="form-check form-check-inline">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="y" data-style="line" id="y-plot-line" checked />
-											<label class="form-check-label" for="y-plot-line">Line Plot</label>
-										</div>
-										<div class="form-check form-check-inline mb-2">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="y" data-style="scatter" id="y-plot-scatter" />
-											<label class="form-check-label" for="y-plot-scatter">Scatter Plot</label>
-										</div>
-										<div class="form-floating">
-											<input type="number" class="form-control mark-every" data-axis="y" id="y-mark-every" disabled />
-											<label for="y-mark-every">Marker every <var>n</var> points</label>
+									
+									<!-- Series Container -->
+									<div id="y-series-container">
+										<!-- Series will be dynamically added here -->
+									</div>
+									
+									<!-- Add Series Button -->
+									<div class="row mt-2">
+										<div class="col-12">
+											<button type="button" class="btn btn-outline-primary w-100" id="y-add-series">
+												<i class="bi bi-plus-circle"></i> Add Series to Left Axis
+											</button>
 										</div>
 									</div>
 								</div>
@@ -279,39 +286,28 @@
 								</div>
 							</div>
 							<form action="javascript:void(0);">
-								<div class="row align-items-end" id="yOther-data">
-									<div class="col-md-8">
-										<div class="dropdown d-grid mt-2">
-											<button id="yOther-label" class="btn btn-primary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select other <var>y</var> quantity</button>
-
-											<div class="dropdown-menu" id="y-choices">
-												<form action="javascript:void(0);">
-													<div class="form-floating mb-2 mx-2">
-														<input class="form-control" type="text" id="yOther-search" placeholder="Search" />
-														<label for="yOther-search">Search</label>
-													</div>
-												</form>
-												<hr class="dropdown-divider" />
-												<div id="yOther-choices"></div>
+								<div id="yOther-data">
+									<!-- Axis Label (separate from series) -->
+									<div class="row mb-3">
+										<div class="col-12">
+											<div class="form-floating">
+												<input type="text" class="form-control axis-label-field" id="yOther-axis-label" placeholder="Right y-axis label" />
+												<label for="yOther-axis-label">Right <var>y</var>-axis label</label>
 											</div>
 										</div>
-										<div class="form-floating mt-2">
-											<input type="text" class="form-control axis-label-field" id="yOther-axis-label" placeholder="Other <var>y</var>-axis label" />
-											<label for="yOther-axis-label">Other <var>y</var>-axis label</label>
-										</div>
 									</div>
-									<div class="col-md-4">
-										<div class="form-check form-check-inline">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="yOther" data-style="line" id="yOther-plot-line" checked />
-											<label class="form-check-label" for="yOther-plot-line">Line Plot</label>
-										</div>
-										<div class="form-check form-check-inline mb-2">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="yOther" data-style="scatter" id="yOther-plot-scatter" />
-											<label class="form-check-label" for="yOther-plot-scatter">Scatter Plot</label>
-										</div>
-										<div class="form-floating">
-											<input type="number" class="form-control mark-every" data-axis="yOther" id="yOther-mark-every" disabled />
-											<label for="yOther-mark-every">Marker every <var>n</var> points</label>
+									
+									<!-- Series Container -->
+									<div id="yOther-series-container">
+										<!-- Series will be dynamically added here -->
+									</div>
+									
+									<!-- Add Series Button -->
+									<div class="row mt-2">
+										<div class="col-12">
+											<button type="button" class="btn btn-outline-primary w-100" id="yOther-add-series">
+												<i class="bi bi-plus-circle"></i> Add Series to Right Axis
+											</button>
 										</div>
 									</div>
 								</div>

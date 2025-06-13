@@ -751,6 +751,11 @@ vis = {
 				}
 			});
 		});
+		// Set up handlers for axis label fields
+		d3.selectAll('.axis-label-field').on('input', () => {
+			vis.update_axis_labels();
+		});
+		
 		// Set up handlers for line/scatter controls
 		d3.selectAll('input.plot-style').on('change', function() {
 			const elt = d3.select(this);
@@ -856,6 +861,27 @@ vis = {
 			}
 		});
 
+		// Set up tool selection button handlers
+		d3.select('#inspector-tool').on('click', () => {
+			vis.interaction.current_tool = 'inspector';
+			vis.update_tool_ui();
+		});
+
+		d3.select('#pan-tool').on('click', () => {
+			vis.interaction.current_tool = 'pan';
+			vis.update_tool_ui();
+		});
+
+		d3.select('#box-zoom-tool').on('click', () => {
+			vis.interaction.current_tool = 'box-zoom';
+			vis.update_tool_ui();
+		});
+
+		d3.select('#reset-view-tool').on('click', () => {
+			vis.interaction.current_tool = 'reset-view';
+			vis.reset_view();
+		});
+
 		// In-plot mouse controls
 		vis.svg.mouse_x_pixel = null;
 		vis.svg.mouse_y_pixel = null;
@@ -863,83 +889,90 @@ vis = {
 			vis.axes[axis].mouse_val = null;
 		});
 
+		// Set up tool-aware mouse event handlers
 		vis.svg.attr('cursor', 'crosshair')
+			.on('mousedown', function(event) {
+				const [x, y] = d3.pointer(event, vis.svg.node());
+				if (vis.interaction.current_tool === 'pan' || vis.interaction.current_tool === 'box-zoom') {
+					vis.interaction.is_dragging = true;
+					vis.interaction.drag_start = {x, y};
+					vis.interaction.drag_end = {x, y};
+					
+					// Create zoom rectangle for box-zoom tool
+					if (vis.interaction.current_tool === 'box-zoom') {
+						vis.svg.select('#zoom-rect').remove();
+						vis.svg.append('rect')
+							.attr('id', 'zoom-rect')
+							.attr('x', x)
+							.attr('y', y)
+							.attr('width', 0)
+							.attr('height', 0)
+							.attr('fill', 'none')
+							.attr('stroke', 'blue')
+							.attr('stroke-width', 2)
+							.attr('stroke-dasharray', '5,5');
+					}
+				}
+			})
 			.on('mousemove', function(event) {
-			[vis.svg.mouse_x_pixel, vis.svg.mouse_y_pixel] = d3.pointer(event, vis.svg.node());
-			// console.log(`x: ${vis.svg.mouse_x_pixel}, y: ${vis.svg.mouse_y_pixel}`)
-			label_data = []
-			Object.keys(vis.axes).forEach(axis => {
-				if (vis.axes[axis].data_name && vis.svg[`mouse_${axis[0]}_pixel`] != null) {
-					vis.axes[axis].mouse_val = vis.axes[axis].scale.invert(vis.svg[`mouse_${axis[0]}_pixel`]);
-					label_data.push({axis: vis.axes[axis], val: vis.axes[axis].mouse_val});
-					if (vis.axes[axis].mouse_val >= 10000 || vis.axes[axis].mouse_val <= 0.001) {
-						// Use exponential notation with 3 decimal places
-						label_data[label_data.length - 1].val = label_data[label_data.length - 1].val.toExponential(3);
-					} else {
-						// Convert number to string with 4 significant digits
-						const str = label_data[label_data.length - 1].val.toPrecision(4);
+				const [x, y] = d3.pointer(event, vis.svg.node());
+				vis.svg.mouse_x_pixel = x;
+				vis.svg.mouse_y_pixel = y;
+				
+				if (vis.interaction.is_dragging) {
+					vis.interaction.drag_end = {x, y};
+					
+					// Real-time pan feedback
+					if (vis.interaction.current_tool === 'pan') {
+						const dx = x - vis.interaction.drag_start.x;
+						const dy = y - vis.interaction.drag_start.y;
+						vis.apply_pan_transform(dx, dy);
+					}
+					// Update zoom rectangle for box-zoom tool
+					if (vis.interaction.current_tool === 'box-zoom') {
+						const rect = vis.svg.select('#zoom-rect');
+						const startX = Math.min(vis.interaction.drag_start.x, x);
+						const startY = Math.min(vis.interaction.drag_start.y, y);
+						const width = Math.abs(x - vis.interaction.drag_start.x);
+						const height = Math.abs(y - vis.interaction.drag_start.y);
+						
+						rect.attr('x', startX)
+							.attr('y', startY)
+							.attr('width', width)
+							.attr('height', height);
+					}
+				} else if (vis.interaction.current_tool === 'inspector') {
+					// Show inspector tooltips only when inspector tool is active
+					vis.show_inspector_tooltip(x, y);
+				}
+			})
+			.on('mouseup', function(event) {
+				if (vis.interaction.is_dragging) {
+					vis.interaction.is_dragging = false;
+					
+					if (vis.interaction.current_tool === 'pan') {
+						vis.execute_pan();
+					} else if (vis.interaction.current_tool === 'box-zoom') {
+						vis.execute_box_zoom();
+						vis.svg.select('#zoom-rect').remove();
+					}
+				}
+			})
+			.on('mouseleave', function() {
+				vis.svg.select('#mouse-text').remove();
+				vis.svg.select('#mouse-text-bg').remove();
+				vis.svg.select('#zoom-rect').remove();
+				
+				// If we were panning, execute the pan operation
+				if (vis.interaction.is_dragging && vis.interaction.current_tool === 'pan') {
+					vis.execute_pan();
+				}
+				
+				vis.interaction.is_dragging = false;
+			})
 		
-						// Remove trailing zeros after decimal point
-						const formatted = parseFloat(str).toString();
-		
-						label_data[label_data.length - 1].val = formatted;
-				}					
-					// console.log(`${vis.axes[axis].data_name}: ${vis.axes[axis].mouse_val}`)
-				} else {
-					vis.axes[axis].mouse_val = null;
-				}
-				// create text element for data from mouseover in lower left of vis.svg
-			});
-			if (label_data.length > 0) {
-				// create or update text element with this text. element is a member of vis.svg,
-				// has id "mouse-text", and text is left and bottom justifed at 10px from the
-				// bottom and left edges of the plot.
-				let mouse_text = vis.svg.select('#mouse-text');
-				if (mouse_text.empty()) {
-					mouse_text = vis.svg.append('text')
-						.attr('id', 'mouse-text')
-						.attr('x', vis.svg.mouse_x_pixel + 20)
-						.attr('y', vis.svg.mouse_y_pixel + 35)
-						.attr('text-anchor', 'start')
-						.attr('dominant-baseline', 'baseline')
-						.attr('fill', vis.axes.x.color)
-						.attr('font-size', vis.styles.global.font_size);
-				}
-				// add tspans for each text/val pair
-				mouse_text.selectAll('tspan').remove();
-				mouse_text.selectAll('tspan')
-					.data(label_data)
-					.enter()
-					.append('tspan')
-					.attr('x', vis.svg.mouse_x_pixel + 20)
-					.attr('y', vis.svg.mouse_y_pixel + 35)
-					.attr('dy', (d, i) => (i * 1.2).toString() + 'em')
-					.attr('fill', (d) => d.axis.color)
-					.text(d => `${d['axis'].data_name.replace('_', ' ').replace(/log\s*/g, '')}: ${d['val']}`);
-				// Calculate the bounding box of the text, then adjust for margin
-				let bbox = mouse_text.node().getBBox();
-				let margin = 5;
-				let rect = vis.svg.select('#mouse-text-bg');
-				if (rect.empty()) {
-					rect = vis.svg.insert('rect', () => mouse_text.node())
-						.attr('id', 'mouse-text-bg');;
-				}
-
-				rect.attr('x', bbox.x - margin)
-						.attr('y', bbox.y - margin)
-						.attr('width', bbox.width + 2 * margin)
-						.attr('height', bbox.height + 2 * margin)
-						.attr('fill', vis.axes.x.color == 'Black' ? 'white' : 'rgb(34,37,41)')
-						.attr('stroke', vis.axes.x.color == 'Black' ? 'black' : 'rgb(223,226,230)')
-						.attr('stroke-width', 2)
-						.attr('rx', 10);
-			}
-		});
-		// destroy #mouse-text upon leaving plot area
-		vis.svg.on('mouseleave', function() {
-			vis.svg.select('#mouse-text').remove();
-			vis.svg.select('#mouse-text-bg').remove();
-		});
+		// Initialize tool UI
+		vis.update_tool_ui();
 		
 	},
 
@@ -961,6 +994,12 @@ vis = {
 	marker_interval: {
 		y: 1,
 		yOther: 1,
+	},
+	interaction: {
+		current_tool: 'inspector',
+		is_dragging: false,
+		drag_start: null,
+		drag_end: null
 	},
 	current_bootstrap_size: () => {
 		const smaller = Object.keys(vis.breakpoints).filter(key => +window.innerWidth >= vis.breakpoints[key]);
@@ -987,6 +1026,321 @@ vis = {
 		// Load data for known history/profile columns
 		d3.csv('data/history_columns.csv').then(data => (vis.known_history_names = data));
 		d3.csv('data/profile_columns.csv').then(data => (vis.known_profile_names = data));
+	},
+	
+	// Multi-series management system
+	series_definitions: {
+		y: [], // Array of series definitions for left y-axis
+		yOther: [] // Array of series definitions for right y-axis
+	},
+	
+	setup_series_management: () => {
+		// Setup add series button handlers
+		d3.select('#y-add-series').on('click', () => {
+			vis.add_series_ui('y');
+		});
+		
+		d3.select('#yOther-add-series').on('click', () => {
+			vis.add_series_ui('yOther');
+		});
+	},
+	
+	add_series_ui: (axis) => {
+		const container = d3.select(`#${axis}-series-container`);
+		const seriesIndex = vis.series_definitions[axis].length;
+		const seriesId = `${axis}-series-${seriesIndex}`;
+		
+		// Create series definition
+		const seriesDefinition = {
+			id: seriesId,
+			axis: axis,
+			column: null,
+			label: '',
+			style: {
+				show_line: true,
+				show_markers: false,
+				marker_every: 10
+			}
+		};
+		
+		vis.series_definitions[axis].push(seriesDefinition);
+		
+		// Create UI for this series
+		const seriesDiv = container.append('div')
+			.attr('class', 'series-item border rounded p-3 mb-3')
+			.attr('id', seriesId);
+		
+		// Series header with remove button
+		const headerDiv = seriesDiv.append('div')
+			.attr('class', 'd-flex justify-content-between align-items-center mb-2');
+		
+		headerDiv.append('h6')
+			.attr('class', 'mb-0')
+			.text(`Series ${seriesIndex + 1}`);
+		
+		if (seriesIndex > 0) { // Don't allow removing the first series
+			headerDiv.append('button')
+				.attr('class', 'btn btn-outline-danger btn-sm')
+				.attr('type', 'button')
+				.html('<i class="bi bi-trash"></i>')
+				.on('click', () => {
+					vis.remove_series_ui(axis, seriesIndex);
+				});
+		}
+		
+		// Column selection row
+		const columnRow = seriesDiv.append('div')
+			.attr('class', 'row mb-2');
+		
+		const columnCol = columnRow.append('div')
+			.attr('class', 'col-md-6');
+		
+		const dropdown = columnCol.append('div')
+			.attr('class', 'dropdown d-grid');
+		
+		const dropdownButton = dropdown.append('button')
+			.attr('class', 'btn btn-outline-secondary dropdown-toggle')
+			.attr('type', 'button')
+			.attr('data-bs-toggle', 'dropdown')
+			.attr('aria-expanded', 'false')
+			.attr('id', `${seriesId}-dropdown`)
+			.text('Select column');
+		
+		const dropdownMenu = dropdown.append('div')
+			.attr('class', 'dropdown-menu')
+			.attr('id', `${seriesId}-choices`);
+		
+		// Search field
+		const searchDiv = dropdownMenu.append('div')
+			.attr('class', 'form-floating mb-2 mx-2');
+		
+		searchDiv.append('input')
+			.attr('class', 'form-control')
+			.attr('type', 'text')
+			.attr('id', `${seriesId}-search`)
+			.attr('placeholder', 'Search')
+			.on('input', function() {
+				vis.apply_series_search(seriesId);
+			});
+		
+		searchDiv.append('label')
+			.attr('for', `${seriesId}-search`)
+			.text('Search');
+		
+		dropdownMenu.append('hr')
+			.attr('class', 'dropdown-divider');
+		
+		dropdownMenu.append('div')
+			.attr('id', `${seriesId}-options`);
+		
+		// Series label row
+		const labelCol = columnRow.append('div')
+			.attr('class', 'col-md-6');
+		
+		const labelDiv = labelCol.append('div')
+			.attr('class', 'form-floating');
+		
+		labelDiv.append('input')
+			.attr('type', 'text')
+			.attr('class', 'form-control')
+			.attr('id', `${seriesId}-label`)
+			.attr('placeholder', 'Series label')
+			.on('input', function() {
+				seriesDefinition.label = this.value;
+				vis.register_new_files(); // Refresh plot
+			});
+		
+		labelDiv.append('label')
+			.attr('for', `${seriesId}-label`)
+			.text('Series label');
+		
+		// Style controls moved to style panel
+		
+		// Populate dropdown with available columns
+		vis.update_series_choices(seriesId);
+		
+		return seriesDefinition;
+	},
+	
+	remove_series_ui: (axis, seriesIndex) => {
+		// Remove from series definitions
+		vis.series_definitions[axis].splice(seriesIndex, 1);
+		
+		// Remove UI element
+		d3.select(`#${axis}-series-${seriesIndex}`).remove();
+		
+		// Renumber remaining series
+		vis.series_definitions[axis].forEach((series, newIndex) => {
+			const oldId = series.id;
+			const newId = `${axis}-series-${newIndex}`;
+			series.id = newId;
+			
+			// Update DOM element id and associated elements
+			const element = d3.select(`#${oldId}`);
+			if (!element.empty()) {
+				element.attr('id', newId);
+				// Update all child element ids and references
+				element.select('h6').text(`Series ${newIndex + 1}`);
+				// Update all input ids and labels... (this would be more complex in full implementation)
+			}
+		});
+		
+		// Refresh plot
+		vis.register_new_files();
+	},
+	
+	apply_series_search: (seriesId) => {
+		const query = d3.select(`#${seriesId}-search`).property('value');
+		const optionsContainer = d3.select(`#${seriesId}-options`);
+		
+		if (query.length === 0) {
+			optionsContainer.selectAll('a').classed('d-none', false);
+		} else {
+			optionsContainer.selectAll('a').classed('d-none', (d, i, nodes) => {
+				return !nodes[i].textContent.toLowerCase().includes(query.toLowerCase());
+			});
+		}
+	},
+	
+	update_series_choices: (seriesId) => {
+		if (!vis.name_data) return;
+		
+		const optionsContainer = d3.select(`#${seriesId}-options`);
+		optionsContainer.selectAll('*').remove();
+		
+		const choices = optionsContainer.selectAll('a')
+			.data(vis.name_data)
+			.enter()
+			.append('a')
+			.attr('class', 'dropdown-item')
+			.attr('href', '#')
+			.attr('data-name', d => d.key)
+			.html(d => {
+				let display = d.html_name || d.key.replace(/_/g, ' ');
+				if (d.html_units) {
+					display += ` (${d.html_units})`;
+				}
+				return display;
+			})
+			.on('click', function(event, d) {
+				event.preventDefault();
+				vis.handle_series_column_selection(seriesId, d, this);
+			});
+	},
+	
+	handle_series_column_selection: (seriesId, columnData, element) => {
+		// Find the series definition
+		const [axis, , seriesIndex] = seriesId.split('-');
+		const seriesDefinition = vis.series_definitions[axis][parseInt(seriesIndex)];
+		
+		// Update series definition
+		seriesDefinition.column = columnData.key;
+		
+		// Set axis data_name for the first series (needed for axis labels to appear)
+		if (parseInt(seriesIndex) === 0) {
+			vis.axes[axis].data_name = columnData.key;
+			vis.axes[axis].data_type = columnData.scale || 'linear';
+		}
+		
+		// Update dropdown button text
+		d3.select(`#${seriesId}-dropdown`).html(d3.select(element).html());
+		
+		// Auto-generate series label if empty
+		const labelInput = d3.select(`#${seriesId}-label`);
+		if (!labelInput.property('value')) {
+			const cleanedName = columnData.key
+				.replace(/^log\s*/, '')
+				.replace(/_/g, ' ');
+			labelInput.property('value', cleanedName);
+			seriesDefinition.label = cleanedName;
+		}
+		
+		// Auto-populate axis label if this is the first series and axis label is empty
+		const axisLabelInput = d3.select(`#${axis}-axis-label`);
+		if (parseInt(seriesIndex) === 0 && !axisLabelInput.property('value')) {
+			const cleanedAxisName = columnData.key
+				.replace(/^log\s*/, '')
+				.replace(/_/g, ' ');
+			axisLabelInput.property('value', cleanedAxisName);
+			// Update the SVG label immediately if it exists
+			if (vis.have_axis_labels) {
+				vis.update_axis_labels();
+			}
+		}
+		
+		// Refresh plot
+		vis.register_new_files();
+	},
+	
+	create_multi_series: (file, fileIndex, targetAxis, seriesDefinition, seriesIndex) => {
+		// Generate unique series ID
+		const series_id = `${file.filename}_${targetAxis}_${seriesIndex}_${fileIndex}`;
+		
+		// Get style for this series
+		const style = vis.get_multi_series_style(targetAxis, seriesIndex, fileIndex);
+		
+		// Override style with series definition preferences
+		style.show_line = seriesDefinition.style.show_line;
+		style.show_markers = seriesDefinition.style.show_markers;
+		style.marker_every = seriesDefinition.style.marker_every;
+		
+		// Determine series name
+		let seriesName = seriesDefinition.label || seriesDefinition.column.replace(/_/g, ' ');
+		
+		// Add file indicator for multi-file mode
+		if (vis.files.length > 1) {
+			seriesName += ` (${file.local_name})`;
+		}
+		
+		return {
+			series_id: series_id,
+			file_reference: file,
+			data: file.data.bulk,
+			target_axis: targetAxis,
+			name: seriesName,
+			data_columns: {
+				x: vis.axes.x.data_name,
+				y: seriesDefinition.column
+			},
+			style: style,
+			source_type: 'file',
+			color: style.color
+		};
+	},
+	
+	get_multi_series_style: (axis, seriesIndex, fileIndex) => {
+		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
+		const series_id = `multi_${axis}_${seriesIndex}_${fileIndex}`;
+		
+		// Check if we have persistent styling for this series
+		if (vis.styles.persistent_styles[series_id]) {
+			return { ...vis.styles.persistent_styles[series_id] };
+		}
+		
+		// Create new style with smart color assignment
+		let colorIndex;
+		if (axis === 'y') {
+			// Left axis: cycle through colors starting with blue
+			colorIndex = seriesIndex % colors.length;
+		} else {
+			// Right axis: start with orange (index 1) then continue cycling
+			colorIndex = (seriesIndex + 1) % colors.length;
+		}
+		
+		const style = {
+			color: colors[colorIndex],
+			line_width: vis.styles.global.default_line_width,
+			marker_size: vis.styles.global.default_marker_size,
+			marker_shape: 'circle',
+			opacity: vis.styles.global.default_opacity,
+			show_line: true,
+			show_markers: false
+		};
+		
+		// Store in persistent styles
+		vis.styles.persistent_styles[series_id] = { ...style };
+		
+		return style;
 	},
 	// These variables and methods deal with the plot area and axis scaling,
 	// irrespective of the actual data being plotted
@@ -1030,7 +1384,7 @@ vis = {
 			type: 'linear',
 			min: undefined,
 			max: undefined,
-			color: d3.schemeCategory10[0],
+			color: '#1f77b4', // Tableau10 blue (first color)
 		},
 		yOther: {
 			generic_html: 'other <var>y</var>',
@@ -1041,7 +1395,7 @@ vis = {
 			type: 'linear',
 			min: undefined,
 			max: undefined,
-			color: d3.schemeCategory10[1],
+			color: '#ff7f0e', // Tableau10 orange (second color)
 		},
 	},
 	// Style management system
@@ -1096,43 +1450,140 @@ vis = {
 	// also add some padding to make sure tick labels don't get clipped
 	// Get combined data from all series for extent calculations
 	get_all_data: () => {
-		if (!vis.series || vis.series.length === 0) return [];
+		if (!vis.series || vis.series.length === 0) {
+			// Fallback: return all file data if series aren't available yet
+			if (vis.files && vis.files.length > 0) {
+				return vis.files.flatMap(file => file.data ? file.data.bulk : []);
+			}
+			return [];
+		}
 		return vis.series.flatMap(series => series.data);
 	},
 	width_data: axis => {
-		const allData = vis.get_all_data();
-		const max = vis.axes[axis].max || d3.max(allData, vis.accessor(axis));
-		const min = vis.axes[axis].min || d3.min(allData, vis.accessor(axis));
+		const values = vis.get_axis_data_values(axis);
+		if (values.length === 0) return 1;
+		
+		const max = vis.axes[axis].max || d3.max(values);
+		const min = vis.axes[axis].min || d3.min(values);
 		return max - min;
 	},
 	width_log_data: axis => {
-		const allData = vis.get_all_data();
-		const max = vis.axes[axis].max || d3.max(allData, vis.accessor(axis));
-		const min = vis.axes[axis].min || d3.min(allData, vis.accessor(axis));
+		const values = vis.get_axis_data_values(axis);
+		if (values.length === 0) return 1;
+		
+		const max = vis.axes[axis].max || d3.max(values);
+		const min = vis.axes[axis].min || d3.min(values);
 		return safe_log(max) - safe_log(min);
 	},
+	get_axis_data_values: axis => {
+		// Collect all data values for a specific axis from all relevant series
+		const values = [];
+		
+		if (axis === 'x') {
+			// X-axis: use traditional accessor if data_name is set
+			if (vis.axes[axis].data_name) {
+				const allData = vis.get_all_data();
+				values.push(...allData.map(vis.accessor(axis)));
+			}
+		} else {
+			// Y-axes: collect from series definitions and their corresponding data
+			const seriesDefinitions = vis.series_definitions && vis.series_definitions[axis] ? vis.series_definitions[axis] : [];
+			const validSeriesDefinitions = seriesDefinitions.filter(def => def.column);
+			
+			validSeriesDefinitions.forEach(seriesDef => {
+				// Collect data from all files for this series definition
+				vis.files.forEach(file => {
+					if (file.data && file.data.bulk && seriesDef.column) {
+						const columnData = file.data.bulk.map(row => row[seriesDef.column]);
+						// Apply data transformations (similar to series_accessor logic)
+						const transformedData = columnData.map(val => {
+							if (val === null || val === undefined) return NaN;
+							let transformedVal = parseFloat(val);
+							
+							// Apply transformations based on axis settings
+							const axisControls = vis.axes[axis];
+							
+							// Apply data transformations
+							switch (axisControls.data_trans.rescale) {
+								case 'log':
+									transformedVal = safe_log(transformedVal);
+									break;
+								case 'logabs':
+									transformedVal = safe_log(Math.abs(transformedVal));
+									break;
+								case 'exp':
+									transformedVal = Math.pow(10, transformedVal);
+									break;
+								default:
+									// linear - no change
+									break;
+							}
+							
+							// Apply re-zeroing
+							transformedVal -= axisControls.data_trans.rezero;
+							
+							// Apply modulo
+							if (axisControls.data_trans.divisor != 0) {
+								transformedVal = transformedVal % axisControls.data_trans.divisor;
+							}
+							
+							// Apply absolute value
+							if (axisControls.data_trans.absval) {
+								transformedVal = Math.abs(transformedVal);
+							}
+							
+							return transformedVal;
+						});
+						values.push(...transformedData);
+					}
+				});
+			});
+		}
+		
+		return values.filter(v => !isNaN(v) && isFinite(v));
+	},
+	
 	min_data: axis => {
 		if (vis.axes[axis].min) {
 			return vis.axes[axis].min;
-		} else if (vis.axes[axis].type == 'log') {
-			const allData = vis.get_all_data();
-			const log_min = safe_log(d3.min(allData, vis.accessor(axis)));
-			return Math.pow(10, log_min - 0.05 * vis.width_log_data(axis));
+		}
+		
+		const values = vis.get_axis_data_values(axis);
+		if (values.length === 0) return 0;
+		
+		const min_val = d3.min(values);
+		const max_val = d3.max(values);
+		const range = max_val - min_val;
+		
+		if (vis.axes[axis].type == 'log') {
+			const log_min = safe_log(min_val);
+			const log_max = safe_log(max_val);
+			const log_range = log_max - log_min;
+			return Math.pow(10, log_min - 0.05 * log_range);
 		} else {
-			const allData = vis.get_all_data();
-			return d3.min(allData, vis.accessor(axis)) - 0.05 * vis.width_data(axis);
+			return min_val - 0.05 * range;
 		}
 	},
+	
 	max_data: axis => {
 		if (vis.axes[axis].max) {
 			return vis.axes[axis].max;
-		} else if (vis.axes[axis].type == 'log') {
-			const allData = vis.get_all_data();
-			const log_max = safe_log(d3.max(allData, vis.accessor(axis)));
-			return Math.pow(10, log_max + 0.05 * vis.width_log_data(axis));
+		}
+		
+		const values = vis.get_axis_data_values(axis);
+		if (values.length === 0) return 1;
+		
+		const min_val = d3.min(values);
+		const max_val = d3.max(values);
+		const range = max_val - min_val;
+		
+		if (vis.axes[axis].type == 'log') {
+			const log_min = safe_log(min_val);
+			const log_max = safe_log(max_val);
+			const log_range = log_max - log_min;
+			return Math.pow(10, log_max + 0.05 * log_range);
 		} else {
-			const allData = vis.get_all_data();
-			return d3.max(allData, vis.accessor(axis)) + 0.05 * vis.width_data(axis);
+			return max_val + 0.05 * range;
 		}
 	},
 
@@ -1179,6 +1630,40 @@ vis = {
 		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
 		return d => do_abs(modulo(rezero(rescale(d))));
 	},
+	
+	// Series-specific accessor that uses the series' own column definitions
+	series_accessor: (series, axisType) => {
+		const columnName = axisType === 'x' ? series.data_columns.x : series.data_columns.y;
+		const axis = axisType === 'x' ? 'x' : series.target_axis;
+		
+		if (!columnName) {
+			return d => 0; // Return default value if no column specified
+		}
+		
+		let rescale;
+		let rezero;
+		let modulo;
+		let do_abs;
+		rescale = d => {
+			switch (vis.axes[axis].data_trans.rescale) {
+				case 'log':
+					return safe_log(d[columnName]);
+				case 'logabs':
+					return safe_log(Math.abs(d[columnName]));
+				case 'exp':
+					return Math.pow(10, d[columnName]);
+				default:
+					return d[columnName];
+			}
+		};
+		rezero = val => val - vis.axes[axis].data_trans.rezero;
+		modulo = val => val
+		if (vis.axes[axis].data_trans.divisor != 0) {
+			modulo = val => val % vis.axes[axis].data_trans.divisor
+		}
+		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
+		return d => do_abs(modulo(rezero(rescale(d))));
+	},
 	// Inverse accessor function. Given an axis, this generates returns a function
 	// that maps pixel coordinates on that axis back to data coordinates. This is
 	// useful for things like mouseover events, where we want to know the data
@@ -1206,10 +1691,20 @@ vis = {
 			xxl: 90,
 		},
 	},
+	// Helper functions to check if there are series for each axis
+	has_y_series: () => {
+		return vis.series_definitions && vis.series_definitions.y && 
+			vis.series_definitions.y.some(def => def.column);
+	},
+	has_yOther_series: () => {
+		return vis.series_definitions && vis.series_definitions.yOther && 
+			vis.series_definitions.yOther.some(def => def.column) && 
+			!d3.select('#yOther-data').classed('d-none');
+	},
 	// pixel coordinates for left/bottom of data
 	min_display: axis => {
 		if (axis == 'x') {
-			if (vis.axes.y.data_name) {
+			if (vis.has_y_series()) {
 				return vis.tick_padding.y[vis.saved_bootstrap_size];
 			} else {
 				return 10;
@@ -1221,7 +1716,7 @@ vis = {
 	// pixel coordinates for right/top of data
 	max_display: axis => {
 		if (axis == 'x') {
-			if (vis.axes.yOther.data_name) {
+			if (vis.has_yOther_series()) {
 				return vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size];
 			} else {
 				return vis.width() - 10;
@@ -1278,21 +1773,38 @@ vis = {
 			}
 		});
 
-		// Create series data for each file with persistent styling
-		vis.series = vis.files.map((file, index) => {
-			const series_id = vis.get_series_id(file, index);
-			const style = vis.get_series_style(series_id, index);
+		// Create series data using multi-series model
+		vis.series = [];
+		
+		// Process series definitions from UI
+		['y', 'yOther'].forEach(axis => {
+			// Skip yOther if controls are hidden (multi-file mode)
+			if (axis === 'yOther' && d3.select('#yOther-data').classed('d-none')) {
+				return;
+			}
 			
-			return {
-				file: file,
-				data: file.data.bulk,
-				name: file.local_name,
-				series_id: series_id,
-				style: style,
-				// Keep legacy color for compatibility
-				color: style.color
-			};
+			const seriesDefinitions = vis.series_definitions[axis];
+			if (seriesDefinitions && seriesDefinitions.length > 0) {
+				seriesDefinitions.forEach((seriesDef, seriesIndex) => {
+					if (seriesDef.column && commonColumns.includes(seriesDef.column)) {
+						// Create series for each file
+						vis.files.forEach((file, fileIndex) => {
+							const series = vis.create_multi_series(file, fileIndex, axis, seriesDef, seriesIndex);
+							if (series) vis.series.push(series);
+						});
+					}
+				});
+			}
 		});
+		
+		// Auto-create initial series if none exist
+		if (vis.series_definitions.y.length === 0 && vis.files.length > 0) {
+			vis.add_series_ui('y');
+		}
+		// Only auto-create yOther series if it's not hidden
+		if (vis.series_definitions.yOther.length === 0 && vis.files.length > 0 && !d3.select('#yOther-data').classed('d-none')) {
+			vis.add_series_ui('yOther');
+		}
 
 		// Use first file's column structure for interface (since all have same columns due to intersection)
 		vis.name_data = vis.files[0].data.bulk_names
@@ -1316,6 +1828,15 @@ vis = {
 
 		// Refresh interface to reflect new data
 		Object.keys(vis.axes).forEach(axis => vis.update_choices(axis));
+		
+		// Update series dropdown choices
+		['y', 'yOther'].forEach(axis => {
+			vis.series_definitions[axis].forEach((seriesDef, index) => {
+				const seriesId = `${axis}-series-${index}`;
+				vis.update_series_choices(seriesId);
+			});
+		});
+		
 		vis.update_plot();
 		vis.update_style_panel();
 	},
@@ -1338,9 +1859,10 @@ vis = {
 		
 		// Update axis colors based on mode
 		if (show) {
-			// Single file mode: restore original colors
-			vis.axes.y.color = d3.schemeCategory10[0]; // blue
-			vis.axes.yOther.color = d3.schemeCategory10[1]; // orange
+			// Single file mode: restore original colors using current color scheme
+			const currentColors = vis.styles.color_schemes[vis.styles.global.color_scheme];
+			vis.axes.y.color = currentColors[0]; // first color (blue in tableau10)
+			vis.axes.yOther.color = currentColors[1]; // second color (orange in tableau10)
 		} else {
 			// Multi-file mode: neutral color for y-axis
 			vis.axes.y.color = vis.axes.x.color; // same as x-axis (black)
@@ -1392,21 +1914,41 @@ vis = {
 		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
 		
 		if (vis.series && vis.series.length > 0) {
-			// Update current series with new global settings
-			vis.series.forEach((series, index) => {
-				const new_color = colors[index % colors.length];
-				
-				// Update series style
-				series.style.color = new_color;
-				series.style.line_width = vis.styles.global.default_line_width;
-				series.style.marker_size = vis.styles.global.default_marker_size;
-				series.style.opacity = vis.styles.global.default_opacity;
-				
-				// Update legacy color for compatibility
-				series.color = new_color;
-				
-				// Update persistent storage
-				vis.styles.persistent_styles[series.series_id] = { ...series.style };
+			// Group series by file to maintain proper color relationships
+			const seriesByFile = {};
+			vis.series.forEach(series => {
+				const fileName = series.file_reference.filename;
+				if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
+				seriesByFile[fileName].push(series);
+			});
+			
+			// Update series with axis-aware colors
+			Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
+				seriesByFile[fileName].forEach(series => {
+					// Use axis-specific color logic
+					let colorIndex;
+					if (series.target_axis === 'y') {
+						colorIndex = fileIndex % colors.length;
+					} else if (series.target_axis === 'yOther') {
+						colorIndex = (fileIndex + 1) % colors.length;
+					} else {
+						colorIndex = fileIndex % colors.length;
+					}
+					
+					const new_color = colors[colorIndex];
+					
+					// Update series style
+					series.style.color = new_color;
+					series.style.line_width = vis.styles.global.default_line_width;
+					series.style.marker_size = vis.styles.global.default_marker_size;
+					series.style.opacity = vis.styles.global.default_opacity;
+					
+					// Update legacy color for compatibility
+					series.color = new_color;
+					
+					// Update persistent storage
+					vis.styles.persistent_styles[series.series_id] = { ...series.style };
+				});
 			});
 		}
 		
@@ -1421,8 +1963,86 @@ vis = {
 			style.opacity = vis.styles.global.default_opacity;
 		});
 		
+		// Update axis colors to match new color scheme (but only in single-file mode)
+		if (!d3.select('#yOther-data').classed('d-none')) {
+			vis.axes.y.color = colors[0]; // first color (blue in tableau10)
+			vis.axes.yOther.color = colors[1]; // second color (orange in tableau10)
+		}
+		
 		vis.update_plot();
 		vis.update_style_panel();
+	},
+	// New flexible series creation system
+	create_axis_series: (file, fileIndex, targetAxis) => {
+		// Generate unique series ID based on file and axis
+		const series_id = `${file.filename}_${targetAxis}_${fileIndex}`;
+		
+		// Get axis-specific styling
+		const style = vis.get_axis_specific_style(targetAxis, fileIndex);
+		
+		// Determine series name based on axis and file count
+		let seriesName;
+		if (vis.files.length === 1) {
+			// Single file mode: differentiate by axis
+			seriesName = targetAxis === 'y' ? file.local_name : `${file.local_name} (right)`;
+		} else {
+			// Multi-file mode: use file name
+			seriesName = file.local_name;
+		}
+		
+		return {
+			series_id: series_id,
+			file_reference: file,
+			data: file.data.bulk,
+			target_axis: targetAxis,
+			name: seriesName,
+			data_columns: {
+				x: vis.axes.x.data_name,
+				y: vis.axes[targetAxis].data_name
+			},
+			style: style,
+			source_type: 'file',
+			// Keep legacy color for compatibility
+			color: style.color
+		};
+	},
+	get_axis_specific_style: (axis, fileIndex) => {
+		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
+		const series_id = `${vis.files[fileIndex]?.filename}_${axis}_${fileIndex}`;
+		
+		// Check if we have persistent styling for this series
+		if (vis.styles.persistent_styles[series_id]) {
+			return { ...vis.styles.persistent_styles[series_id] };
+		}
+		
+		// Create new style with axis-specific color logic
+		let colorIndex;
+		if (axis === 'y') {
+			// Left axis: use normal color cycling starting with blue
+			colorIndex = fileIndex % colors.length;
+		} else if (axis === 'yOther') {
+			// Right axis: start with orange (second color) for better differentiation
+			colorIndex = (fileIndex + 1) % colors.length;
+		} else {
+			// Future axes: continue cycling
+			colorIndex = fileIndex % colors.length;
+		}
+		
+		const style = {
+			color: colors[colorIndex],
+			line_width: vis.styles.global.default_line_width,
+			marker_size: vis.styles.global.default_marker_size,
+			opacity: vis.styles.global.default_opacity,
+			show_line: true,
+			show_markers: false,
+			marker_shape: 'circle',
+			line_style: 'solid'
+		};
+		
+		// Save to persistent storage
+		vis.styles.persistent_styles[series_id] = { ...style };
+		
+		return style;
 	},
 	// Style panel UI functions
 	setup_style_handlers: () => {
@@ -1719,6 +2339,51 @@ vis = {
 						vis.update_series_style(d.series_id, { marker_size: parseInt(this.value) });
 					});
 			});
+		
+		// Marker frequency row
+		const markerFreqRow = seriesItems.append('div')
+			.attr('class', 'row mb-3');
+		
+		markerFreqRow.append('div')
+			.attr('class', 'col-6')
+			.each(function(d) {
+				const div = d3.select(this);
+				div.append('label')
+					.attr('class', 'form-label small')
+					.text('Marker every n points');
+				
+				div.append('input')
+					.attr('type', 'number')
+					.attr('class', 'form-control form-control-sm')
+					.attr('min', '1')
+					.attr('step', '1')
+					.property('value', d.style.marker_every || 10)
+					.property('disabled', !d.style.show_markers)
+					.on('change', function() {
+						vis.update_series_style(d.series_id, { marker_every: parseInt(this.value) });
+					});
+			});
+	},
+	
+	update_series_style: (seriesId, styleChanges) => {
+		// Find the series and update its style
+		const series = vis.series.find(s => s.series_id === seriesId);
+		if (series) {
+			Object.assign(series.style, styleChanges);
+			// Update persistent styles
+			if (!vis.styles.persistent_styles[seriesId]) {
+				vis.styles.persistent_styles[seriesId] = {};
+			}
+			Object.assign(vis.styles.persistent_styles[seriesId], styleChanges);
+			
+			// Update color property for backward compatibility
+			if (styleChanges.color) {
+				series.color = styleChanges.color;
+			}
+			
+			// Refresh plot
+			vis.update_plot();
+		}
 	},
 	// helper function for grabbing the relevant "known" column name data
 	known_names: () => {
@@ -1800,13 +2465,26 @@ vis = {
 					document.querySelector(`#${axis}-data-trans-linear`).click();
 				}
 				vis.pause = false;
-				vis.update_plot();
+				// Recreate series with new axis data, then update plot
+				vis.register_new_files();
 				return false;
 			});
 	},
 	make_scale: axis => {
 		// set up right scaling
-		if (vis.axes[axis].data_name) {
+		let shouldCreateScale = false;
+		
+		if (axis === 'x') {
+			// X-axis: use traditional data_name approach
+			shouldCreateScale = vis.axes[axis].data_name;
+		} else {
+			// Y-axes: check if any series definitions exist for this axis (not just actual series)
+			const seriesDefinitions = vis.series_definitions && vis.series_definitions[axis] ? vis.series_definitions[axis] : [];
+			const validSeriesDefinitions = seriesDefinitions.filter(def => def.column);
+			shouldCreateScale = validSeriesDefinitions.length > 0;
+		}
+		
+		if (shouldCreateScale) {
 			if (vis.axes[axis].type == 'log') {
 				vis.axes[axis].scale = d3.scaleLog();
 			} else {
@@ -1850,8 +2528,8 @@ vis = {
 		const y_max = vis.max_data(yAxis);
 
 		return series.data.filter((d, i) => {
-			const x = vis.accessor('x')(d);
-			const y = vis.accessor(yAxis)(d);
+			const x = vis.series_accessor(series, 'x')(d);
+			const y = vis.series_accessor(series, 'y')(d);
 			let res = i % vis.marker_interval[yAxis] == 0;
 			res = res && x >= x_min && x <= x_max;
 			res = res && y >= y_min && y <= y_max;
@@ -1859,8 +2537,10 @@ vis = {
 		});
 	},
 	plot_data_scatter: yAxis => {
-		if (vis.axes[yAxis].data_name && vis.series) {
-			vis.series.forEach((series, seriesIndex) => {
+		if (vis.series) {
+			// Filter series to only those targeting this axis
+			const axisSpecificSeries = vis.series.filter(s => s.target_axis === yAxis);
+			axisSpecificSeries.forEach((series, seriesIndex) => {
 				if (!series.style.show_markers) return;
 				
 				const reducedData = vis.reduced_data_for_series(yAxis, series);
@@ -1875,19 +2555,21 @@ vis = {
 					.append('path')
 					.classed(`marker-${yAxis} series-${seriesIndex}`, true)
 					.attr('d', symbol)
-					.attr('transform', d => `translate(${vis.axes.x.scale(vis.accessor('x')(d))}, ${vis.axes[yAxis].scale(vis.accessor(yAxis)(d))})`)
+					.attr('transform', d => `translate(${vis.axes.x.scale(vis.series_accessor(series, 'x')(d))}, ${vis.axes[yAxis].scale(vis.series_accessor(series, 'y')(d))})`)
 					.attr('fill', series.style.color)
 					.attr('opacity', series.style.opacity);
 			});
 		}
 	},
 	plot_data_line: yAxis => {
-		if (vis.axes[yAxis].data_name && vis.series) {
-			vis.series.forEach((series, seriesIndex) => {
+		if (vis.series) {
+			// Filter series to only those targeting this axis
+			const axisSpecificSeries = vis.series.filter(s => s.target_axis === yAxis);
+			axisSpecificSeries.forEach((series, seriesIndex) => {
 				if (!series.style.show_line) return;
 				
-				const x = vis.accessor('x');
-				const y = vis.accessor(yAxis);
+				const x = vis.series_accessor(series, 'x');
+				const y = vis.series_accessor(series, 'y');
 				const line_maker = d3
 					.line()
 					.x(d => vis.axes.x.scale(x(d)))
@@ -1909,7 +2591,9 @@ vis = {
 	},
 	add_axes: (force_light = false) => {
 		// axes themselves (spines, ticks, tick labels)
-		if (vis.axes.x.data_name) {
+		
+		// X-axis
+		if (vis.axes.x.data_name && vis.axes.x.scale) {
 			vis.svg
 				.append('g')
 				.call(d3.axisTop(vis.axes.x.scale).tickSizeOuter(0))
@@ -1926,7 +2610,10 @@ vis = {
 				.selectAll('text')
 				.remove();
 		}
-		if (vis.axes.y.data_name) {
+		
+		// Left Y-axis (y)
+		const hasYSeries = vis.has_y_series();
+		if (hasYSeries && vis.axes.y.scale) {
 			vis.svg
 				.append('g')
 				.call(d3.axisRight(vis.axes.y.scale).tickSizeOuter(0))
@@ -1935,28 +2622,27 @@ vis = {
 				.attr('text-anchor', 'end')
 				.attr('font-size', vis.styles.global.font_size)
 				.attr('transform', `translate(-${vis.tick_offset()}, 0)`);
-			// Always draw right spine - either with yOther scale or y scale
-			if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
-				// yOther is active: this will be handled below
-			} else {
-				// yOther is hidden or undefined: draw right spine with y scale, no labels
-				vis.svg
-					.append('g')
-					.call(d3.axisLeft(vis.axes.y.scale).tickSizeOuter(0))
-					.attr('transform', `translate(${vis.max_display('x')},0)`)
-					.selectAll('text')
-					.remove();
-			}
 		}
-		if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
+		
+		// Right Y-axis (yOther)
+		const hasYOtherSeries = vis.has_yOther_series();
+		if (hasYOtherSeries && vis.axes.yOther.scale) {
 			vis.svg
 				.append('g')
 				.call(d3.axisLeft(vis.axes.yOther.scale).tickSizeOuter(0))
-				.attr('transform', `translate(${vis.max_display('x')},0)`)
+				.attr('transform', `translate(${vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'start')
 				.attr('font-size', vis.styles.global.font_size)
 				.attr('transform', `translate(${vis.tick_offset()}, 0)`);
+		} else if (hasYSeries && vis.axes.y.scale) {
+			// If only left y-axis has data, draw right spine with no labels
+			vis.svg
+				.append('g')
+				.call(d3.axisLeft(vis.axes.y.scale).tickSizeOuter(0))
+				.attr('transform', `translate(${vis.max_display('x')},0)`)
+				.selectAll('text')
+				.remove();
 		}
 
 		// add or update axis labels
@@ -1984,7 +2670,7 @@ vis = {
 				.attr('font-size', vis.styles.global.font_size)
 				.text(d3.select('#x-axis-label').property('value'));
 		}
-		if (vis.axes.y.data_name) {
+		if (vis.has_y_series()) {
 			vis.svg
 				.append('text')
 				.attr('transform', `translate(5, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`)
@@ -1996,7 +2682,7 @@ vis = {
 				.attr('font-size', vis.styles.global.font_size)
 				.text(d3.select('#y-axis-label').property('value'));
 		}
-		if (vis.axes.yOther.data_name && !d3.select('#yOther-data').classed('d-none')) {
+		if (vis.has_yOther_series()) {
 			vis.svg
 				.append('text')
 				.attr('transform', `translate(${vis.width() - 5}, ${vis.max_display('yOther') + 0.5 * (vis.min_display('yOther') - vis.max_display('yOther'))}) rotate(90)`)
@@ -2008,18 +2694,28 @@ vis = {
 				.attr('font-size', vis.styles.global.font_size)
 				.text(d3.select('#yOther-axis-label').property('value'));
 		}
-		// Set up handlers for axis label fields (should this live here?)
-		d3.selectAll('.axis-label-field').on('keyup', () => {
-			vis.update_axis_labels();
-		});
 		vis.have_axis_labels = true;
 	},
 	// Set axis labels to be whatever is in the input field that controls them.
 	// Perhaps this should live in the data model, but it works quite well.
 	update_axis_labels: () => {
-		d3.select('#svg-x-label').text(d3.select('#x-axis-label').property('value'));
-		d3.select('#svg-y-label').text(d3.select('#y-axis-label').property('value'));
-		d3.select('#svg-yOther-label').text(d3.select('#yOther-axis-label').property('value'));
+		// Update x-axis label if it exists
+		const xLabel = d3.select('#svg-x-label');
+		if (!xLabel.empty()) {
+			xLabel.text(d3.select('#x-axis-label').property('value'));
+		}
+		
+		// Update y-axis label if it exists
+		const yLabel = d3.select('#svg-y-label');
+		if (!yLabel.empty()) {
+			yLabel.text(d3.select('#y-axis-label').property('value'));
+		}
+		
+		// Update yOther-axis label if it exists
+		const yOtherLabel = d3.select('#svg-yOther-label');
+		if (!yOtherLabel.empty()) {
+			yOtherLabel.text(d3.select('#yOther-axis-label').property('value'));
+		}
 	},
 	add_legend: () => {
 		if (!vis.series || vis.series.length <= 1) return; // No legend needed for single series
@@ -2126,15 +2822,29 @@ vis = {
 			return;
 		}
 		vis.clear_plot();
-		if (vis.series && vis.series.length > 0 && vis.axes.x.data_name) {
+		
+		// Check if we have any valid axes to display
+		const hasXAxis = vis.axes.x.data_name;
+		const hasYAxis = vis.series_definitions && vis.series_definitions.y && 
+			vis.series_definitions.y.some(def => def.column);
+		const hasYOtherAxis = vis.series_definitions && vis.series_definitions.yOther && 
+			vis.series_definitions.yOther.some(def => def.column) && 
+			!d3.select('#yOther-data').classed('d-none');
+			
+		// Display plot if we have x-axis and at least one y-axis
+		if (hasXAxis && (hasYAxis || hasYOtherAxis)) {
 			vis.make_scales();
 			vis.make_clipPath();
+			
+			// Plot data for each y-axis that has series
 			['y', 'yOther'].forEach(yAxis => {
 				// Skip yOther if controls are hidden (multi-file mode)
 				if (yAxis === 'yOther' && d3.select('#yOther-data').classed('d-none')) {
 					return;
 				}
-				if (vis.axes[yAxis].data_name) {
+				// Check if there are any series for this axis
+				const axisSpecificSeries = vis.series ? vis.series.filter(s => s.target_axis === yAxis) : [];
+				if (axisSpecificSeries.length > 0) {
 					vis.plot_data_line(yAxis);
 					vis.plot_data_scatter(yAxis);
 				}
@@ -2143,6 +2853,11 @@ vis = {
 			vis.add_axes(force_light);
 			vis.add_legend();
 		}
+		// Always show x-axis if it's set, even without y-data
+		else if (hasXAxis) {
+			vis.make_scales();
+			vis.add_axes(force_light);
+		}
 		
 		// Sync mini plot if visible
 		if (typeof sync_mini_plot === 'function') {
@@ -2150,6 +2865,257 @@ vis = {
 			setTimeout(sync_mini_plot, 50);
 		}
 	},
+	update_tool_ui: () => {
+		// Update button active states
+		d3.selectAll('#plot-tools button').classed('active', false);
+		d3.select(`#${vis.interaction.current_tool}-tool`).classed('active', true);
+		
+		// Update cursor style
+		const plotContainer = d3.select('#main-plot-container');
+		plotContainer.style('cursor', () => {
+			switch(vis.interaction.current_tool) {
+				case 'inspector': return 'crosshair';
+				case 'pan': return 'move';
+				case 'box-zoom': return 'crosshair';
+				case 'reset-view': return 'pointer';
+				default: return 'default';
+			}
+		});
+	},
+	reset_view: () => {
+		// Clear all axis limit input fields
+		const limitFields = ['x-axis-left', 'x-axis-right', 'y-axis-bottom', 'y-axis-top', 'yOther-axis-bottom', 'yOther-axis-top'];
+		limitFields.forEach(fieldId => {
+			const field = d3.select(`#${fieldId}`);
+			if (!field.empty()) {
+				field.property('value', '');
+			}
+		});
+		
+		// Reset axis limits in vis object
+		Object.keys(vis.axes).forEach(axis => {
+			vis.axes[axis].min = undefined;
+			vis.axes[axis].max = undefined;
+		});
+		
+		// Trigger redraw to auto-scale all axes
+		vis.update_plot();
+	},
+	show_inspector_tooltip: (x, y) => {
+		let label_data = [];
+		Object.keys(vis.axes).forEach(axis => {
+			if (vis.axes[axis].data_name && vis.svg[`mouse_${axis[0]}_pixel`] != null) {
+				vis.axes[axis].mouse_val = vis.axes[axis].scale.invert(vis.svg[`mouse_${axis[0]}_pixel`]);
+				label_data.push({axis: vis.axes[axis], val: vis.axes[axis].mouse_val});
+				if (vis.axes[axis].mouse_val >= 10000 || vis.axes[axis].mouse_val <= 0.001) {
+					// Use exponential notation with 3 decimal places
+					label_data[label_data.length - 1].val = label_data[label_data.length - 1].val.toExponential(3);
+				} else {
+					// Convert number to string with 4 significant digits
+					const str = label_data[label_data.length - 1].val.toPrecision(4);
+					// Remove trailing zeros after decimal point
+					const formatted = parseFloat(str).toString();
+					label_data[label_data.length - 1].val = formatted;
+				}
+			} else {
+				vis.axes[axis].mouse_val = null;
+			}
+		});
+		
+		if (label_data.length > 0) {
+			let mouse_text = vis.svg.select('#mouse-text');
+			if (mouse_text.empty()) {
+				mouse_text = vis.svg.append('text')
+					.attr('id', 'mouse-text')
+					.attr('x', x + 20)
+					.attr('y', y + 35)
+					.attr('text-anchor', 'start')
+					.attr('dominant-baseline', 'baseline')
+					.attr('fill', vis.axes.x.color)
+					.attr('font-size', vis.styles.global.font_size);
+			}
+			
+			// Update position and content
+			mouse_text.attr('x', x + 20).attr('y', y + 35);
+			mouse_text.selectAll('tspan').remove();
+			mouse_text.selectAll('tspan')
+				.data(label_data)
+				.enter()
+				.append('tspan')
+				.attr('x', x + 20)
+				.attr('y', y + 35)
+				.attr('dy', (d, i) => (i * 1.2).toString() + 'em')
+				.attr('fill', (d) => d.axis.color)
+				.text(d => `${d['axis'].data_name.replace('_', ' ').replace(/log\s*/g, '')}: ${d['val']}`);
+			
+			// Update background rectangle
+			let bbox = mouse_text.node().getBBox();
+			let margin = 5;
+			let rect = vis.svg.select('#mouse-text-bg');
+			if (rect.empty()) {
+				rect = vis.svg.insert('rect', () => mouse_text.node())
+					.attr('id', 'mouse-text-bg');
+			}
+			
+			rect.attr('x', bbox.x - margin)
+				.attr('y', bbox.y - margin)
+				.attr('width', bbox.width + 2 * margin)
+				.attr('height', bbox.height + 2 * margin)
+				.attr('fill', vis.axes.x.color == 'Black' ? 'white' : 'rgb(34,37,41)')
+				.attr('stroke', vis.axes.x.color == 'Black' ? 'black' : 'rgb(223,226,230)')
+				.attr('stroke-width', 2)
+				.attr('rx', 10);
+		}
+	},
+	execute_pan: () => {
+		// Calculate visual movement for consistent dual y-axis behavior
+		const pixelDy = vis.interaction.drag_end.y - vis.interaction.drag_start.y;
+		
+		// Calculate data coordinate changes
+		Object.keys(vis.axes).forEach(axis => {
+			if (vis.axes[axis].scale && vis.axes[axis].data_name) {
+				let deltaData;
+				if (axis === 'x') {
+					deltaData = vis.axes[axis].scale.invert(vis.interaction.drag_start.x) - 
+					           vis.axes[axis].scale.invert(vis.interaction.drag_end.x);
+				} else {
+					// For y-axes, calculate the visual percentage movement and apply to each axis's range
+					const currentMin = vis.axes[axis].min || vis.axes[axis].scale.domain()[0];
+					const currentMax = vis.axes[axis].max || vis.axes[axis].scale.domain()[1];
+					const currentRange = currentMax - currentMin;
+					
+					// Calculate what percentage of the visual height we moved
+					const plotHeight = vis.axes[axis].scale.range()[0] - vis.axes[axis].scale.range()[1]; // range is [bottom, top]
+					const visualPercent = -pixelDy / plotHeight; // negative because SVG y is inverted
+					
+					// Apply this percentage to the current data range
+					deltaData = visualPercent * currentRange;
+				}
+				
+				// Validate deltaData to prevent invalid values
+				if (!isFinite(deltaData) || isNaN(deltaData)) {
+					console.warn(`Invalid deltaData for axis ${axis}:`, deltaData);
+					return;
+				}
+				
+				// Update axis limits
+				const currentMin = vis.axes[axis].min || vis.axes[axis].scale.domain()[0];
+				const currentMax = vis.axes[axis].max || vis.axes[axis].scale.domain()[1];
+				
+				// Validate current limits
+				if (!isFinite(currentMin) || !isFinite(currentMax) || isNaN(currentMin) || isNaN(currentMax)) {
+					console.warn(`Invalid current limits for axis ${axis}:`, currentMin, currentMax);
+					return;
+				}
+				
+				const newMin = currentMin + deltaData;
+				const newMax = currentMax + deltaData;
+				
+				// Special validation for logarithmic axes
+				if (vis.axes[axis].type === 'log') {
+					if (newMin <= 0 || newMax <= 0) {
+						console.warn(`Log axis ${axis} pan would create non-positive limits:`, newMin, newMax);
+						return; // Skip this axis - can't have non-positive values on log scale
+					}
+				}
+				
+				// Validate new limits
+				if (!isFinite(newMin) || !isFinite(newMax) || isNaN(newMin) || isNaN(newMax)) {
+					console.warn(`Invalid new limits for axis ${axis}:`, newMin, newMax);
+					return;
+				}
+				
+				vis.axes[axis].min = newMin;
+				vis.axes[axis].max = newMax;
+				
+				// Update input fields with correct field IDs
+				let minFieldId, maxFieldId;
+				if (axis === 'x') {
+					minFieldId = 'x-axis-left';
+					maxFieldId = 'x-axis-right';
+				} else if (axis === 'y') {
+					minFieldId = 'y-axis-bottom';
+					maxFieldId = 'y-axis-top';
+				} else if (axis === 'yOther') {
+					minFieldId = 'yOther-axis-bottom';
+					maxFieldId = 'yOther-axis-top';
+				}
+				
+				const minField = d3.select(`#${minFieldId}`);
+				const maxField = d3.select(`#${maxFieldId}`);
+				
+				if (!minField.empty()) minField.property('value', vis.axes[axis].min);
+				if (!maxField.empty()) maxField.property('value', vis.axes[axis].max);
+			}
+		});
+		
+		vis.update_plot();
+	},
+	execute_box_zoom: () => {
+		const startX = Math.min(vis.interaction.drag_start.x, vis.interaction.drag_end.x);
+		const endX = Math.max(vis.interaction.drag_start.x, vis.interaction.drag_end.x);
+		const startY = Math.min(vis.interaction.drag_start.y, vis.interaction.drag_end.y);
+		const endY = Math.max(vis.interaction.drag_start.y, vis.interaction.drag_end.y);
+		
+		// Only zoom if the rectangle is large enough
+		if (Math.abs(endX - startX) > 10 && Math.abs(endY - startY) > 10) {
+			// Update x-axis limits
+			if (vis.axes.x.scale && vis.axes.x.data_name) {
+				vis.axes.x.min = vis.axes.x.scale.invert(startX);
+				vis.axes.x.max = vis.axes.x.scale.invert(endX);
+				
+				d3.select('#x-axis-left').property('value', vis.axes.x.min);
+				d3.select('#x-axis-right').property('value', vis.axes.x.max);
+			}
+			
+			// Update y-axis limits (y coordinates are inverted in SVG)
+			// Both y-axes use the same pixel coordinates for visual consistency
+			if (vis.axes.y.scale && vis.axes.y.data_name) {
+				vis.axes.y.min = vis.axes.y.scale.invert(endY);
+				vis.axes.y.max = vis.axes.y.scale.invert(startY);
+				
+				d3.select('#y-axis-bottom').property('value', vis.axes.y.min);
+				d3.select('#y-axis-top').property('value', vis.axes.y.max);
+			}
+			
+			// Update yOther-axis limits using same pixel coordinates for visual consistency
+			if (vis.axes.yOther.scale && vis.axes.yOther.data_name) {
+				vis.axes.yOther.min = vis.axes.yOther.scale.invert(endY);
+				vis.axes.yOther.max = vis.axes.yOther.scale.invert(startY);
+				
+				d3.select('#yOther-axis-bottom').property('value', vis.axes.yOther.min);
+				d3.select('#yOther-axis-top').property('value', vis.axes.yOther.max);
+			}
+			
+			vis.update_plot();
+		}
+	},
+	apply_pan_transform: (dx, dy) => {
+		// Apply temporary transform to data elements for real-time feedback
+		// Transform all plot data elements (line groups and marker paths)
+		const dataElements = vis.svg.selectAll('g[class*="line-series-"], path[class*="marker-"]');
+		
+		// Apply CSS transform - use transform attribute for better SVG compatibility
+		dataElements.attr('transform', function() {
+			const existing = d3.select(this).attr('transform') || '';
+			// Remove any existing translate and add the new one
+			const cleaned = existing.replace(/translate\([^)]*\)/g, '').trim();
+			return `translate(${dx}, ${dy}) ${cleaned}`.trim();
+		});
+	},
+	finalize_pan: () => {
+		// Remove transform from data elements
+		const dataElements = vis.svg.selectAll('g[class*="line-series-"], path[class*="marker-"]');
+		
+		dataElements.attr('transform', function() {
+			const existing = d3.select(this).attr('transform') || '';
+			// Remove any translate transform, keeping other transforms
+			return existing.replace(/translate\([^)]*\)/g, '').trim() || null;
+		});
+		
+		// Execute the pan operation to update axis limits and redraw
+		vis.execute_pan();
+	}
 };
 
 // Downloads an SVG on the webpage, accessed by its class name
@@ -2303,6 +3269,7 @@ setup = () => {
 	file_manager.setup();
 	vis.setup();
 	vis.setup_style_handlers();
+	vis.setup_series_management();
 	
 	// Setup files panel hide/show toggle
 	setup_files_panel_toggle();
