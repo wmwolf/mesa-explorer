@@ -201,118 +201,8 @@ vis = {
 			}
 		});
 
-		// Set up tool selection button handlers
-		d3.select('#inspector-tool').on('click', () => {
-			vis.interaction.current_tool = 'inspector';
-			vis.update_tool_ui();
-		});
-
-		d3.select('#pan-tool').on('click', () => {
-			vis.interaction.current_tool = 'pan';
-			vis.update_tool_ui();
-		});
-
-		d3.select('#box-zoom-tool').on('click', () => {
-			vis.interaction.current_tool = 'box-zoom';
-			vis.update_tool_ui();
-		});
-
-		d3.select('#reset-view-tool').on('click', () => {
-			vis.interaction.current_tool = 'reset-view';
-			vis.reset_view();
-		});
-
-		// In-plot mouse controls
-		vis.svg.mouse_x_pixel = null;
-		vis.svg.mouse_y_pixel = null;
-		Object.keys(vis.axes).forEach(axis => {
-			vis.axes[axis].mouse_val = null;
-		});
-
-		// Set up tool-aware mouse event handlers
-		vis.svg.attr('cursor', 'crosshair')
-			.on('mousedown', function(event) {
-				const [x, y] = d3.pointer(event, vis.svg.node());
-				if (vis.interaction.current_tool === 'pan' || vis.interaction.current_tool === 'box-zoom') {
-					vis.interaction.is_dragging = true;
-					vis.interaction.drag_start = {x, y};
-					vis.interaction.drag_end = {x, y};
-					
-					// Create zoom rectangle for box-zoom tool
-					if (vis.interaction.current_tool === 'box-zoom') {
-						vis.svg.select('#zoom-rect').remove();
-						vis.svg.append('rect')
-							.attr('id', 'zoom-rect')
-							.attr('x', x)
-							.attr('y', y)
-							.attr('width', 0)
-							.attr('height', 0)
-							.attr('fill', 'none')
-							.attr('stroke', 'blue')
-							.attr('stroke-width', 2)
-							.attr('stroke-dasharray', '5,5');
-					}
-				}
-			})
-			.on('mousemove', function(event) {
-				const [x, y] = d3.pointer(event, vis.svg.node());
-				vis.svg.mouse_x_pixel = x;
-				vis.svg.mouse_y_pixel = y;
-				
-				if (vis.interaction.is_dragging) {
-					vis.interaction.drag_end = {x, y};
-					
-					// Real-time pan feedback
-					if (vis.interaction.current_tool === 'pan') {
-						const dx = x - vis.interaction.drag_start.x;
-						const dy = y - vis.interaction.drag_start.y;
-						vis.apply_pan_transform(dx, dy);
-					}
-					// Update zoom rectangle for box-zoom tool
-					if (vis.interaction.current_tool === 'box-zoom') {
-						const rect = vis.svg.select('#zoom-rect');
-						const startX = Math.min(vis.interaction.drag_start.x, x);
-						const startY = Math.min(vis.interaction.drag_start.y, y);
-						const width = Math.abs(x - vis.interaction.drag_start.x);
-						const height = Math.abs(y - vis.interaction.drag_start.y);
-						
-						rect.attr('x', startX)
-							.attr('y', startY)
-							.attr('width', width)
-							.attr('height', height);
-					}
-				} else if (vis.interaction.current_tool === 'inspector') {
-					// Show inspector tooltips only when inspector tool is active
-					vis.show_inspector_tooltip(x, y);
-				}
-			})
-			.on('mouseup', function(event) {
-				if (vis.interaction.is_dragging) {
-					vis.interaction.is_dragging = false;
-					
-					if (vis.interaction.current_tool === 'pan') {
-						vis.execute_pan();
-					} else if (vis.interaction.current_tool === 'box-zoom') {
-						vis.execute_box_zoom();
-						vis.svg.select('#zoom-rect').remove();
-					}
-				}
-			})
-			.on('mouseleave', function() {
-				vis.svg.select('#mouse-text').remove();
-				vis.svg.select('#mouse-text-bg').remove();
-				vis.svg.select('#zoom-rect').remove();
-				
-				// If we were panning, execute the pan operation
-				if (vis.interaction.is_dragging && vis.interaction.current_tool === 'pan') {
-					vis.execute_pan();
-				}
-				
-				vis.interaction.is_dragging = false;
-			})
-		
-		// Initialize tool UI
-		vis.update_tool_ui();
+		// Initialize interaction manager
+		interaction_manager.setup();
 		
 	},
 
@@ -334,12 +224,6 @@ vis = {
 	marker_interval: {
 		y: 1,
 		yOther: 1,
-	},
-	interaction: {
-		current_tool: 'inspector',
-		is_dragging: false,
-		drag_start: null,
-		drag_end: null
 	},
 	current_bootstrap_size: () => {
 		const smaller = Object.keys(vis.breakpoints).filter(key => +window.innerWidth >= vis.breakpoints[key]);
@@ -649,12 +533,12 @@ vis = {
 	},
 	
 	get_multi_series_style: (axis, seriesIndex, fileIndex) => {
-		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
+		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		const series_id = `multi_${axis}_${seriesIndex}_${fileIndex}`;
 		
 		// Check if we have persistent styling for this series
-		if (vis.styles.persistent_styles[series_id]) {
-			return { ...vis.styles.persistent_styles[series_id] };
+		if (style_manager.styles.persistent_styles[series_id]) {
+			return { ...style_manager.styles.persistent_styles[series_id] };
 		}
 		
 		// Create new style with smart color assignment
@@ -669,16 +553,16 @@ vis = {
 		
 		const style = {
 			color: colors[colorIndex],
-			line_width: vis.styles.global.default_line_width,
-			marker_size: vis.styles.global.default_marker_size,
+			line_width: style_manager.styles.global.default_line_width,
+			marker_size: style_manager.styles.global.default_marker_size,
 			marker_shape: 'circle',
-			opacity: vis.styles.global.default_opacity,
+			opacity: style_manager.styles.global.default_opacity,
 			show_line: true,
 			show_markers: false
 		};
 		
 		// Store in persistent styles
-		vis.styles.persistent_styles[series_id] = { ...style };
+		style_manager.styles.persistent_styles[series_id] = { ...style };
 		
 		return style;
 	},
@@ -737,53 +621,6 @@ vis = {
 			max: undefined,
 			color: '#ff7f0e', // Tableau10 orange (second color)
 		},
-	},
-	// Style management system
-	styles: {
-		// Persistent style storage by series ID
-		persistent_styles: {},
-		
-		// Global style settings
-		global: {
-			color_scheme: 'tableau10',
-			default_line_width: 2.0,
-			default_marker_size: 4,
-			default_opacity: 1.0,
-			font_size: 12
-		},
-		
-		// Available color schemes
-		color_schemes: {
-			tableau10: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'],
-			set1: ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf', '#999999'],
-			set2: ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3'],
-			dark2: ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666'],
-			viridis: ['#440154', '#482777', '#3f4a8a', '#31678e', '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'],
-			magma: ['#000004', '#180f3d', '#440f76', '#721f81', '#9f2f7f', '#cd4071', '#f1605d', '#fd9668', '#fcfdbf'],
-			plasma: ['#0d0887', '#5302a3', '#8b0aa5', '#b83289', '#db5c68', '#f48849', '#febd2a', '#f0f921'],
-			inferno: ['#000004', '#1b0c41', '#4a0c6b', '#781c6d', '#a52c60', '#cf4446', '#ed6925', '#fb9b06', '#fcffa4']
-		},
-		
-		// Line style options
-		line_styles: {
-			solid: 'none',
-			dashed: '5,5',
-			dotted: '2,3',
-			dashdot: '5,5,2,5'
-		},
-		
-		// Marker shapes with D3 symbols
-		marker_shapes: {
-			circle: d3.symbolCircle,
-			square: d3.symbolSquare,
-			triangle_up: d3.symbolTriangle,
-			triangle_down: d3.symbolTriangle2,
-			diamond: d3.symbolDiamond,
-			star: d3.symbolStar,
-			cross: d3.symbolCross,
-			pentagon: d3.symbolWye,
-			hexagon: d3.symbolSquare // D3 doesn't have hexagon, using square as placeholder
-		}
 	},
 	// minimum and maximum data coordinates to display on plot
 	// TODO: make automatic margins work with logarithmic data/axes
@@ -1178,7 +1015,7 @@ vis = {
 		});
 		
 		vis.update_plot();
-		vis.update_style_panel();
+		style_manager.update_style_panel();
 	},
 	// Show or hide right y-axis controls and manage axis colors
 	show_right_axis_controls: (show) => {
@@ -1200,7 +1037,7 @@ vis = {
 		// Update axis colors based on mode
 		if (show) {
 			// Single file mode: restore original colors using current color scheme
-			const currentColors = vis.styles.color_schemes[vis.styles.global.color_scheme];
+			const currentColors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 			vis.axes.y.color = currentColors[0]; // first color (blue in tableau10)
 			vis.axes.yOther.color = currentColors[1]; // second color (orange in tableau10)
 		} else {
@@ -1210,518 +1047,6 @@ vis = {
 		
 		// Force plot refresh to update axis colors
 		if (!vis.pause) {
-			vis.update_plot();
-		}
-	},
-	// Style management functions
-	get_series_id: (file, index) => {
-		return `${file.local_name}_${index}`;
-	},
-	get_series_style: (series_id, color_index) => {
-		// Check if we have a persistent style for this series
-		if (vis.styles.persistent_styles[series_id]) {
-			return vis.styles.persistent_styles[series_id];
-		}
-		
-		// Create default style from color scheme
-		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
-		const color = colors[color_index % colors.length];
-		
-		const default_style = {
-			color: color,
-			show_line: true,
-			show_markers: false,
-			line_width: vis.styles.global.default_line_width,
-			line_style: 'solid',
-			marker_shape: 'circle',
-			marker_size: vis.styles.global.default_marker_size,
-			opacity: vis.styles.global.default_opacity
-		};
-		
-		// Store it for persistence
-		vis.styles.persistent_styles[series_id] = default_style;
-		return default_style;
-	},
-	update_series_style: (series_id, style_updates) => {
-		if (!vis.styles.persistent_styles[series_id]) {
-			vis.styles.persistent_styles[series_id] = {};
-		}
-		Object.assign(vis.styles.persistent_styles[series_id], style_updates);
-		vis.update_plot();
-	},
-	apply_global_style_changes: () => {
-		// Apply global settings to all currently displayed series
-		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
-		
-		if (vis.series && vis.series.length > 0) {
-			// Group series by file to maintain proper color relationships
-			const seriesByFile = {};
-			vis.series.forEach(series => {
-				const fileName = series.file_reference.filename;
-				if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
-				seriesByFile[fileName].push(series);
-			});
-			
-			// Update series with axis-aware colors
-			Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
-				seriesByFile[fileName].forEach(series => {
-					// Use axis-specific color logic
-					let colorIndex;
-					if (series.target_axis === 'y') {
-						colorIndex = fileIndex % colors.length;
-					} else if (series.target_axis === 'yOther') {
-						colorIndex = (fileIndex + 1) % colors.length;
-					} else {
-						colorIndex = fileIndex % colors.length;
-					}
-					
-					const new_color = colors[colorIndex];
-					
-					// Update series style
-					series.style.color = new_color;
-					series.style.line_width = vis.styles.global.default_line_width;
-					series.style.marker_size = vis.styles.global.default_marker_size;
-					series.style.opacity = vis.styles.global.default_opacity;
-					
-					// Update legacy color for compatibility
-					series.color = new_color;
-					
-					// Update persistent storage
-					vis.styles.persistent_styles[series.series_id] = { ...series.style };
-				});
-			});
-		}
-		
-		// Also update any other persistent styles not currently displayed
-		Object.keys(vis.styles.persistent_styles).forEach((series_id, index) => {
-			const style = vis.styles.persistent_styles[series_id];
-			const new_color = colors[index % colors.length];
-			
-			style.color = new_color;
-			style.line_width = vis.styles.global.default_line_width;
-			style.marker_size = vis.styles.global.default_marker_size;
-			style.opacity = vis.styles.global.default_opacity;
-		});
-		
-		// Update axis colors to match new color scheme (but only in single-file mode)
-		if (!d3.select('#yOther-data').classed('d-none')) {
-			vis.axes.y.color = colors[0]; // first color (blue in tableau10)
-			vis.axes.yOther.color = colors[1]; // second color (orange in tableau10)
-		}
-		
-		vis.update_plot();
-		vis.update_style_panel();
-	},
-	// New flexible series creation system
-	create_axis_series: (file, fileIndex, targetAxis) => {
-		// Generate unique series ID based on file and axis
-		const series_id = `${file.filename}_${targetAxis}_${fileIndex}`;
-		
-		// Get axis-specific styling
-		const style = vis.get_axis_specific_style(targetAxis, fileIndex);
-		
-		// Determine series name based on axis and file count
-		let seriesName;
-		if (vis.files.length === 1) {
-			// Single file mode: differentiate by axis
-			seriesName = targetAxis === 'y' ? file.local_name : `${file.local_name} (right)`;
-		} else {
-			// Multi-file mode: use file name
-			seriesName = file.local_name;
-		}
-		
-		return {
-			series_id: series_id,
-			file_reference: file,
-			data: file.data.bulk,
-			target_axis: targetAxis,
-			name: seriesName,
-			data_columns: {
-				x: vis.axes.x.data_name,
-				y: vis.axes[targetAxis].data_name
-			},
-			style: style,
-			source_type: 'file',
-			// Keep legacy color for compatibility
-			color: style.color
-		};
-	},
-	get_axis_specific_style: (axis, fileIndex) => {
-		const colors = vis.styles.color_schemes[vis.styles.global.color_scheme];
-		const series_id = `${vis.files[fileIndex]?.filename}_${axis}_${fileIndex}`;
-		
-		// Check if we have persistent styling for this series
-		if (vis.styles.persistent_styles[series_id]) {
-			return { ...vis.styles.persistent_styles[series_id] };
-		}
-		
-		// Create new style with axis-specific color logic
-		let colorIndex;
-		if (axis === 'y') {
-			// Left axis: use normal color cycling starting with blue
-			colorIndex = fileIndex % colors.length;
-		} else if (axis === 'yOther') {
-			// Right axis: start with orange (second color) for better differentiation
-			colorIndex = (fileIndex + 1) % colors.length;
-		} else {
-			// Future axes: continue cycling
-			colorIndex = fileIndex % colors.length;
-		}
-		
-		const style = {
-			color: colors[colorIndex],
-			line_width: vis.styles.global.default_line_width,
-			marker_size: vis.styles.global.default_marker_size,
-			opacity: vis.styles.global.default_opacity,
-			show_line: true,
-			show_markers: false,
-			marker_shape: 'circle',
-			line_style: 'solid'
-		};
-		
-		// Save to persistent storage
-		vis.styles.persistent_styles[series_id] = { ...style };
-		
-		return style;
-	},
-	// Style panel UI functions
-	setup_style_handlers: () => {
-		// Global style handlers
-		d3.select('#colorSchemeSelect').on('change', function() {
-			vis.styles.global.color_scheme = this.value;
-			vis.apply_global_style_changes();
-		});
-		
-		d3.select('#defaultLineWidth').on('input', function() {
-			vis.styles.global.default_line_width = parseFloat(this.value);
-			// Auto-apply to current series
-			if (vis.series) {
-				vis.series.forEach(series => {
-					series.style.line_width = vis.styles.global.default_line_width;
-					vis.styles.persistent_styles[series.series_id].line_width = vis.styles.global.default_line_width;
-				});
-				vis.update_plot();
-				vis.update_style_panel();
-			}
-		});
-		
-		d3.select('#defaultMarkerSize').on('input', function() {
-			vis.styles.global.default_marker_size = parseInt(this.value);
-			// Auto-apply to current series
-			if (vis.series) {
-				vis.series.forEach(series => {
-					series.style.marker_size = vis.styles.global.default_marker_size;
-					vis.styles.persistent_styles[series.series_id].marker_size = vis.styles.global.default_marker_size;
-				});
-				vis.update_plot();
-				vis.update_style_panel();
-			}
-		});
-		
-		d3.select('#defaultOpacity').on('input', function() {
-			vis.styles.global.default_opacity = parseFloat(this.value);
-			d3.select('#defaultOpacityValue').text(this.value);
-			// Auto-apply to current series
-			if (vis.series) {
-				vis.series.forEach(series => {
-					series.style.opacity = vis.styles.global.default_opacity;
-					vis.styles.persistent_styles[series.series_id].opacity = vis.styles.global.default_opacity;
-				});
-				vis.update_plot();
-				vis.update_style_panel();
-			}
-		});
-		
-		d3.select('#globalFontSize').on('input', function() {
-			vis.styles.global.font_size = parseInt(this.value);
-			d3.select('#globalFontSizeValue').text(this.value + 'px');
-			// Apply immediately to plot
-			vis.update_plot();
-		});
-		
-		d3.select('#applyGlobalStyles').on('click', () => {
-			vis.apply_global_style_changes();
-		});
-		
-		d3.select('#resetAllStyles').on('click', () => {
-			vis.styles.persistent_styles = {};
-			vis.apply_global_style_changes();
-		});
-		
-		// Preset handlers
-		d3.select('#saveStylePreset').on('click', () => {
-			localStorage.setItem('mesa_explorer_style_preset', JSON.stringify(vis.styles));
-			alert('Style preset saved!');
-		});
-		
-		d3.select('#loadStylePreset').on('click', () => {
-			const saved = localStorage.getItem('mesa_explorer_style_preset');
-			if (saved) {
-				Object.assign(vis.styles, JSON.parse(saved));
-				vis.update_style_panel();
-				vis.update_plot();
-				alert('Style preset loaded!');
-			} else {
-				alert('No saved preset found.');
-			}
-		});
-	},
-	update_style_panel: () => {
-		if (!vis.series || vis.series.length === 0) return;
-		
-		// Update global settings
-		d3.select('#colorSchemeSelect').property('value', vis.styles.global.color_scheme);
-		d3.select('#defaultLineWidth').property('value', vis.styles.global.default_line_width);
-		d3.select('#defaultMarkerSize').property('value', vis.styles.global.default_marker_size);
-		d3.select('#defaultOpacity').property('value', vis.styles.global.default_opacity);
-		d3.select('#defaultOpacityValue').text(vis.styles.global.default_opacity.toFixed(1));
-		d3.select('#globalFontSize').property('value', vis.styles.global.font_size);
-		d3.select('#globalFontSizeValue').text(vis.styles.global.font_size + 'px');
-		
-		// Generate individual series controls
-		const container = d3.select('#seriesStylesList');
-		container.selectAll('.series-style-item').remove();
-		
-		const seriesItems = container.selectAll('.series-style-item')
-			.data(vis.series)
-			.enter()
-			.append('div')
-			.attr('class', 'series-style-item border rounded p-3 mb-3');
-		
-		// Series name header
-		seriesItems.append('h6')
-			.style('color', d => d.style.color)
-			.text(d => d.name);
-		
-		// Plot type controls
-		const plotTypeRow = seriesItems.append('div')
-			.attr('class', 'row mb-3');
-		
-		const lineCol = plotTypeRow.append('div')
-			.attr('class', 'col-6');
-		
-		lineCol.append('div')
-			.attr('class', 'form-check')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('input')
-					.attr('class', 'form-check-input')
-					.attr('type', 'checkbox')
-					.attr('id', `line-${d.series_id}`)
-					.property('checked', d.style.show_line)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { show_line: this.checked });
-					});
-				
-				div.append('label')
-					.attr('class', 'form-check-label')
-					.attr('for', `line-${d.series_id}`)
-					.text('Line');
-			});
-		
-		const markerCol = plotTypeRow.append('div')
-			.attr('class', 'col-6');
-		
-		markerCol.append('div')
-			.attr('class', 'form-check')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('input')
-					.attr('class', 'form-check-input')
-					.attr('type', 'checkbox')
-					.attr('id', `marker-${d.series_id}`)
-					.property('checked', d.style.show_markers)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { show_markers: this.checked });
-					});
-				
-				div.append('label')
-					.attr('class', 'form-check-label')
-					.attr('for', `marker-${d.series_id}`)
-					.text('Markers');
-			});
-		
-		// Color picker
-		seriesItems.append('div')
-			.attr('class', 'mb-3')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label')
-					.text('Color');
-				
-				div.append('input')
-					.attr('type', 'color')
-					.attr('class', 'form-control form-control-color')
-					.property('value', d.style.color)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { color: this.value });
-					});
-			});
-		
-		// Line settings
-		const lineSettingsRow = seriesItems.append('div')
-			.attr('class', 'row mb-3');
-		
-		// Line width
-		lineSettingsRow.append('div')
-			.attr('class', 'col-4')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label small')
-					.text('Width');
-				
-				div.append('input')
-					.attr('type', 'number')
-					.attr('class', 'form-control form-control-sm')
-					.attr('min', '0.5')
-					.attr('max', '10')
-					.attr('step', '0.5')
-					.property('value', d.style.line_width)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { line_width: parseFloat(this.value) });
-					});
-			});
-		
-		// Line style
-		lineSettingsRow.append('div')
-			.attr('class', 'col-4')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label small')
-					.text('Style');
-				
-				const select = div.append('select')
-					.attr('class', 'form-select form-select-sm')
-					.property('value', d.style.line_style)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { line_style: this.value });
-					});
-				
-				select.selectAll('option')
-					.data(Object.keys(vis.styles.line_styles))
-					.enter()
-					.append('option')
-					.attr('value', d => d)
-					.property('selected', style => style === d.style.line_style)
-					.text(d => d.charAt(0).toUpperCase() + d.slice(1));
-			});
-		
-		// Opacity
-		lineSettingsRow.append('div')
-			.attr('class', 'col-4')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label small')
-					.text('Opacity');
-				
-				div.append('input')
-					.attr('type', 'range')
-					.attr('class', 'form-range')
-					.attr('min', '0.1')
-					.attr('max', '1')
-					.attr('step', '0.1')
-					.property('value', d.style.opacity)
-					.on('input', function() {
-						vis.update_series_style(d.series_id, { opacity: parseFloat(this.value) });
-					});
-			});
-		
-		// Marker settings
-		const markerSettingsRow = seriesItems.append('div')
-			.attr('class', 'row mb-3');
-		
-		// Marker shape
-		markerSettingsRow.append('div')
-			.attr('class', 'col-6')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label small')
-					.text('Shape');
-				
-				const select = div.append('select')
-					.attr('class', 'form-select form-select-sm')
-					.property('value', d.style.marker_shape)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { marker_shape: this.value });
-					});
-				
-				select.selectAll('option')
-					.data(Object.keys(vis.styles.marker_shapes))
-					.enter()
-					.append('option')
-					.attr('value', d => d)
-					.property('selected', shape => shape === d.style.marker_shape)
-					.text(d => d.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
-			});
-		
-		// Marker size
-		markerSettingsRow.append('div')
-			.attr('class', 'col-6')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label small')
-					.text('Size');
-				
-				div.append('input')
-					.attr('type', 'number')
-					.attr('class', 'form-control form-control-sm')
-					.attr('min', '1')
-					.attr('max', '20')
-					.attr('step', '1')
-					.property('value', d.style.marker_size)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { marker_size: parseInt(this.value) });
-					});
-			});
-		
-		// Marker frequency row
-		const markerFreqRow = seriesItems.append('div')
-			.attr('class', 'row mb-3');
-		
-		markerFreqRow.append('div')
-			.attr('class', 'col-6')
-			.each(function(d) {
-				const div = d3.select(this);
-				div.append('label')
-					.attr('class', 'form-label small')
-					.text('Marker every n points');
-				
-				div.append('input')
-					.attr('type', 'number')
-					.attr('class', 'form-control form-control-sm')
-					.attr('min', '1')
-					.attr('step', '1')
-					.property('value', d.style.marker_every || 10)
-					.property('disabled', !d.style.show_markers)
-					.on('change', function() {
-						vis.update_series_style(d.series_id, { marker_every: parseInt(this.value) });
-					});
-			});
-	},
-	
-	update_series_style: (seriesId, styleChanges) => {
-		// Find the series and update its style
-		const series = vis.series.find(s => s.series_id === seriesId);
-		if (series) {
-			Object.assign(series.style, styleChanges);
-			// Update persistent styles
-			if (!vis.styles.persistent_styles[seriesId]) {
-				vis.styles.persistent_styles[seriesId] = {};
-			}
-			Object.assign(vis.styles.persistent_styles[seriesId], styleChanges);
-			
-			// Update color property for backward compatibility
-			if (styleChanges.color) {
-				series.color = styleChanges.color;
-			}
-			
-			// Refresh plot
 			vis.update_plot();
 		}
 	},
@@ -1885,7 +1210,7 @@ vis = {
 				
 				const reducedData = vis.reduced_data_for_series(yAxis, series);
 				const symbol = d3.symbol()
-					.type(vis.styles.marker_shapes[series.style.marker_shape])
+					.type(style_manager.styles.marker_shapes[series.style.marker_shape])
 					.size(Math.pow(series.style.marker_size, 2));
 				
 				vis.svg
@@ -1923,7 +1248,7 @@ vis = {
 					.attr('d', line_maker(series.data))
 					.attr('stroke', series.style.color)
 					.attr('stroke-width', series.style.line_width)
-					.attr('stroke-dasharray', vis.styles.line_styles[series.style.line_style])
+					.attr('stroke-dasharray', style_manager.styles.line_styles[series.style.line_style])
 					.attr('opacity', series.style.opacity)
 					.attr('clip-path', 'url(#clip)');
 			});
@@ -1941,7 +1266,7 @@ vis = {
 				.selectAll('text')
 				.attr('text-anchor', 'top')
 				.attr('dominant-baseline', 'hanging')
-				.attr('font-size', vis.styles.global.font_size)
+				.attr('font-size', style_manager.styles.global.font_size)
 				.attr('transform', `translate(0, ${vis.tick_offset() + 2})`);
 			vis.svg
 				.append('g')
@@ -1960,7 +1285,7 @@ vis = {
 				.attr('transform', `translate(${vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'end')
-				.attr('font-size', vis.styles.global.font_size)
+				.attr('font-size', style_manager.styles.global.font_size)
 				.attr('transform', `translate(-${vis.tick_offset()}, 0)`);
 		}
 		
@@ -1973,7 +1298,7 @@ vis = {
 				.attr('transform', `translate(${vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'start')
-				.attr('font-size', vis.styles.global.font_size)
+				.attr('font-size', style_manager.styles.global.font_size)
 				.attr('transform', `translate(${vis.tick_offset()}, 0)`);
 		} else if (hasYSeries && vis.axes.y.scale) {
 			// If only left y-axis has data, draw right spine with no labels
@@ -2007,7 +1332,7 @@ vis = {
 				.attr('id', 'svg-x-label')
 				.attr('font-family', 'sans-serif')
 				.attr('fill', vis.axes.x.color)
-				.attr('font-size', vis.styles.global.font_size)
+				.attr('font-size', style_manager.styles.global.font_size)
 				.text(d3.select('#x-axis-label').property('value'));
 		}
 		if (vis.has_y_series()) {
@@ -2019,7 +1344,7 @@ vis = {
 				.attr('id', 'svg-y-label')
 				.attr('fill', vis.axes.y.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.styles.global.font_size)
+				.attr('font-size', style_manager.styles.global.font_size)
 				.text(d3.select('#y-axis-label').property('value'));
 		}
 		if (vis.has_yOther_series()) {
@@ -2031,7 +1356,7 @@ vis = {
 				.attr('id', 'svg-yOther-label')
 				.attr('fill', vis.axes.yOther.color)
 				.attr('font-family', 'sans-serif')
-				.attr('font-size', vis.styles.global.font_size)
+				.attr('font-size', style_manager.styles.global.font_size)
 				.text(d3.select('#yOther-axis-label').property('value'));
 		}
 		vis.have_axis_labels = true;
@@ -2150,7 +1475,7 @@ vis = {
 			.attr('dy', '0.35em')
 			.attr('fill', vis.axes.x.color)
 			.attr('font-family', 'sans-serif')
-			.attr('font-size', Math.max(8, vis.styles.global.font_size - 2))
+			.attr('font-size', Math.max(8, style_manager.styles.global.font_size - 2))
 			.text(d => d.name);
 	},
 	clear_plot: () => {
@@ -2205,257 +1530,6 @@ vis = {
 			setTimeout(sync_mini_plot, 50);
 		}
 	},
-	update_tool_ui: () => {
-		// Update button active states
-		d3.selectAll('#plot-tools button').classed('active', false);
-		d3.select(`#${vis.interaction.current_tool}-tool`).classed('active', true);
-		
-		// Update cursor style
-		const plotContainer = d3.select('#main-plot-container');
-		plotContainer.style('cursor', () => {
-			switch(vis.interaction.current_tool) {
-				case 'inspector': return 'crosshair';
-				case 'pan': return 'move';
-				case 'box-zoom': return 'crosshair';
-				case 'reset-view': return 'pointer';
-				default: return 'default';
-			}
-		});
-	},
-	reset_view: () => {
-		// Clear all axis limit input fields
-		const limitFields = ['x-axis-left', 'x-axis-right', 'y-axis-bottom', 'y-axis-top', 'yOther-axis-bottom', 'yOther-axis-top'];
-		limitFields.forEach(fieldId => {
-			const field = d3.select(`#${fieldId}`);
-			if (!field.empty()) {
-				field.property('value', '');
-			}
-		});
-		
-		// Reset axis limits in vis object
-		Object.keys(vis.axes).forEach(axis => {
-			vis.axes[axis].min = undefined;
-			vis.axes[axis].max = undefined;
-		});
-		
-		// Trigger redraw to auto-scale all axes
-		vis.update_plot();
-	},
-	show_inspector_tooltip: (x, y) => {
-		let label_data = [];
-		Object.keys(vis.axes).forEach(axis => {
-			if (vis.axes[axis].data_name && vis.svg[`mouse_${axis[0]}_pixel`] != null) {
-				vis.axes[axis].mouse_val = vis.axes[axis].scale.invert(vis.svg[`mouse_${axis[0]}_pixel`]);
-				label_data.push({axis: vis.axes[axis], val: vis.axes[axis].mouse_val});
-				if (vis.axes[axis].mouse_val >= 10000 || vis.axes[axis].mouse_val <= 0.001) {
-					// Use exponential notation with 3 decimal places
-					label_data[label_data.length - 1].val = label_data[label_data.length - 1].val.toExponential(3);
-				} else {
-					// Convert number to string with 4 significant digits
-					const str = label_data[label_data.length - 1].val.toPrecision(4);
-					// Remove trailing zeros after decimal point
-					const formatted = parseFloat(str).toString();
-					label_data[label_data.length - 1].val = formatted;
-				}
-			} else {
-				vis.axes[axis].mouse_val = null;
-			}
-		});
-		
-		if (label_data.length > 0) {
-			let mouse_text = vis.svg.select('#mouse-text');
-			if (mouse_text.empty()) {
-				mouse_text = vis.svg.append('text')
-					.attr('id', 'mouse-text')
-					.attr('x', x + 20)
-					.attr('y', y + 35)
-					.attr('text-anchor', 'start')
-					.attr('dominant-baseline', 'baseline')
-					.attr('fill', vis.axes.x.color)
-					.attr('font-size', vis.styles.global.font_size);
-			}
-			
-			// Update position and content
-			mouse_text.attr('x', x + 20).attr('y', y + 35);
-			mouse_text.selectAll('tspan').remove();
-			mouse_text.selectAll('tspan')
-				.data(label_data)
-				.enter()
-				.append('tspan')
-				.attr('x', x + 20)
-				.attr('y', y + 35)
-				.attr('dy', (d, i) => (i * 1.2).toString() + 'em')
-				.attr('fill', (d) => d.axis.color)
-				.text(d => `${d['axis'].data_name.replace('_', ' ').replace(/log\s*/g, '')}: ${d['val']}`);
-			
-			// Update background rectangle
-			let bbox = mouse_text.node().getBBox();
-			let margin = 5;
-			let rect = vis.svg.select('#mouse-text-bg');
-			if (rect.empty()) {
-				rect = vis.svg.insert('rect', () => mouse_text.node())
-					.attr('id', 'mouse-text-bg');
-			}
-			
-			rect.attr('x', bbox.x - margin)
-				.attr('y', bbox.y - margin)
-				.attr('width', bbox.width + 2 * margin)
-				.attr('height', bbox.height + 2 * margin)
-				.attr('fill', vis.axes.x.color == 'Black' ? 'white' : 'rgb(34,37,41)')
-				.attr('stroke', vis.axes.x.color == 'Black' ? 'black' : 'rgb(223,226,230)')
-				.attr('stroke-width', 2)
-				.attr('rx', 10);
-		}
-	},
-	execute_pan: () => {
-		// Calculate visual movement for consistent dual y-axis behavior
-		const pixelDy = vis.interaction.drag_end.y - vis.interaction.drag_start.y;
-		
-		// Calculate data coordinate changes
-		Object.keys(vis.axes).forEach(axis => {
-			if (vis.axes[axis].scale && vis.axes[axis].data_name) {
-				let deltaData;
-				if (axis === 'x') {
-					deltaData = vis.axes[axis].scale.invert(vis.interaction.drag_start.x) - 
-					           vis.axes[axis].scale.invert(vis.interaction.drag_end.x);
-				} else {
-					// For y-axes, calculate the visual percentage movement and apply to each axis's range
-					const currentMin = vis.axes[axis].min || vis.axes[axis].scale.domain()[0];
-					const currentMax = vis.axes[axis].max || vis.axes[axis].scale.domain()[1];
-					const currentRange = currentMax - currentMin;
-					
-					// Calculate what percentage of the visual height we moved
-					const plotHeight = vis.axes[axis].scale.range()[0] - vis.axes[axis].scale.range()[1]; // range is [bottom, top]
-					const visualPercent = -pixelDy / plotHeight; // negative because SVG y is inverted
-					
-					// Apply this percentage to the current data range
-					deltaData = visualPercent * currentRange;
-				}
-				
-				// Validate deltaData to prevent invalid values
-				if (!isFinite(deltaData) || isNaN(deltaData)) {
-					console.warn(`Invalid deltaData for axis ${axis}:`, deltaData);
-					return;
-				}
-				
-				// Update axis limits
-				const currentMin = vis.axes[axis].min || vis.axes[axis].scale.domain()[0];
-				const currentMax = vis.axes[axis].max || vis.axes[axis].scale.domain()[1];
-				
-				// Validate current limits
-				if (!isFinite(currentMin) || !isFinite(currentMax) || isNaN(currentMin) || isNaN(currentMax)) {
-					console.warn(`Invalid current limits for axis ${axis}:`, currentMin, currentMax);
-					return;
-				}
-				
-				const newMin = currentMin + deltaData;
-				const newMax = currentMax + deltaData;
-				
-				// Special validation for logarithmic axes
-				if (vis.axes[axis].type === 'log') {
-					if (newMin <= 0 || newMax <= 0) {
-						console.warn(`Log axis ${axis} pan would create non-positive limits:`, newMin, newMax);
-						return; // Skip this axis - can't have non-positive values on log scale
-					}
-				}
-				
-				// Validate new limits
-				if (!isFinite(newMin) || !isFinite(newMax) || isNaN(newMin) || isNaN(newMax)) {
-					console.warn(`Invalid new limits for axis ${axis}:`, newMin, newMax);
-					return;
-				}
-				
-				vis.axes[axis].min = newMin;
-				vis.axes[axis].max = newMax;
-				
-				// Update input fields with correct field IDs
-				let minFieldId, maxFieldId;
-				if (axis === 'x') {
-					minFieldId = 'x-axis-left';
-					maxFieldId = 'x-axis-right';
-				} else if (axis === 'y') {
-					minFieldId = 'y-axis-bottom';
-					maxFieldId = 'y-axis-top';
-				} else if (axis === 'yOther') {
-					minFieldId = 'yOther-axis-bottom';
-					maxFieldId = 'yOther-axis-top';
-				}
-				
-				const minField = d3.select(`#${minFieldId}`);
-				const maxField = d3.select(`#${maxFieldId}`);
-				
-				if (!minField.empty()) minField.property('value', vis.axes[axis].min);
-				if (!maxField.empty()) maxField.property('value', vis.axes[axis].max);
-			}
-		});
-		
-		vis.update_plot();
-	},
-	execute_box_zoom: () => {
-		const startX = Math.min(vis.interaction.drag_start.x, vis.interaction.drag_end.x);
-		const endX = Math.max(vis.interaction.drag_start.x, vis.interaction.drag_end.x);
-		const startY = Math.min(vis.interaction.drag_start.y, vis.interaction.drag_end.y);
-		const endY = Math.max(vis.interaction.drag_start.y, vis.interaction.drag_end.y);
-		
-		// Only zoom if the rectangle is large enough
-		if (Math.abs(endX - startX) > 10 && Math.abs(endY - startY) > 10) {
-			// Update x-axis limits
-			if (vis.axes.x.scale && vis.axes.x.data_name) {
-				vis.axes.x.min = vis.axes.x.scale.invert(startX);
-				vis.axes.x.max = vis.axes.x.scale.invert(endX);
-				
-				d3.select('#x-axis-left').property('value', vis.axes.x.min);
-				d3.select('#x-axis-right').property('value', vis.axes.x.max);
-			}
-			
-			// Update y-axis limits (y coordinates are inverted in SVG)
-			// Both y-axes use the same pixel coordinates for visual consistency
-			if (vis.axes.y.scale && vis.axes.y.data_name) {
-				vis.axes.y.min = vis.axes.y.scale.invert(endY);
-				vis.axes.y.max = vis.axes.y.scale.invert(startY);
-				
-				d3.select('#y-axis-bottom').property('value', vis.axes.y.min);
-				d3.select('#y-axis-top').property('value', vis.axes.y.max);
-			}
-			
-			// Update yOther-axis limits using same pixel coordinates for visual consistency
-			if (vis.axes.yOther.scale && vis.axes.yOther.data_name) {
-				vis.axes.yOther.min = vis.axes.yOther.scale.invert(endY);
-				vis.axes.yOther.max = vis.axes.yOther.scale.invert(startY);
-				
-				d3.select('#yOther-axis-bottom').property('value', vis.axes.yOther.min);
-				d3.select('#yOther-axis-top').property('value', vis.axes.yOther.max);
-			}
-			
-			vis.update_plot();
-		}
-	},
-	apply_pan_transform: (dx, dy) => {
-		// Apply temporary transform to data elements for real-time feedback
-		// Transform all plot data elements (line groups and marker paths)
-		const dataElements = vis.svg.selectAll('g[class*="line-series-"], path[class*="marker-"]');
-		
-		// Apply CSS transform - use transform attribute for better SVG compatibility
-		dataElements.attr('transform', function() {
-			const existing = d3.select(this).attr('transform') || '';
-			// Remove any existing translate and add the new one
-			const cleaned = existing.replace(/translate\([^)]*\)/g, '').trim();
-			return `translate(${dx}, ${dy}) ${cleaned}`.trim();
-		});
-	},
-	finalize_pan: () => {
-		// Remove transform from data elements
-		const dataElements = vis.svg.selectAll('g[class*="line-series-"], path[class*="marker-"]');
-		
-		dataElements.attr('transform', function() {
-			const existing = d3.select(this).attr('transform') || '';
-			// Remove any translate transform, keeping other transforms
-			return existing.replace(/translate\([^)]*\)/g, '').trim() || null;
-		});
-		
-		// Execute the pan operation to update axis limits and redraw
-		vis.execute_pan();
-	}
 };
 
 // Downloads an SVG on the webpage, accessed by its class name

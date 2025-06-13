@@ -14,6 +14,7 @@ The application allows users to upload MESA history files, profile files, or GYR
 - `index.html` - Main application page with Bootstrap UI components
 - `js/file-manager.js` - File upload, parsing, validation, and selection management
 - `js/ui-utils.js` - UI layout utilities (panel toggle, mini plot, responsive resizing)
+- `js/interaction-manager.js` - Mouse interactions, tool palette, pan/zoom, and inspector functionality
 - `js/mesa-explorer.js` - Core visualization logic and D3.js plotting
 - `js/color-modes.js` - Bootstrap color theme switching functionality
 - `data/` - Contains CSV files with known column metadata for MESA files
@@ -30,8 +31,13 @@ The application allows users to upload MESA history files, profile files, or GYR
 **Visualization** (`vis` object):
 - Manages D3.js-based plotting with dual y-axes support
 - Handles data transformations (log, absolute value, modulo, re-zeroing)
-- Provides interactive features (mouseover values, zoom controls)
 - Supports both line plots and scatter plots with customizable markers
+
+**Interaction Manager** (`interaction_manager` object):
+- Handles mouse interactions and tool palette (Inspector, Pan, Box Zoom, Reset View)
+- Manages pan and zoom operations with axis limit updates
+- Provides inspector tooltips and real-time visual feedback
+- Coordinates with visualization system for seamless user interaction
 
 **Data Processing**:
 - MESA files have specific format: header data in lines 1-3, column names in line 6, data starting line 7
@@ -39,9 +45,11 @@ The application allows users to upload MESA history files, profile files, or GYR
 - Column metadata is merged with known column information from CSV files
 
 ### Development vs Production Modes
+
 The application has commented sections for development vs production JavaScript paths:
-- Development: `/js/file-manager.js`, `/js/ui-utils.js`, `/js/mesa-explorer.js`, `/js/color-modes.js`
-- Production: `/mesa-explorer/js/file-manager.js`, `/mesa-explorer/js/ui-utils.js`, `/mesa-explorer/js/mesa-explorer.js`, `/mesa-explorer/js/color-modes.js`
+
+- Development: `/js/file-manager.js`, `/js/ui-utils.js`, `/js/interaction-manager.js`, `/js/mesa-explorer.js`, `/js/color-modes.js`
+- Production: `/mesa-explorer/js/file-manager.js`, `/mesa-explorer/js/ui-utils.js`, `/mesa-explorer/js/interaction-manager.js`, `/mesa-explorer/js/mesa-explorer.js`, `/mesa-explorer/js/color-modes.js`
 
 ## Common Commands
 
@@ -111,14 +119,20 @@ python gen_columns_data.py
    - Need: Series should default to using file display names (local_name) in multi-file mode
    - Enhancement: Better visual distinction between files when plotting multiple files
 
+5. **Series styling persistence issues**:
+   - Current: Adding a new series may reset individual style changes made to existing series
+   - Need: Individual series style changes should persist when new series are added
+   - Issue: Style management may not properly maintain individual customizations during series creation
+
 #### Code Architecture
-5. **File modularity** (in progress - reduced from ~3500 to ~2600 lines):
+
+1. **File modularity** (in progress - reduced from ~3500 to ~1666 lines):
    - ✅ Completed: `file-manager.js` - File upload, parsing, validation (651 lines)
    - ✅ Completed: `ui-utils.js` - UI layout utilities, panel toggle, mini plot (266 lines)
+   - ✅ Completed: `interaction-manager.js` - Mouse tools, tool palette, pan/zoom controls (398 lines)
    - 🔄 Remaining: Break down `mesa-explorer.js` further:
      - `visualization-core.js` - Core D3.js plotting and rendering
      - `series-manager.js` - Multi-series logic and styling
-     - `interaction.js` - Mouse tools and user controls
      - `data-utils.js` - Data processing and transformations
    - Benefits: Easier maintenance, better separation of concerns, improved AI/human collaboration
 
@@ -130,133 +144,36 @@ python gen_columns_data.py
 - Export enhancements (multiple formats, publication-ready layouts)
 - Comprehensive testing suite
 
-## Planned Development: Enhanced Mouse Controls (Tool Palette Approach)
+## ✅ Completed: Enhanced Mouse Controls (Tool Palette System)
 
-### Overview
-Implement a tool palette system for enhanced plot interaction with four tools: Inspector, Pan, Box Zoom, and Reset View. This will replace the current always-on mouseover behavior with user-controlled modes.
+### Implementation Status: COMPLETED
 
-### Design Decisions
-- **Tool Palette Location**: Below main plot container in visualization column, remains visible when files panel is collapsed
-- **Axis Limits Integration**: Zoom/pan operations will update the axis limit input fields, leveraging existing infrastructure
-- **Cross-File Persistence**: Axis limits remain active when switching files (current behavior), easily reset with Reset View button
-- **Universal Actions**: Mouse wheel zoom and legend dragging work in all modes
+The tool palette system has been successfully implemented with all four interaction tools:
 
-### Implementation Plan
+- ✅ **Inspector Tool**: Mouseover tooltips showing axis values (default mode)
+- ✅ **Pan Tool**: Click-and-drag to pan plot view with real-time feedback
+- ✅ **Box Zoom Tool**: Draw rectangle to zoom into specific regions
+- ✅ **Reset View Tool**: One-click reset to auto-scale all axes
 
-#### Phase 1: UI Components
-1. **Add Tool Palette HTML** (in `index.html` after main plot container):
-   ```html
-   <div class="btn-group w-100 mt-2" role="group" aria-label="Plot interaction tools" id="plot-tools">
-     <button type="button" class="btn btn-outline-secondary active" id="inspector-tool">
-       <i class="bi bi-info-circle"></i> Inspector
-     </button>
-     <button type="button" class="btn btn-outline-secondary" id="pan-tool">
-       <i class="bi bi-arrows-move"></i> Pan
-     </button>
-     <button type="button" class="btn btn-outline-secondary" id="box-zoom-tool">
-       <i class="bi bi-zoom-in"></i> Box Zoom
-     </button>
-     <button type="button" class="btn btn-outline-secondary" id="reset-view-tool">
-       <i class="bi bi-arrow-counterclockwise"></i> Reset View
-     </button>
-   </div>
-   ```
+### Technical Implementation
 
-2. **Add Visual State Indicators**:
-   - Active tool gets `active` class (Bootstrap styling)
-   - Cursor changes based on active tool
-   - Optional: subtle background on axis limit fields when populated
+**Architecture**: Extracted into `js/interaction-manager.js` (398 lines) for better modularity
 
-#### Phase 2: Core JavaScript (in `mesa-explorer.js`)
-1. **Add Tool State Management**:
-   ```javascript
-   vis.interaction = {
-     current_tool: 'inspector',
-     is_dragging: false,
-     drag_start: null,
-     drag_end: null
-   };
-   ```
+**Key Features**:
 
-2. **Tool Selection Handlers**:
-   - Button click handlers to switch between tools
-   - Update cursor styles and active button states
-   - Enable/disable inspector mouseover based on tool
+- Tool palette located below main plot container
+- Axis limits integration - zoom/pan operations update input fields
+- Cross-file persistence - axis limits remain active when switching files
+- Visual feedback - zoom rectangle preview, cursor changes, real-time pan
+- Error handling - validates axis limits, handles edge cases for log scales
 
-3. **Mouse Event Handlers**:
-   - `mousedown`: Initialize drag operations for pan/zoom tools
-   - `mousemove`: Handle drag preview (zoom rectangle), pan feedback, inspector values
-   - `mouseup`: Execute pan/zoom operations, update axis limits
-   - `wheel`: Universal zoom in/out around cursor position
+**Testing Results**:
 
-#### Phase 3: Tool-Specific Functionality
-1. **Inspector Tool**:
-   - Current mouseover behavior showing data values
-   - Toggle on/off based on tool selection
-   - No change to existing implementation when active
-
-2. **Pan Tool**:
-   - Calculate view offset based on drag distance
-   - Convert pixel movement to data coordinates
-   - Update all axis limit fields (x-axis-left, x-axis-right, y-axis-bottom, y-axis-top, yOther-axis-bottom, yOther-axis-top)
-   - Trigger redraw through existing axis limit system
-
-3. **Box Zoom Tool**:
-   - Draw temporary zoom rectangle during drag
-   - Calculate new axis limits from rectangle corners
-   - Update appropriate axis limit fields based on rectangle bounds
-   - Clear rectangle and trigger redraw
-
-4. **Reset View Tool**:
-   - Clear all axis limit input fields
-   - Trigger redraw to auto-scale all axes
-   - Simple one-click reset functionality
-
-#### Phase 4: Enhanced Features
-1. **Mouse Wheel Zoom**:
-   - Zoom in/out around cursor position
-   - Calculate new axis limits maintaining cursor position
-   - Update axis limit fields
-   - Works in all tool modes
-
-2. **Legend Dragging** (existing feature, ensure compatibility):
-   - Maintain current legend dragging in all modes
-   - Prevent tool actions when dragging legend
-
-3. **Visual Feedback**:
-   - Zoom rectangle preview with dashed border
-   - Pan direction indicators
-   - Cursor style changes per tool
-
-#### Phase 5: Integration & Polish
-1. **Responsive Behavior**:
-   - Tool palette contracts/expands with files panel
-   - Ensure tools work with miniature plot
-   - Test with different screen sizes
-
-2. **State Management**:
-   - Tools persist across file switches
-   - Axis limits behavior remains consistent
-   - Reset tool clears all persistent limits
-
-3. **Error Handling**:
-   - Graceful handling of invalid zoom rectangles
-   - Prevent pan/zoom beyond reasonable bounds
-   - Validation for calculated axis limits
-
-### Technical Notes
-- **Coordinate Conversion**: Use existing D3 scale functions to convert between pixel and data coordinates
-- **Axis Limit Updates**: Leverage existing input field update system and redraw triggers
-- **Event Management**: Ensure proper event ordering and prevent conflicts between tools
-- **Performance**: Minimize redraws during drag operations, only update on completion
-
-### Testing Checklist
-- [ ] All four tools function independently
-- [ ] Axis limits update correctly for zoom/pan operations
-- [ ] Mouse wheel zoom works in all modes
-- [ ] Legend dragging unaffected by tool changes
-- [ ] Reset tool clears all limits and restores auto-scaling
-- [ ] Tool palette responsive behavior with files panel
-- [ ] Cross-file limit persistence works as expected
-- [ ] Visual feedback appropriate for each tool
-- [ ] No conflicts between tool interactions
+- ✅ All four tools function independently
+- ✅ Axis limits update correctly for zoom/pan operations
+- ✅ Legend dragging unaffected by tool changes
+- ✅ Reset tool clears all limits and restores auto-scaling
+- ✅ Tool palette responsive behavior with files panel
+- ✅ Cross-file limit persistence works as expected
+- ✅ Visual feedback appropriate for each tool
+- ✅ No conflicts between tool interactions
