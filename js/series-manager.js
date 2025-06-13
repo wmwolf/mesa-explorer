@@ -34,6 +34,12 @@ const series_manager = {
 				show_line: true,
 				show_markers: false,
 				marker_every: 10
+			},
+			data_transformations: {
+				rescale: 'linear',  // linear, log, exp, logabs
+				rezero: 0,
+				modulo: 0,
+				absval: false
 			}
 		};
 		
@@ -67,13 +73,13 @@ const series_manager = {
 			.attr('class', 'row mb-2');
 		
 		const columnCol = columnRow.append('div')
-			.attr('class', 'col-md-6');
+			.attr('class', 'col-md-8');
 		
 		const dropdown = columnCol.append('div')
 			.attr('class', 'dropdown d-grid');
 		
 		const dropdownButton = dropdown.append('button')
-			.attr('class', 'btn btn-outline-secondary dropdown-toggle')
+			.attr('class', 'btn btn-primary btn-lg dropdown-toggle')
 			.attr('type', 'button')
 			.attr('data-bs-toggle', 'dropdown')
 			.attr('aria-expanded', 'false')
@@ -107,9 +113,12 @@ const series_manager = {
 		dropdownMenu.append('div')
 			.attr('id', `${seriesId}-options`);
 		
+		// Setup keyboard navigation for this series dropdown
+		series_manager.setup_dropdown_navigation(seriesId);
+		
 		// Series label row
 		const labelCol = columnRow.append('div')
-			.attr('class', 'col-md-6');
+			.attr('class', 'col-md-4');
 		
 		const labelDiv = labelCol.append('div')
 			.attr('class', 'form-floating');
@@ -127,6 +136,101 @@ const series_manager = {
 		labelDiv.append('label')
 			.attr('for', `${seriesId}-label`)
 			.text('Series label');
+		
+		// Data Transformation Controls (matching X-axis style)
+		const transformRow = seriesDiv.append('div')
+			.attr('class', 'row mt-2');
+		
+		const transformCol = transformRow.append('div')
+			.attr('class', 'col-12');
+		
+		transformCol.append('h6')
+			.text('Data Transformations');
+		
+		// Single row with all controls (matching X-axis layout)
+		const controlsRow = transformCol.append('div')
+			.attr('class', 'row');
+		
+		// Scale type controls (left side)
+		const scaleCol = controlsRow.append('div')
+			.attr('class', 'col-md-6');
+		
+		scaleCol.append('h6').text('Rescale');
+		
+		['linear', 'log', 'exp'].forEach((transform, index) => {
+			const checkDiv = scaleCol.append('div')
+				.attr('class', 'form-check form-check-inline');
+			
+			checkDiv.append('input')
+				.attr('class', 'form-check-input')
+				.attr('type', 'radio')
+				.attr('name', `${seriesId}-data-trans`)
+				.attr('id', `${seriesId}-data-trans-${transform}`)
+				.attr('value', transform)
+				.property('checked', transform === 'linear')
+				.on('change', function() {
+					if (this.checked) {
+						seriesDefinition.data_transformations.rescale = transform;
+						vis.register_new_files(); // Refresh plot
+					}
+				});
+			
+			checkDiv.append('label')
+				.attr('class', 'form-check-label')
+				.attr('for', `${seriesId}-data-trans-${transform}`)
+				.text(transform === 'linear' ? 'Linear' : (transform === 'log' ? 'Log' : 'Exp'));
+		});
+		
+		// Additional controls (right side)
+		const additionalCol = controlsRow.append('div')
+			.attr('class', 'col-md-6');
+		
+		const additionalRow = additionalCol.append('div')
+			.attr('class', 'row');
+		
+		// Zero point control
+		const zeroCol = additionalRow.append('div')
+			.attr('class', 'col-6');
+		
+		const zeroDiv = zeroCol.append('div')
+			.attr('class', 'form-floating');
+		
+		zeroDiv.append('input')
+			.attr('type', 'number')
+			.attr('class', 'form-control form-control-sm')
+			.attr('id', `${seriesId}-data-zero`)
+			.attr('placeholder', '0')
+			.attr('value', '0')
+			.on('input', function() {
+				seriesDefinition.data_transformations.rezero = parseFloat(this.value) || 0;
+				vis.register_new_files(); // Refresh plot
+			});
+		
+		zeroDiv.append('label')
+			.attr('for', `${seriesId}-data-zero`)
+			.attr('class', 'small')
+			.text('Zero-point');
+		
+		// Absolute value control
+		const absCol = additionalRow.append('div')
+			.attr('class', 'col-6');
+		
+		const absDiv = absCol.append('div')
+			.attr('class', 'form-check mt-2');
+		
+		absDiv.append('input')
+			.attr('class', 'form-check-input')
+			.attr('type', 'checkbox')
+			.attr('id', `${seriesId}-absval`)
+			.on('change', function() {
+				seriesDefinition.data_transformations.absval = this.checked;
+				vis.register_new_files(); // Refresh plot
+			});
+		
+		absDiv.append('label')
+			.attr('class', 'form-check-label small')
+			.attr('for', `${seriesId}-absval`)
+			.text('Absolute Value');
 		
 		// Style controls moved to style panel
 		
@@ -174,6 +278,9 @@ const series_manager = {
 				return !nodes[i].textContent.toLowerCase().includes(query.toLowerCase());
 			});
 		}
+		// Clear all active states and highlight the first visible item (matching X-axis behavior)
+		optionsContainer.selectAll('a').classed('active', false);
+		optionsContainer.select('a:not(.d-none)').classed('active', true);
 	},
 	
 	update_series_choices: (seriesId) => {
@@ -213,12 +320,34 @@ const series_manager = {
 		// Update dropdown button text
 		d3.select(`#${seriesId}-dropdown`).html(d3.select(element).html());
 		
+		// Automatic log detection
+		const isLogColumn = /^log[_\s]|^log(?=[A-Z])/i.test(columnData.key);
+		if (isLogColumn) {
+			// Set data transformation to exponentiate
+			seriesDefinition.data_transformations.rescale = 'exp';
+			// Update the UI to reflect this
+			d3.select(`#${seriesId}-data-trans-exp`).property('checked', true);
+			d3.select(`#${seriesId}-data-trans-linear`).property('checked', false);
+			
+			// Suggest logarithmic axis scale for the first series
+			if (parseInt(seriesIndex) === 0) {
+				d3.select(`#${axis}-scale-log`).property('checked', true);
+				d3.select(`#${axis}-scale-linear`).property('checked', false);
+				vis.axes[axis].type = 'log';
+			}
+		}
+		
 		// Auto-generate series label if empty
 		const labelInput = d3.select(`#${seriesId}-label`);
 		if (!labelInput.property('value')) {
-			const cleanedName = columnData.key
-				.replace(/^log\s*/, '')
-				.replace(/_/g, ' ');
+			let cleanedName = columnData.key;
+			// If it's a log column, clean up the label
+			if (isLogColumn) {
+				cleanedName = columnData.key
+					.replace(/^log[_\s]*/i, '')  // Remove log prefix
+					.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
+			}
+			cleanedName = cleanedName.replace(/_/g, ' ');
 			labelInput.property('value', cleanedName);
 			seriesDefinition.label = cleanedName;
 		}
@@ -226,9 +355,14 @@ const series_manager = {
 		// Auto-populate axis label if this is the first series and axis label is empty
 		const axisLabelInput = d3.select(`#${axis}-axis-label`);
 		if (parseInt(seriesIndex) === 0 && !axisLabelInput.property('value')) {
-			const cleanedAxisName = columnData.key
-				.replace(/^log\s*/, '')
-				.replace(/_/g, ' ');
+			let cleanedAxisName = columnData.key;
+			// If it's a log column, clean up the axis label
+			if (isLogColumn) {
+				cleanedAxisName = columnData.key
+					.replace(/^log[_\s]*/i, '')  // Remove log prefix
+					.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
+			}
+			cleanedAxisName = cleanedAxisName.replace(/_/g, ' ');
 			axisLabelInput.property('value', cleanedAxisName);
 			// Update the SVG label immediately if it exists
 			if (vis.have_axis_labels) {
@@ -252,12 +386,14 @@ const series_manager = {
 		style.show_markers = seriesDefinition.style.show_markers;
 		style.marker_every = seriesDefinition.style.marker_every;
 		
-		// Determine series name
-		let seriesName = seriesDefinition.label || seriesDefinition.column.replace(/_/g, ' ');
-		
-		// Add file indicator for multi-file mode
+		// Determine series name - in multi-file mode, just use file name for cleaner legends
+		let seriesName;
 		if (vis.files.length > 1) {
-			seriesName += ` (${file.local_name})`;
+			// Multi-file mode: use only the file name for cleaner legend
+			seriesName = file.local_name;
+		} else {
+			// Single-file mode: use series label or cleaned column name
+			seriesName = seriesDefinition.label || seriesDefinition.column.replace(/_/g, ' ');
 		}
 		
 		return {
@@ -272,7 +408,8 @@ const series_manager = {
 			},
 			style: style,
 			source_type: 'file',
-			color: style.color
+			color: style.color,
+			data_transformations: seriesDefinition.data_transformations
 		};
 	},
 	
@@ -287,12 +424,21 @@ const series_manager = {
 		
 		// Create new style with smart color assignment
 		let colorIndex;
-		if (axis === 'y') {
-			// Left axis: cycle through colors starting with blue
-			colorIndex = seriesIndex % colors.length;
+		
+		// In multi-file mode, assign colors by file index (each file gets different color)
+		// In single-file mode, assign colors by series index (each series gets different color)
+		if (vis.files && vis.files.length > 1) {
+			// Multi-file mode: color by file index so each file is distinct
+			colorIndex = fileIndex % colors.length;
 		} else {
-			// Right axis: start with orange (index 1) then continue cycling
-			colorIndex = (seriesIndex + 1) % colors.length;
+			// Single-file mode: color by series index for axis-aware cycling
+			if (axis === 'y') {
+				// Left axis: cycle through colors starting with blue
+				colorIndex = seriesIndex % colors.length;
+			} else {
+				// Right axis: start with orange (index 1) then continue cycling
+				colorIndex = (seriesIndex + 1) % colors.length;
+			}
 		}
 		
 		const style = {
@@ -329,6 +475,76 @@ const series_manager = {
 				const seriesId = `${axis}-series-${index}`;
 				series_manager.update_series_choices(seriesId);
 			});
+		});
+	},
+	
+	// Setup keyboard navigation for series dropdowns (matching X-axis behavior)
+	setup_dropdown_navigation: (seriesId) => {
+		// Clicking on dropdown button should focus on the search field
+		d3.select(`#${seriesId}-dropdown`).on('click', function() {
+			setTimeout(() => {
+				d3.select(`#${seriesId}-search`)
+					.node()
+					.focus();
+				series_manager.apply_series_search(seriesId);
+			}, 10); // Small delay to ensure dropdown is open
+		});
+		
+		d3.select(`#${seriesId}-search`).on('keyup', function(e) {
+			// ignore arrow keys; those control the active element via keydown
+			if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') return;
+			series_manager.apply_series_search(seriesId);
+		});
+		
+		d3.select(`#${seriesId}-search`).on('keydown', function(e) {
+			if (e.code === 'ArrowDown') {
+				e.preventDefault();
+				// if we push "down", we should highlight the next result, if it exists
+				let active = d3.select(`#${seriesId}-options`).select('a.active');
+				let next = null;
+				// If there's nothing active yet, then we'll just highlight the first non-hidden element
+				if (active.empty()) {
+					d3.select(`#${seriesId}-options`)
+						.select('a:not(.d-none)')
+						.classed('active', true);
+					return;
+				}
+				active = active.node();
+				let sibling = active.nextElementSibling;
+				while (sibling) {
+					if (!sibling.classList.contains('d-none')) {
+						next = d3.select(sibling);
+						break;
+					}
+					sibling = sibling.nextElementSibling;
+				}
+				if (next) {
+					d3.select(active).classed('active', false);
+					next.classed('active', true);
+				}
+			} else if (e.code === 'ArrowUp') {
+				e.preventDefault();
+				// if we push "up", we should highlight the previous result, if it exists
+				let prev = null;
+				let active = d3.select(`#${seriesId}-options`).select('a.active');
+				if (active.empty()) return;
+				active = active.node();
+				let sibling = active.previousElementSibling;
+				while (sibling) {
+					if (!sibling.classList.contains('d-none')) {
+						prev = sibling;
+						break;
+					}
+					sibling = sibling.previousElementSibling;
+				}
+				if (prev) {
+					d3.select(active).classed('active', false);
+					d3.select(prev).classed('active', true);
+				}
+			} else if (e.code === 'Enter') {
+				// simulate click event on the active element if user hits enter
+				d3.select(`#${seriesId}-options a.active`).dispatch('click');
+			}
 		});
 	}
 };

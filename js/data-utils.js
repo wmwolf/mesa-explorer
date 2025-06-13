@@ -52,16 +52,20 @@ const data_utils = {
 				vis.files.forEach(file => {
 					if (file.data && file.data.bulk && seriesDef.column) {
 						const columnData = file.data.bulk.map(row => row[seriesDef.column]);
-						// Apply data transformations (similar to series_accessor logic)
+						// Apply per-series data transformations
+						const transformations = seriesDef.data_transformations || {
+							rescale: 'linear',
+							rezero: 0,
+							modulo: 0,
+							absval: false
+						};
+						
 						const transformedData = columnData.map(val => {
 							if (val === null || val === undefined) return NaN;
 							let transformedVal = parseFloat(val);
 							
-							// Apply transformations based on axis settings
-							const axisControls = vis.axes[axis];
-							
-							// Apply data transformations
-							switch (axisControls.data_trans.rescale) {
+							// Apply data transformations based on series settings
+							switch (transformations.rescale) {
 								case 'log':
 									transformedVal = safe_log(transformedVal);
 									break;
@@ -77,15 +81,15 @@ const data_utils = {
 							}
 							
 							// Apply re-zeroing
-							transformedVal -= axisControls.data_trans.rezero;
+							transformedVal -= transformations.rezero;
 							
 							// Apply modulo
-							if (axisControls.data_trans.divisor != 0) {
-								transformedVal = transformedVal % axisControls.data_trans.divisor;
+							if (transformations.modulo && transformations.modulo != 0) {
+								transformedVal = transformedVal % transformations.modulo;
 							}
 							
 							// Apply absolute value
-							if (axisControls.data_trans.absval) {
+							if (transformations.absval) {
 								transformedVal = Math.abs(transformedVal);
 							}
 							
@@ -184,21 +188,57 @@ const data_utils = {
 		return d => do_abs(modulo(rezero(rescale(d))));
 	},
 	
-	// Series-specific accessor that uses the series' own column definitions
+	// Series-specific accessor that uses the series' own column definitions and transformations
 	series_accessor: (series, axisType) => {
 		const columnName = axisType === 'x' ? series.data_columns.x : series.data_columns.y;
-		const axis = axisType === 'x' ? 'x' : series.target_axis;
 		
 		if (!columnName) {
 			return d => 0; // Return default value if no column specified
 		}
 		
+		// For X-axis, use axis-wide transformations (for now, until X-axis gets per-series treatment)
+		if (axisType === 'x') {
+			const axis = 'x';
+			let rescale;
+			let rezero;
+			let modulo;
+			let do_abs;
+			rescale = d => {
+				switch (vis.axes[axis].data_trans.rescale) {
+					case 'log':
+						return safe_log(d[columnName]);
+					case 'logabs':
+						return safe_log(Math.abs(d[columnName]));
+					case 'exp':
+						return Math.pow(10, d[columnName]);
+					default:
+						return d[columnName];
+				}
+			};
+			rezero = val => val - vis.axes[axis].data_trans.rezero;
+			modulo = val => val
+			if (vis.axes[axis].data_trans.divisor != 0) {
+				modulo = val => val % vis.axes[axis].data_trans.divisor
+			}
+			do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
+			return d => do_abs(modulo(rezero(rescale(d))));
+		}
+		
+		// For Y-axes, use per-series transformations
+		const transformations = series.data_transformations || {
+			rescale: 'linear',
+			rezero: 0,
+			modulo: 0,
+			absval: false
+		};
+		
 		let rescale;
 		let rezero;
 		let modulo;
 		let do_abs;
+		
 		rescale = d => {
-			switch (vis.axes[axis].data_trans.rescale) {
+			switch (transformations.rescale) {
 				case 'log':
 					return safe_log(d[columnName]);
 				case 'logabs':
@@ -209,12 +249,14 @@ const data_utils = {
 					return d[columnName];
 			}
 		};
-		rezero = val => val - vis.axes[axis].data_trans.rezero;
-		modulo = val => val
-		if (vis.axes[axis].data_trans.divisor != 0) {
-			modulo = val => val % vis.axes[axis].data_trans.divisor
+		
+		rezero = val => val - transformations.rezero;
+		modulo = val => val;
+		if (transformations.modulo && transformations.modulo != 0) {
+			modulo = val => val % transformations.modulo;
 		}
-		do_abs = val => (vis.axes[axis].data_trans.absval ? Math.abs(val) : val);
+		do_abs = val => (transformations.absval ? Math.abs(val) : val);
+		
 		return d => do_abs(modulo(rezero(rescale(d))));
 	},
 	

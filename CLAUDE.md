@@ -147,6 +147,44 @@ python gen_columns_data.py
    - Need: Individual series style changes should persist when new series are added
    - Issue: Style management may not properly maintain individual customizations during series creation
 
+6. **✅ Y-axis dropdown UI inconsistency** (COMPLETED):
+   - ✅ Fixed: Y-axis dropdowns now match X-axis behavior and appearance
+   - ✅ Implemented: Full keyboard navigation (arrow keys, return to select, immediate search active state)
+   - ✅ Resolution: Users can navigate y-axis selections entirely with keyboard
+
+7. **✅ Multi-file mode legend labeling** (COMPLETED):
+   - ✅ Fixed: Legend labels now show only file names in multi-file mode
+   - ✅ Enhancement: Cleaner legend presentation for multi-file comparisons
+
+8. **✅ Multi-file mode color cycling** (COMPLETED):
+   - ✅ Fixed: Each file now gets distinct color from color cycle
+   - ✅ Resolution: Multi-file mode properly assigns colors by file index
+
+9. **✅ Logarithmic column detection and transformation system** (COMPLETED):
+   - ✅ Implemented: Complete per-series transformation architecture
+   - ✅ Fixed: Auto-detection of log columns with automatic rescaling and axis suggestions
+   - ✅ Enhanced: Per-series data transformations (Linear/Log/Exp, Zero-point, Absolute Value)
+   - ✅ UI Redesign: Moved transformation controls into series boxes with consistent layout
+   - ✅ X-axis Integration: X-axis transformations now work properly with automatic log detection
+
+10. **✅ UI architecture and consistency** (COMPLETED):
+   - ✅ Fixed: X-axis label positioning moved above dropdown for consistency
+   - ✅ Enhanced: Uniform layout across all axis controls
+   - ✅ Improved: All axes have identical "Axis Settings" sections with consistent styling
+   - ✅ Terminology: Clear distinction between "Rescale" (data) and "Scale" (axis display)
+
+11. **Files panel hide/minimize button not working**:
+   - Current: Button to hide files panel no longer functions
+   - Need: Restore panel toggle functionality 
+   - Issue: Files panel cannot be collapsed/expanded
+
+12. **Legend responsive sizing and typography**:
+   - Current: Legend width is fixed and doesn't scale with legend content size
+   - Current: Legend text size may not match other UI text elements
+   - Need: Legend width should auto-adjust based on legend handle size and content
+   - Need: Legend text should use consistent font size with rest of interface
+   - Enhancement: Better visual integration and responsive design
+
 #### Code Architecture
 
 1. **✅ File modularity** (COMPLETED - reduced from ~3500 to ~550 lines):
@@ -261,3 +299,62 @@ The codebase has been successfully modularized into focused, manageable componen
 ```
 
 The modularization provides a solid foundation for future development with clear separation of concerns and excellent maintainability.
+
+## ✅ Completed: Major UI Architecture Transformation (Per-Series Data Transformations)
+
+### Implementation Status: COMPLETED
+
+A comprehensive architectural redesign has been successfully implemented, transforming the user interface from axis-wide to per-series data transformations.
+
+### Key Achievements
+
+**New UI Architecture:**
+- **✅ Consistent Axis Layout**: All axes (X, Left Y, Right Y) now have identical structure
+- **✅ Axis Settings Sections**: Gray-background sections at top of each axis for scale and limits
+- **✅ Per-Series Controls**: Each series has individual data transformation controls
+- **✅ Intuitive Workflow**: Select data → Transform data → Style series → Set axis display
+
+**Enhanced Data Processing:**
+- **✅ Per-Series Transformations**: Each Y-axis series can have independent rescaling (Linear/Log/Exp)
+- **✅ Smart Log Detection**: Automatic detection of log columns with auto-rescaling and axis suggestions  
+- **✅ Label Cleaning**: "log_L" → "L" with proper exponential transformation
+- **✅ X-axis Integration**: X-axis transformations fully functional with existing architecture
+
+**UI Consistency Improvements:**
+- **✅ Keyboard Navigation**: Full keyboard support for all dropdown menus
+- **✅ Layout Uniformity**: Consistent positioning and styling across all controls
+- **✅ Clear Terminology**: "Rescale" for data transformations vs "Scale" for axis display
+- **✅ Removed Complexity**: Eliminated confusing tabbed "More Details" section
+
+**Multi-File Mode Fixes:**
+- **✅ Clean Legend Labels**: Multi-file legends show only file names
+- **✅ Distinct Colors**: Each file gets unique color in multi-file mode
+- **✅ Proper Series Handling**: Multi-file series creation and styling works correctly
+
+### Before vs After
+
+**Before:**
+- Axis-wide transformations affected all series equally
+- Confusing tabbed interface separated from data selection
+- Inconsistent dropdown behavior between X and Y axes
+- Broken multi-file mode styling and labeling
+
+**After:**  
+- Per-series transformations allow complex mixed plots
+- Integrated controls right where users select data
+- Consistent, keyboard-navigable interface across all axes
+- Clean, functional multi-file mode
+
+### Technical Implementation
+
+**Data Processing Updates:**
+- Modified `data-utils.js` to handle per-series transformations
+- Updated `series_accessor()` to use individual series transformation settings
+- Enhanced `get_axis_data_values()` for proper extent calculations
+
+**UI Architecture:**
+- Redesigned series creation in `series-manager.js` with integrated transformation controls
+- Added proper event handlers in `controls-manager.js` for X-axis transformations
+- Implemented automatic log detection with smart defaults
+
+**Result**: A much more powerful, intuitive, and consistent user interface that enables complex visualizations while being easier to use.

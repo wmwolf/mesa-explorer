@@ -84,6 +84,24 @@ controls_manager = {
 			vis.update_axis_labels();
 		});
 		
+		// Set up handlers for X-axis data transformations
+		d3.selectAll('.x-data-transformation[type="radio"]').on('change', function() {
+			if (this.checked) {
+				vis.axes.x.data_trans.rescale = this.value;
+				vis.update_plot();
+			}
+		});
+		
+		d3.selectAll('.x-data-transformation[type="number"]').on('input', function() {
+			vis.axes.x.data_trans.rezero = parseFloat(this.value) || 0;
+			vis.update_plot();
+		});
+		
+		d3.selectAll('.x-data-transformation[type="checkbox"]').on('change', function() {
+			vis.axes.x.data_trans.absval = this.checked;
+			vis.update_plot();
+		});
+		
 		// Set up handlers for line/scatter controls
 		d3.selectAll('input.plot-style').on('change', function() {
 			const elt = d3.select(this);
