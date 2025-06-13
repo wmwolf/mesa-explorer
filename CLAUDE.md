@@ -12,7 +12,9 @@ The application allows users to upload MESA history files, profile files, or GYR
 
 ### File Structure
 - `index.html` - Main application page with Bootstrap UI components
-- `js/mesa-explorer.js` - Core application logic (file management, data processing, visualization)
+- `js/file-manager.js` - File upload, parsing, validation, and selection management
+- `js/ui-utils.js` - UI layout utilities (panel toggle, mini plot, responsive resizing)
+- `js/mesa-explorer.js` - Core visualization logic and D3.js plotting
 - `js/color-modes.js` - Bootstrap color theme switching functionality
 - `data/` - Contains CSV files with known column metadata for MESA files
 - `gen_columns_data.py` - Python script to generate column metadata from MESA installation
@@ -38,8 +40,8 @@ The application allows users to upload MESA history files, profile files, or GYR
 
 ### Development vs Production Modes
 The application has commented sections for development vs production JavaScript paths:
-- Development: `/js/mesa-explorer.js` and `/js/color-modes.js`
-- Production: `/mesa-explorer/js/mesa-explorer.js` and `/mesa-explorer/js/color-modes.js`
+- Development: `/js/file-manager.js`, `/js/ui-utils.js`, `/js/mesa-explorer.js`, `/js/color-modes.js`
+- Production: `/mesa-explorer/js/file-manager.js`, `/mesa-explorer/js/ui-utils.js`, `/mesa-explorer/js/mesa-explorer.js`, `/mesa-explorer/js/color-modes.js`
 
 ## Common Commands
 
@@ -102,15 +104,22 @@ python gen_columns_data.py
    - Need: Update mouseover functionality to properly handle multiple series per axis
    - Enhancement: Show all relevant series data at cursor position
 
+4. **Multi-file mode series styling and naming**:
+   - Current: All series in multi-file mode get the same default color
+   - Need: Default series colors should cycle through color schemes to distinguish files
+   - Current: Series names in multi-file mode may not default to file names
+   - Need: Series should default to using file display names (local_name) in multi-file mode
+   - Enhancement: Better visual distinction between files when plotting multiple files
+
 #### Code Architecture
-4. **File modularity** (`mesa-explorer.js` ~3500+ lines):
-   - Current: Single large file with mixed concerns
-   - Need: Break into focused modules:
-     - `file-manager.js` - File upload, parsing, validation
-     - `visualization.js` - D3.js plotting and rendering
+5. **File modularity** (in progress - reduced from ~3500 to ~2600 lines):
+   - ✅ Completed: `file-manager.js` - File upload, parsing, validation (651 lines)
+   - ✅ Completed: `ui-utils.js` - UI layout utilities, panel toggle, mini plot (266 lines)
+   - 🔄 Remaining: Break down `mesa-explorer.js` further:
+     - `visualization-core.js` - Core D3.js plotting and rendering
      - `series-manager.js` - Multi-series logic and styling
      - `interaction.js` - Mouse tools and user controls
-     - `utils.js` - Data processing and transformations
+     - `data-utils.js` - Data processing and transformations
    - Benefits: Easier maintenance, better separation of concerns, improved AI/human collaboration
 
 #### Future Enhancements
