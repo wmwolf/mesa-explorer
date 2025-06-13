@@ -26,7 +26,7 @@ setup = () => {
 
 	file_manager.setup();
 	vis.setup();
-	vis.setup_style_handlers();
+	style_manager.setup_style_handlers();
 	vis.setup_series_management();
 	
 	// Setup files panel hide/show toggle
