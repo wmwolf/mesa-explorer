@@ -367,7 +367,7 @@ const series_manager = {
 			.enter()
 			.append('a')
 			.attr('class', 'dropdown-item')
-			.attr('href', '#')
+			.attr('href', 'javascript: void(0)')
 			.attr('data-name', d => d.key)
 			.html(d => `<samp>${d.key}</samp>`)
 			.on('click', function(event, d) {
@@ -384,13 +384,23 @@ const series_manager = {
 		// Update series definition
 		seriesDefinition.column = columnData.key;
 		
-		// Update series label to match the selected column
-		seriesDefinition.label = columnData.key;
+		// Automatic log detection (needed for label cleaning)
+		const isLogColumn = /^log[_\s]|^log(?=[A-Z])/i.test(columnData.key);
+		
+		// Update series label to match the selected column (with log cleaning)
+		let cleanedSeriesName = columnData.key;
+		if (isLogColumn) {
+			cleanedSeriesName = columnData.key
+				.replace(/^log[_\s]*/i, '')  // Remove log prefix
+				.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
+		}
+		cleanedSeriesName = cleanedSeriesName.replace(/_/g, ' ');
+		seriesDefinition.label = cleanedSeriesName;
 		
 		// Update the series label input field in the UI
 		const labelInput = d3.select(`#${seriesId}-label`);
 		if (!labelInput.empty()) {
-			labelInput.property('value', columnData.key);
+			labelInput.property('value', cleanedSeriesName);
 		}
 		
 		// Set axis data_name for the first series (needed for axis labels to appear)
@@ -398,18 +408,22 @@ const series_manager = {
 			vis.axes[axis].data_name = columnData.key;
 			vis.axes[axis].data_type = columnData.scale || 'linear';
 			
-			// Update the axis label when the first series is updated
+			// Update the axis label when the first series is updated (with log cleaning)
 			const axisLabelInput = d3.select(`#${axis}-axis-label`);
 			if (!axisLabelInput.empty()) {
-				axisLabelInput.property('value', columnData.key);
+				let cleanedAxisName = columnData.key;
+				if (isLogColumn) {
+					cleanedAxisName = columnData.key
+						.replace(/^log[_\s]*/i, '')  // Remove log prefix
+						.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
+				}
+				cleanedAxisName = cleanedAxisName.replace(/_/g, ' ');
+				axisLabelInput.property('value', cleanedAxisName);
 			}
 		}
 		
 		// Update dropdown button text
 		d3.select(`#${seriesId}-dropdown`).html(d3.select(element).html());
-		
-		// Automatic log detection
-		const isLogColumn = /^log[_\s]|^log(?=[A-Z])/i.test(columnData.key);
 		if (isLogColumn) {
 			// Set data transformation to exponentiate
 			seriesDefinition.data_transformations.rescale = 'exp';
@@ -425,36 +439,9 @@ const series_manager = {
 			}
 		}
 		
-		// Auto-generate series label if empty
-		if (!labelInput.property('value')) {
-			let cleanedName = columnData.key;
-			// If it's a log column, clean up the label
-			if (isLogColumn) {
-				cleanedName = columnData.key
-					.replace(/^log[_\s]*/i, '')  // Remove log prefix
-					.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
-			}
-			cleanedName = cleanedName.replace(/_/g, ' ');
-			labelInput.property('value', cleanedName);
-			seriesDefinition.label = cleanedName;
-		}
-		
-		// Auto-populate axis label if this is the first series and axis label is empty
-		const axisLabelInput = d3.select(`#${axis}-axis-label`);
-		if (parseInt(seriesIndex) === 0 && !axisLabelInput.property('value')) {
-			let cleanedAxisName = columnData.key;
-			// If it's a log column, clean up the axis label
-			if (isLogColumn) {
-				cleanedAxisName = columnData.key
-					.replace(/^log[_\s]*/i, '')  // Remove log prefix
-					.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
-			}
-			cleanedAxisName = cleanedAxisName.replace(/_/g, ' ');
-			axisLabelInput.property('value', cleanedAxisName);
-			// Update the SVG label immediately if it exists
-			if (vis.have_axis_labels) {
-				vis.update_axis_labels();
-			}
+		// Update the SVG label immediately if it exists (for first series)
+		if (parseInt(seriesIndex) === 0 && vis.have_axis_labels) {
+			vis.update_axis_labels();
 		}
 		
 		// Refresh plot
@@ -576,7 +563,13 @@ const series_manager = {
 		
 		d3.select(`#${seriesId}-search`).on('keyup', function(e) {
 			// ignore arrow keys; those control the active element via keydown
-			if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') return;
+			if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') {
+				if (e.code === 'Enter') {
+					e.preventDefault(); // Prevent default form submission behavior
+					e.stopPropagation(); // Prevent event bubbling
+				}
+				return;
+			}
 			series_manager.apply_series_search(seriesId);
 		});
 		
@@ -626,8 +619,20 @@ const series_manager = {
 					d3.select(prev).classed('active', true);
 				}
 			} else if (e.code === 'Enter') {
+				e.preventDefault(); // Prevent page scroll to top
+				e.stopPropagation(); // Prevent event bubbling
 				// simulate click event on the active element if user hits enter
-				d3.select(`#${seriesId}-options a.active`).dispatch('click');
+				const activeElement = d3.select(`#${seriesId}-options a.active`);
+				if (!activeElement.empty()) {
+					activeElement.dispatch('click');
+					// Close the dropdown menu (matching X-axis behavior)
+					const dropdownButton = document.querySelector(`#${seriesId}-dropdown`);
+					if (dropdownButton) {
+						// Use Bootstrap's dropdown API to close the dropdown
+						const dropdown = bootstrap.Dropdown.getInstance(dropdownButton) || new bootstrap.Dropdown(dropdownButton);
+						dropdown.hide();
+					}
+				}
 			}
 		});
 	}

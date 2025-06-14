@@ -16,7 +16,13 @@ controls_manager = {
 			});
 			d3.select(`#${axis}-search`).on('keyup', function(e) {
 				// ignore arrow keys; those control the active element via keydown
-				if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') return;
+				if (e.code.slice(0, 3) === 'Arr' || e.code == 'Enter') {
+					if (e.code === 'Enter') {
+						e.preventDefault(); // Prevent default form submission behavior
+						e.stopPropagation(); // Prevent event bubbling
+					}
+					return;
+				}
 				controls_manager.apply_search(axis);
 			});
 			d3.select(`#${axis}-search`).on('keydown', function(e) {
@@ -73,6 +79,8 @@ controls_manager = {
 						d3.select(prev).classed('active', true);
 					}
 				} else if (e.code === 'Enter') {
+					e.preventDefault(); // Prevent default form submission behavior
+					e.stopPropagation(); // Prevent event bubbling
 					// simulate click event on the active element if user hits enter
 					d3.select(`#${axis}-choices a.active`).dispatch('click');
 				}

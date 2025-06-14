@@ -375,8 +375,9 @@ vis = {
 					'value',
 					option
 						.text()
-						.replace('log', '')
-						.replace('_', ' ')
+						.replace(/^log[_\s]*/i, '')     // Remove "log_" or "log " prefix
+						.replace(/^log(?=[A-Z])/i, '')  // Remove "log" before capitals  
+						.replace(/_/g, ' ')             // Replace underscores with spaces
 				);
 				// Set scale to correspond with reported data type (log/linear)
 				const selector = `#${axis}-scale-${option.datum().scale}`;

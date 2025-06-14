@@ -120,6 +120,10 @@ python gen_columns_data.py
 ### Known Issues & Future Improvements
 
 #### High Priority
+
+**11 out of 12 high priority issues have been completed! 🎉**
+
+The following issues have been successfully resolved:
 1. **✅ Color cycle intelligence and axis label management** (COMPLETED):
    - ✅ Fixed: Global color cycling across both axes prevents color conflicts
    - ✅ Implemented: Dynamic axis label coloring based on series counts
@@ -170,25 +174,23 @@ python gen_columns_data.py
    - ✅ Resolution: Files panel can be collapsed/expanded as expected
 
 10. **Legend responsive sizing and typography**:
-   - Current: Legend width is fixed and doesn't scale with legend content size
+   - Current: Legend width is fixed and doesn't scale with legend content size  
    - Current: Legend text size may not match other UI text elements
    - Need: Legend width should auto-adjust based on legend handle size and content
    - Need: Legend text should use consistent font size with rest of interface
    - Enhancement: Better visual integration and responsive design
 
-11. **Y-axis label and series name cleaning for log columns**:
-   - Current: Y-axis labels and series names keep "log_" or "log" prefix from column names
-   - Expected: Should remove "log_" or "log" prefix when generating labels, similar to X-axis behavior
-   - Issue: X-axis properly cleans "log_" from column names but Y-axis does not
-   - Need: Consistent label cleaning across all axes for better readability
-   - Example: "log_L" should become "L" in axis labels and series names
+11. **✅ Y-axis label and series name cleaning for log columns** (COMPLETED):
+   - ✅ Fixed: Y-axis series and axis labels now properly remove "log_" or "log" prefix from column names
+   - ✅ Enhancement: Consistent label cleaning across all axes (X-axis, left Y-axis, right Y-axis)
+   - ✅ Implementation: Applied log cleaning immediately when setting labels instead of conditional logic
+   - ✅ Result: "log_L" becomes "L" in both axis labels and series names consistently
 
-12. **Y-axis series dropdown keyboard selection behavior**:
-   - Current: Pressing Return in y-axis series column dropdowns selects the item but scrolls page to top and leaves menu open
-   - Expected: Should behave like X-axis dropdown - close menu and stay at current scroll position
-   - Issue: Inconsistent keyboard interaction behavior between X-axis and Y-axis dropdowns
-   - Need: Y-axis dropdowns should have identical behavior to X-axis dropdown for Return key selection
-   - UX Impact: Disrupts workflow when navigating with keyboard
+12. **✅ Y-axis series dropdown keyboard selection behavior** (COMPLETED):
+   - ✅ Fixed: Pressing Return in Y-axis series column dropdowns now behaves identically to X-axis dropdowns
+   - ✅ Resolution: Added e.preventDefault() and e.stopPropagation() to all Enter key handlers
+   - ✅ Enhancement: Dropdowns close automatically and page stays at current scroll position
+   - ✅ Consistency: All dropdowns (X-axis, left Y-axis, right Y-axis) have identical keyboard navigation
 
 #### Code Architecture
 
