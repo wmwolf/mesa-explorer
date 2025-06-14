@@ -144,9 +144,6 @@ const series_manager = {
 		const transformCol = transformRow.append('div')
 			.attr('class', 'col-12');
 		
-		transformCol.append('h6')
-			.text('Data Transformations');
-		
 		// Single row with all controls (matching X-axis layout)
 		const controlsRow = transformCol.append('div')
 			.attr('class', 'row');
@@ -176,9 +173,9 @@ const series_manager = {
 				});
 			
 			checkDiv.append('label')
-				.attr('class', 'form-check-label')
+				.attr('class', 'form-check-label small')
 				.attr('for', `${seriesId}-data-trans-${transform}`)
-				.text(transform === 'linear' ? 'Linear' : (transform === 'log' ? 'Log' : 'Exp'));
+				.html(transform === 'linear' ? '<em>x</em>' : (transform === 'log' ? 'log<sub>10</sub>(<em>x</em>)' : '10<sup><em>x</em></sup>'));
 		});
 		
 		// Additional controls (right side)
@@ -311,10 +308,25 @@ const series_manager = {
 		// Update series definition
 		seriesDefinition.column = columnData.key;
 		
+		// Update series label to match the selected column
+		seriesDefinition.label = columnData.key;
+		
+		// Update the series label input field in the UI
+		const labelInput = d3.select(`#${seriesId}-label`);
+		if (!labelInput.empty()) {
+			labelInput.property('value', columnData.key);
+		}
+		
 		// Set axis data_name for the first series (needed for axis labels to appear)
 		if (parseInt(seriesIndex) === 0) {
 			vis.axes[axis].data_name = columnData.key;
 			vis.axes[axis].data_type = columnData.scale || 'linear';
+			
+			// Update the axis label when the first series is updated
+			const axisLabelInput = d3.select(`#${axis}-axis-label`);
+			if (!axisLabelInput.empty()) {
+				axisLabelInput.property('value', columnData.key);
+			}
 		}
 		
 		// Update dropdown button text
@@ -338,7 +350,6 @@ const series_manager = {
 		}
 		
 		// Auto-generate series label if empty
-		const labelInput = d3.select(`#${seriesId}-label`);
 		if (!labelInput.property('value')) {
 			let cleanedName = columnData.key;
 			// If it's a log column, clean up the label

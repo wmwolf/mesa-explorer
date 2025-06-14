@@ -20,9 +20,6 @@ vis = {
 		// Initialize interaction manager
 		interaction_manager.setup();
 		
-		// Initialize series manager
-		series_manager.setup();
-		
 		// Initialize controls manager
 		if (typeof controls_manager !== 'undefined') {
 			controls_manager.setup();
@@ -602,9 +599,22 @@ vis = {
 			color: series.color
 		}));
 		
-		// Position legend in top-right corner of plot area
-		const lineHeight = 18;
-		const legendWidth = 150;
+		// Calculate legend dimensions based on content
+		const fontSize = style_manager.styles.global.font_size;
+		const lineHeight = fontSize + 6; // Add some padding between lines
+		const leftPadding = 15; // Space before line starts
+		const rightPadding = 15; // Space after text ends (matching left padding)
+		const lineLength = 20;
+		const lineToTextGap = 5; // Space between line end and text start
+		const textStartX = lineLength + lineToTextGap; // Text position relative to line start
+		
+		// Calculate maximum text width to determine legend width
+		const canvas = document.createElement('canvas');
+		const context = canvas.getContext('2d');
+		context.font = `${fontSize}px sans-serif`;
+		
+		const maxTextWidth = Math.max(...legendData.map(d => context.measureText(d.name).width));
+		const legendWidth = leftPadding + lineLength + lineToTextGap + maxTextWidth + rightPadding;
 		const legendHeight = legendData.length * lineHeight + 10;
 		// Legend rectangle extends leftward from anchor, so anchor should be at right edge
 		const legendX = vis.max_display('x');
@@ -663,18 +673,18 @@ vis = {
 		
 		legend.call(drag);
 		
-		// Add legend entries
+		// Add legend entries (positioned so line starts at leftPadding from left edge)
 		const entries = legend.selectAll('.legend-entry')
 			.data(legendData)
 			.enter()
 			.append('g')
 			.attr('class', 'legend-entry')
-			.attr('transform', (d, i) => `translate(-${legendWidth - 15}, ${i * lineHeight + 10})`);
+			.attr('transform', (d, i) => `translate(${leftPadding - legendWidth}, ${i * lineHeight + 10})`);
 		
 		// Add colored lines
 		entries.append('line')
 			.attr('x1', 0)
-			.attr('x2', 20)
+			.attr('x2', lineLength)
 			.attr('y1', 0)
 			.attr('y2', 0)
 			.attr('stroke', d => d.color)
@@ -682,12 +692,12 @@ vis = {
 		
 		// Add text labels
 		entries.append('text')
-			.attr('x', 25)
+			.attr('x', textStartX)
 			.attr('y', 0)
 			.attr('dy', '0.35em')
 			.attr('fill', vis.axes.x.color)
 			.attr('font-family', 'sans-serif')
-			.attr('font-size', Math.max(8, style_manager.styles.global.font_size - 2))
+			.attr('font-size', fontSize)
 			.text(d => d.name);
 	},
 	clear_plot: () => {

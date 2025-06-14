@@ -27,7 +27,7 @@ setup = () => {
 	file_manager.setup();
 	vis.setup();
 	style_manager.setup_style_handlers();
-	vis.setup_series_management();
+	series_manager.setup();
 	
 	// Setup files panel hide/show toggle
 	setup_files_panel_toggle();
@@ -37,6 +37,9 @@ setup = () => {
 	
 	// Setup responsive plot resizing
 	setup_plot_resize_observer();
+	
+	// Setup collapsible axis settings
+	setup_axis_settings_collapse();
 };
 
 // Track if files panel is hidden
@@ -47,8 +50,13 @@ setup_files_panel_toggle = () => {
 	const hideToggle = document.getElementById('files-hide-toggle');
 	const showToggle = document.getElementById('files-show-toggle');
 	
-	hideToggle.addEventListener('click', hide_files_panel);
-	showToggle.addEventListener('click', show_files_panel);
+	if (hideToggle) {
+		hideToggle.addEventListener('click', hide_files_panel);
+	}
+	
+	if (showToggle) {
+		showToggle.addEventListener('click', show_files_panel);
+	}
 };
 
 // Hide the files panel and expand visualization
@@ -56,6 +64,10 @@ hide_files_panel = () => {
 	const filesColumn = document.getElementById('files-column');
 	const vizColumn = document.getElementById('visualization-column');
 	const summaryBar = document.getElementById('files-summary-bar');
+	
+	if (!filesColumn || !vizColumn || !summaryBar) {
+		return;
+	}
 	
 	// Hide files column
 	filesColumn.style.display = 'none';
@@ -72,6 +84,9 @@ hide_files_panel = () => {
 	
 	files_panel_hidden = true;
 	
+	// Update axis controls layout
+	update_axis_controls_layout();
+	
 	// Trigger plot resize after layout change
 	setTimeout(() => {
 		if (typeof vis !== 'undefined' && vis.update_plot) {
@@ -86,6 +101,10 @@ show_files_panel = () => {
 	const vizColumn = document.getElementById('visualization-column');
 	const summaryBar = document.getElementById('files-summary-bar');
 	
+	if (!filesColumn || !vizColumn || !summaryBar) {
+		return;
+	}
+	
 	// Show files column
 	filesColumn.style.display = 'block';
 	
@@ -97,6 +116,9 @@ show_files_panel = () => {
 	summaryBar.classList.add('d-none');
 	
 	files_panel_hidden = false;
+	
+	// Update axis controls layout
+	update_axis_controls_layout();
 	
 	// Trigger plot resize after layout change
 	setTimeout(() => {
@@ -264,4 +286,43 @@ setup_plot_resize_observer = () => {
 	});
 	
 	resizeObserver.observe(plotContainer);
+};
+
+// Setup collapsible axis settings with chevron rotation
+setup_axis_settings_collapse = () => {
+	const collapseElements = ['x-axis-settings-collapse', 'y-axis-settings-collapse', 'yOther-axis-settings-collapse'];
+	const chevronIds = ['x-axis-chevron', 'y-axis-chevron', 'yOther-axis-chevron'];
+	
+	collapseElements.forEach((collapseId, index) => {
+		const collapseElement = document.getElementById(collapseId);
+		const chevronElement = document.getElementById(chevronIds[index]);
+		
+		if (collapseElement && chevronElement) {
+			collapseElement.addEventListener('show.bs.collapse', () => {
+				chevronElement.classList.remove('bi-chevron-right');
+				chevronElement.classList.add('bi-chevron-down');
+			});
+			
+			collapseElement.addEventListener('hide.bs.collapse', () => {
+				chevronElement.classList.remove('bi-chevron-down');
+				chevronElement.classList.add('bi-chevron-right');
+			});
+		}
+	});
+};
+
+// Update axis controls layout based on files panel state
+update_axis_controls_layout = () => {
+	const xAxisContainer = document.querySelector('#x-axis-container');
+	const yAxesContainer = document.querySelector('#y-axes-container');
+	
+	if (files_panel_hidden) {
+		// When files panel is hidden, use column layout
+		xAxisContainer.className = 'col-12 col-xl-6';
+		yAxesContainer.className = 'col-12 col-xl-6';
+	} else {
+		// When files panel is visible, stack vertically
+		xAxisContainer.className = 'col-12';
+		yAxesContainer.className = 'col-12';
+	}
 };
