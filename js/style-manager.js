@@ -14,7 +14,9 @@ style_manager = {
 			default_marker_size: 4,
 			default_opacity: 1.0,
 			font_size: 16,
-			global_color_index: 0  // Global color cycling counter
+			global_color_index: 0,  // Global color cycling counter
+			manual_color_overrides: new Set(),  // Track manually changed colors
+			automatic_color_assignments: new Map()  // Track series_id -> color_index for automatic assignments
 		},
 		
 		// Available color schemes
@@ -86,6 +88,11 @@ style_manager = {
 		// Find the series and update its style
 		const series = vis.series.find(s => s.series_id === series_id);
 		if (series) {
+			// Check if this is a manual color change
+			if (style_updates.color) {
+				style_manager.mark_color_as_manual_override(series_id, style_updates.color);
+			}
+			
 			Object.assign(series.style, style_updates);
 			// Update persistent styles
 			if (!style_manager.styles.persistent_styles[series_id]) {
@@ -109,10 +116,12 @@ style_manager = {
 		// Apply global settings to all currently displayed series
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		
+		// Clear manual override tracking when color scheme changes - everything gets reassigned systematically
+		style_manager.styles.global.manual_color_overrides.clear();
+		style_manager.styles.global.automatic_color_assignments.clear();
+		style_manager.reset_global_color_counter();
+		
 		if (vis.series && vis.series.length > 0) {
-			// Reset color counter and assign colors to existing series
-			style_manager.reset_global_color_counter();
-			
 			if (vis.files && vis.files.length > 1) {
 				// Multi-file mode: Group series by file to maintain proper color relationships
 				const seriesByFile = {};
@@ -137,15 +146,36 @@ style_manager = {
 						// Update legacy color for compatibility
 						series.color = new_color;
 						
+						// Track as automatic assignment
+						style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
+						
 						// Update persistent storage
 						style_manager.styles.persistent_styles[series.series_id] = { ...series.style };
 					});
 				});
 			} else {
-				// Single-file mode: Use global color cycling for each series
-				vis.series.forEach(series => {
-					const colorResult = style_manager.get_next_global_color();
-					const new_color = colorResult.color;
+				// Single-file mode: Systematic color assignment (left Y top-to-bottom, then right Y top-to-bottom)
+				// Sort series by axis and order for systematic assignment
+				const leftYSeries = vis.series.filter(s => s.target_axis === 'y').sort((a, b) => {
+					// Sort by series creation order or index
+					const aIndex = parseInt(a.series_id.split('_')[2]) || 0;
+					const bIndex = parseInt(b.series_id.split('_')[2]) || 0;
+					return aIndex - bIndex;
+				});
+				
+				const rightYSeries = vis.series.filter(s => s.target_axis === 'yOther').sort((a, b) => {
+					// Sort by series creation order or index
+					const aIndex = parseInt(a.series_id.split('_')[2]) || 0;
+					const bIndex = parseInt(b.series_id.split('_')[2]) || 0;
+					return aIndex - bIndex;
+				});
+				
+				// Systematic assignment: left Y first, then right Y
+				const systematicOrder = [...leftYSeries, ...rightYSeries];
+				
+				systematicOrder.forEach((series, index) => {
+					const colorIndex = index % colors.length;
+					const new_color = colors[colorIndex];
 					
 					// Update series style
 					series.style.color = new_color;
@@ -156,21 +186,34 @@ style_manager = {
 					// Update legacy color for compatibility
 					series.color = new_color;
 					
+					// Track as automatic assignment
+					style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
+					
 					// Update persistent storage
 					style_manager.styles.persistent_styles[series.series_id] = { ...series.style };
 				});
+				
+				// Update color counter to continue from where systematic assignment left off
+				style_manager.styles.global.global_color_index = systematicOrder.length % colors.length;
 			}
 		}
 		
 		// Also update any other persistent styles not currently displayed
 		Object.keys(style_manager.styles.persistent_styles).forEach((series_id, index) => {
-			const style = style_manager.styles.persistent_styles[series_id];
-			const new_color = colors[index % colors.length];
-			
-			style.color = new_color;
-			style.line_width = style_manager.styles.global.default_line_width;
-			style.marker_size = style_manager.styles.global.default_marker_size;
-			style.opacity = style_manager.styles.global.default_opacity;
+			// Skip if this series is already handled above
+			if (!vis.series || !vis.series.find(s => s.series_id === series_id)) {
+				const style = style_manager.styles.persistent_styles[series_id];
+				const colorIndex = index % colors.length;
+				const new_color = colors[colorIndex];
+				
+				style.color = new_color;
+				style.line_width = style_manager.styles.global.default_line_width;
+				style.marker_size = style_manager.styles.global.default_marker_size;
+				style.opacity = style_manager.styles.global.default_opacity;
+				
+				// Track as automatic assignment
+				style_manager.styles.global.automatic_color_assignments.set(series_id, colorIndex);
+			}
 		});
 		
 		// Update axis label colors based on new series configuration
@@ -254,13 +297,125 @@ style_manager = {
 		return style;
 	},
 
+	// Custom color scheme dropdown functions
+	setup_color_scheme_dropdown: () => {
+		const dropdown = d3.select('#colorSchemeDropdown');
+		const currentScheme = style_manager.styles.global.color_scheme;
+		
+		// Clear existing options
+		dropdown.selectAll('li').remove();
+		
+		// Create dropdown items for each color scheme
+		Object.keys(style_manager.styles.color_schemes).forEach(schemeKey => {
+			const colors = style_manager.styles.color_schemes[schemeKey];
+			const schemeName = style_manager.get_color_scheme_display_name(schemeKey);
+			
+			const listItem = dropdown.append('li');
+			const link = listItem.append('a')
+				.attr('class', 'dropdown-item d-flex align-items-center py-2')
+				.attr('href', '#')
+				.style('cursor', 'pointer')
+				.on('click', (event) => {
+					event.preventDefault();
+					style_manager.select_color_scheme(schemeKey);
+				});
+			
+			// Color preview swatches
+			const previewContainer = link.append('div')
+				.attr('class', 'd-flex me-3');
+			
+			colors.slice(0, Math.min(colors.length, 8)).forEach(color => {
+				previewContainer.append('div')
+					.style('width', '12px')
+					.style('height', '12px')
+					.style('background-color', color)
+					.style('border', '1px solid #ccc')
+					.style('margin-right', '1px')
+					.style('border-radius', '2px');
+			});
+			
+			// Scheme name
+			link.append('span')
+				.text(schemeName);
+			
+			// Mark active scheme
+			if (schemeKey === currentScheme) {
+				link.classed('active', true);
+			}
+		});
+		
+		// Update the button display
+		style_manager.update_color_scheme_button(currentScheme);
+	},
+	
+	get_color_scheme_display_name: (schemeKey) => {
+		const nameMap = {
+			'tableau10': 'Tableau 10',
+			'set1': 'Set 1',
+			'set2': 'Set 2',
+			'dark2': 'Dark 2',
+			'viridis': 'Viridis',
+			'magma': 'Magma',
+			'plasma': 'Plasma',
+			'inferno': 'Inferno'
+		};
+		return nameMap[schemeKey] || schemeKey.charAt(0).toUpperCase() + schemeKey.slice(1);
+	},
+	
+	select_color_scheme: (schemeKey) => {
+		// Update the global setting
+		style_manager.styles.global.color_scheme = schemeKey;
+		
+		// Update the button display
+		style_manager.update_color_scheme_button(schemeKey);
+		
+		// Update active state in dropdown
+		d3.selectAll('#colorSchemeDropdown .dropdown-item').classed('active', false);
+		d3.selectAll('#colorSchemeDropdown .dropdown-item')
+			.filter(function() { 
+				return d3.select(this).on('click').toString().includes(schemeKey); 
+			})
+			.classed('active', true);
+		
+		// Apply the changes
+		style_manager.apply_global_style_changes();
+		
+		// Close the dropdown
+		const dropdownToggle = document.getElementById('colorSchemeSelect');
+		const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+		if (dropdown) {
+			dropdown.hide();
+		}
+	},
+	
+	update_color_scheme_button: (schemeKey) => {
+		const colors = style_manager.styles.color_schemes[schemeKey];
+		const schemeName = style_manager.get_color_scheme_display_name(schemeKey);
+		
+		// Update the scheme name
+		d3.select('#colorSchemeName').text(schemeName);
+		
+		// Update the color preview in the button
+		const previewContainer = d3.select('#colorSchemePreview');
+		previewContainer.selectAll('*').remove();
+		
+		colors.slice(0, Math.min(colors.length, 6)).forEach(color => {
+			previewContainer.append('div')
+				.style('width', '14px')
+				.style('height', '14px')
+				.style('background-color', color)
+				.style('border', '1px solid #ccc')
+				.style('margin-right', '1px')
+				.style('border-radius', '2px');
+		});
+	},
+
 	// Style panel UI functions
 	setup_style_handlers: () => {
-		// Global style handlers
-		d3.select('#colorSchemeSelect').on('change', function() {
-			style_manager.styles.global.color_scheme = this.value;
-			style_manager.apply_global_style_changes();
-		});
+		// Initialize custom color scheme dropdown
+		style_manager.setup_color_scheme_dropdown();
+		
+		// Global style handlers - note: colorSchemeSelect is now handled by the custom dropdown
 		
 		d3.select('#defaultLineWidth').on('input', function() {
 			style_manager.styles.global.default_line_width = parseFloat(this.value);
@@ -340,8 +495,8 @@ style_manager = {
 	update_style_panel: () => {
 		if (!vis.series || vis.series.length === 0) return;
 		
-		// Update global settings
-		d3.select('#colorSchemeSelect').property('value', style_manager.styles.global.color_scheme);
+		// Update global settings - refresh the custom color scheme dropdown
+		style_manager.update_color_scheme_button(style_manager.styles.global.color_scheme);
 		d3.select('#defaultLineWidth').property('value', style_manager.styles.global.default_line_width);
 		d3.select('#defaultMarkerSize').property('value', style_manager.styles.global.default_marker_size);
 		d3.select('#defaultOpacity').property('value', style_manager.styles.global.default_opacity);
@@ -576,16 +731,82 @@ style_manager = {
 			});
 	},
 	
-	// Global color cycling functions
-	get_next_global_color: () => {
+	// Global color cycling functions with cycle independence
+	get_next_global_color: (series_id = null) => {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
-		const colorIndex = style_manager.styles.global.global_color_index;
-		const color = colors[colorIndex % colors.length];
+		const maxAttempts = colors.length;
+		let attempts = 0;
+		let colorIndex = style_manager.styles.global.global_color_index;
 		
-		// Increment for next time
-		style_manager.styles.global.global_color_index = (colorIndex + 1) % colors.length;
+		// Find next available automatic color (skip manually overridden ones)
+		while (attempts < maxAttempts) {
+			const currentColor = colors[colorIndex % colors.length];
+			
+			// Check if this color is manually overridden by looking at persistent styles
+			const isManuallyOverridden = style_manager.is_color_manually_overridden(currentColor);
+			
+			if (!isManuallyOverridden) {
+				// Found an available automatic color
+				const finalIndex = colorIndex % colors.length;
+				const finalColor = colors[finalIndex];
+				
+				// Track this automatic assignment if series_id provided
+				if (series_id) {
+					style_manager.styles.global.automatic_color_assignments.set(series_id, finalIndex);
+				}
+				
+				// Advance counter for next time
+				style_manager.styles.global.global_color_index = (colorIndex + 1) % colors.length;
+				
+				return { color: finalColor, index: finalIndex };
+			}
+			
+			// This color is manually overridden, try next one
+			colorIndex = (colorIndex + 1) % colors.length;
+			attempts++;
+		}
 		
-		return { color, index: colorIndex };
+		// If all colors are manually overridden (edge case), just cycle through normally
+		const fallbackIndex = style_manager.styles.global.global_color_index;
+		const fallbackColor = colors[fallbackIndex % colors.length];
+		style_manager.styles.global.global_color_index = (fallbackIndex + 1) % colors.length;
+		
+		if (series_id) {
+			style_manager.styles.global.automatic_color_assignments.set(series_id, fallbackIndex % colors.length);
+		}
+		
+		return { color: fallbackColor, index: fallbackIndex % colors.length };
+	},
+	
+	// Check if a color is manually overridden
+	is_color_manually_overridden: (color) => {
+		// Look through all persistent styles to see if any series has this color as a manual override
+		for (const [series_id, style] of Object.entries(style_manager.styles.persistent_styles)) {
+			if (style.color === color) {
+				// Check if this was an automatic assignment vs manual override
+				const automaticIndex = style_manager.styles.global.automatic_color_assignments.get(series_id);
+				if (automaticIndex !== undefined) {
+					const automaticColor = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme][automaticIndex];
+					// If the current color doesn't match the automatic assignment, it's a manual override
+					if (style.color !== automaticColor) {
+						return true;
+					}
+				} else {
+					// No automatic assignment record means it could be manual (err on side of caution)
+					return true;
+				}
+			}
+		}
+		return false;
+	},
+	
+	// Mark a series color change as manual override
+	mark_color_as_manual_override: (series_id, new_color) => {
+		// Remove from automatic assignments since it's now manual
+		style_manager.styles.global.automatic_color_assignments.delete(series_id);
+		
+		// The color will be tracked as manual override through the persistent styles
+		// and detected by is_color_manually_overridden()
 	},
 	
 	reset_global_color_counter: () => {

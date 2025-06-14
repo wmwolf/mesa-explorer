@@ -132,61 +132,63 @@ python gen_columns_data.py
    - ✅ Resolved: Right axis tracking bug when switching between file modes
    - ✅ Enhancement: Inspector labels match axis label content and colors exactly
 
-3. **Multi-file mode series styling and naming**:
-   - Current: All series in multi-file mode get the same default color
-   - Need: Default series colors should cycle through color schemes to distinguish files
-   - Current: Series names in multi-file mode may not default to file names
-   - Need: Series should default to using file display names (local_name) in multi-file mode
-   - Enhancement: Better visual distinction between files when plotting multiple files
+3. **✅ Series styling persistence issues** (COMPLETED):
+   - ✅ Fixed: Implemented "cycle independence" color persistence system
+   - ✅ Feature: New series get next color from cycle, manual changes don't affect cycle progression
+   - ✅ Enhancement: Series removal doesn't change existing series colors
+   - ✅ System: Color cycle changes reassign all colors systematically (left Y → right Y)
+   - ✅ Bonus: Added color cycle preview dropdown with visual swatches
 
-4. **Series styling persistence issues**:
-   - Current: Adding a new series may reset individual style changes made to existing series
-   - Need: Individual series style changes should persist when new series are added
-   - Issue: Style management may not properly maintain individual customizations during series creation
-
-5. **✅ Y-axis dropdown UI inconsistency** (COMPLETED):
+4. **✅ Y-axis dropdown UI inconsistency** (COMPLETED):
    - ✅ Fixed: Y-axis dropdowns now match X-axis behavior and appearance
    - ✅ Implemented: Full keyboard navigation (arrow keys, return to select, immediate search active state)
    - ✅ Resolution: Users can navigate y-axis selections entirely with keyboard
 
-6. **✅ Multi-file mode legend labeling** (COMPLETED):
+5. **✅ Multi-file mode legend labeling** (COMPLETED):
    - ✅ Fixed: Legend labels now show only file names in multi-file mode
    - ✅ Enhancement: Cleaner legend presentation for multi-file comparisons
 
-7. **✅ Multi-file mode color cycling** (COMPLETED):
+6. **✅ Multi-file mode color cycling** (COMPLETED):
    - ✅ Fixed: Each file now gets distinct color from color cycle
    - ✅ Resolution: Multi-file mode properly assigns colors by file index
 
-8. **✅ Logarithmic column detection and transformation system** (COMPLETED):
+7. **✅ Logarithmic column detection and transformation system** (COMPLETED):
    - ✅ Implemented: Complete per-series transformation architecture
    - ✅ Fixed: Auto-detection of log columns with automatic rescaling and axis suggestions
    - ✅ Enhanced: Per-series data transformations (Linear/Log/Exp, Zero-point, Absolute Value)
    - ✅ UI Redesign: Moved transformation controls into series boxes with consistent layout
    - ✅ X-axis Integration: X-axis transformations now work properly with automatic log detection
 
-9. **✅ UI architecture and consistency** (COMPLETED):
+8. **✅ UI architecture and consistency** (COMPLETED):
    - ✅ Fixed: X-axis label positioning moved above dropdown for consistency
    - ✅ Enhanced: Uniform layout across all axis controls
    - ✅ Improved: All axes have identical "Axis Settings" sections with consistent styling
    - ✅ Terminology: Clear distinction between "Rescale" (data) and "Scale" (axis display)
 
-10. **✅ Files panel hide/minimize button not working** (COMPLETED):
+9. **✅ Files panel hide/minimize button not working** (COMPLETED):
    - ✅ Fixed: Button to hide files panel now functions properly
    - ✅ Resolution: Files panel can be collapsed/expanded as expected
 
-11. **Legend responsive sizing and typography**:
+10. **Legend responsive sizing and typography**:
    - Current: Legend width is fixed and doesn't scale with legend content size
    - Current: Legend text size may not match other UI text elements
    - Need: Legend width should auto-adjust based on legend handle size and content
    - Need: Legend text should use consistent font size with rest of interface
    - Enhancement: Better visual integration and responsive design
 
-12. **Y-axis label and series name cleaning for log columns**:
+11. **Y-axis label and series name cleaning for log columns**:
    - Current: Y-axis labels and series names keep "log_" or "log" prefix from column names
    - Expected: Should remove "log_" or "log" prefix when generating labels, similar to X-axis behavior
    - Issue: X-axis properly cleans "log_" from column names but Y-axis does not
    - Need: Consistent label cleaning across all axes for better readability
    - Example: "log_L" should become "L" in axis labels and series names
+
+12. **Y-axis series dropdown keyboard selection behavior**:
+   - Current: Pressing Return in y-axis series column dropdowns selects the item but scrolls page to top and leaves menu open
+   - Expected: Should behave like X-axis dropdown - close menu and stay at current scroll position
+   - Issue: Inconsistent keyboard interaction behavior between X-axis and Y-axis dropdowns
+   - Need: Y-axis dropdowns should have identical behavior to X-axis dropdown for Return key selection
+   - UX Impact: Disrupts workflow when navigating with keyboard
 
 #### Code Architecture
 
@@ -514,3 +516,88 @@ if (!axisLabelInput.empty() && axisLabelInput.property('value').trim() !== '') {
 - ✅ Log prefix cleaning consistent across inspector and axis labels
 - ✅ Fallback system handles edge cases gracefully
 - ✅ No regression in existing inspector functionality
+
+## ✅ Completed: Series Color Persistence and Visual Preview System
+
+### Implementation Status: COMPLETED
+
+The series color management system has been completely overhauled with cycle independence and visual color scheme previews.
+
+### Key Improvements
+
+**Cycle Independence Color Persistence:**
+- **✅ Smart Color Assignment**: New series get next available color, skipping manually overridden colors
+- **✅ Manual Override Tracking**: System tracks which colors are manual vs automatic assignments
+- **✅ Series Removal Stability**: Removing series doesn't affect colors of remaining series
+- **✅ Systematic Reassignment**: Color scheme changes apply systematic ordering (left Y → right Y)
+
+**Visual Color Scheme Preview:**
+- **✅ Custom Dropdown**: Replaced standard select with Bootstrap dropdown showing color swatches
+- **✅ Real-time Preview**: Button shows current color scheme with mini swatches
+- **✅ Full Color Display**: Dropdown shows up to 8 colors per scheme for complete preview
+- **✅ Seamless Integration**: Maintains all existing functionality with enhanced UX
+
+### Technical Implementation
+
+**Color Persistence System** (`js/style-manager.js`):
+```javascript
+// Cycle independence with manual override tracking
+get_next_global_color: (series_id = null) => {
+    // Find next available automatic color (skip manually overridden ones)
+    while (attempts < maxAttempts) {
+        const isManuallyOverridden = style_manager.is_color_manually_overridden(currentColor);
+        if (!isManuallyOverridden) {
+            // Track automatic assignment and advance counter
+            style_manager.styles.global.automatic_color_assignments.set(series_id, finalIndex);
+            return { color: finalColor, index: finalIndex };
+        }
+        colorIndex = (colorIndex + 1) % colors.length; // Try next color
+    }
+}
+```
+
+**Visual Preview System** (`index.html` + `js/style-manager.js`):
+```html
+<div class="dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle">
+        <div class="d-flex align-items-center">
+            <div id="colorSchemePreview" class="d-flex me-2"></div>
+            <span id="colorSchemeName">Tableau 10</span>
+        </div>
+    </button>
+    <ul class="dropdown-menu" id="colorSchemeDropdown">
+        <!-- Populated with color swatches by JavaScript -->
+    </ul>
+</div>
+```
+
+### Before vs After
+
+**Before:**
+- Manual color changes disrupted automatic cycle progression
+- Adding series could reset previous color customizations
+- No way to preview color schemes before selection
+- Series removal caused unpredictable color shifts
+
+**After:**
+- Manual changes are invisible to the automatic cycle (true independence)
+- Individual customizations persist when adding new series
+- Visual preview shows exactly what colors to expect
+- Predictable, systematic color assignment and management
+
+### User Experience Benefits
+
+- **Predictable**: Users know exactly what color their next series will get
+- **Flexible**: Manual customizations don't interfere with automatic assignments
+- **Visual**: Color scheme selection shows immediate previews
+- **Stable**: Series operations (add/remove) don't cause unexpected color changes
+- **Systematic**: Color scheme changes apply logical, consistent ordering
+
+### Testing Results
+
+- ✅ New series get correct next color even after manual overrides
+- ✅ Manual color changes properly tracked and preserved
+- ✅ Series removal leaves other colors unchanged
+- ✅ Color scheme changes apply systematic reassignment
+- ✅ Visual dropdown shows accurate color previews
+- ✅ All existing color functionality preserved

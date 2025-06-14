@@ -244,6 +244,10 @@ const series_manager = {
 		// Remove UI element
 		d3.select(`#${axis}-series-${seriesIndex}`).remove();
 		
+		// Update persistent styles and color assignments during renumbering
+		// This preserves manual color overrides when series IDs change
+		series_manager.update_persistent_styles_for_renumbering(axis);
+		
 		// Renumber remaining series
 		series_manager.series_definitions[axis].forEach((series, newIndex) => {
 			const oldId = series.id;
@@ -262,6 +266,78 @@ const series_manager = {
 		
 		// Refresh plot
 		file_manager.invoke_file_change_callbacks();
+	},
+	
+	// Update persistent styles when series are renumbered to preserve manual color overrides
+	update_persistent_styles_for_renumbering: (axis) => {
+		if (!vis.files || vis.files.length === 0) return;
+		
+		// Find all existing persistent styles for this axis
+		const axisStyles = {};
+		const axisAssignments = new Map();
+		
+		// Collect existing styles and assignments that match this axis
+		Object.keys(style_manager.styles.persistent_styles).forEach(seriesId => {
+			if (seriesId.includes(`_${axis}_`)) {
+				// Extract the column name from the series definition this style belongs to
+				const parts = seriesId.split('_');
+				const seriesIndex = parseInt(parts[2]);
+				
+				// Find this series in current vis.series to get its column
+				const existingSeries = vis.series.find(s => s.series_id === seriesId);
+				if (existingSeries) {
+					const column = existingSeries.data_columns.y;
+					axisStyles[column] = { 
+						style: { ...style_manager.styles.persistent_styles[seriesId] },
+						originalId: seriesId
+					};
+				}
+				
+				// Also collect automatic assignments
+				const assignment = style_manager.styles.global.automatic_color_assignments.get(seriesId);
+				if (assignment !== undefined) {
+					const column = existingSeries ? existingSeries.data_columns.y : null;
+					if (column) {
+						axisAssignments.set(column, assignment);
+					}
+				}
+			}
+		});
+		
+		// Clean up old entries
+		Object.keys(style_manager.styles.persistent_styles).forEach(seriesId => {
+			if (seriesId.includes(`_${axis}_`)) {
+				delete style_manager.styles.persistent_styles[seriesId];
+			}
+		});
+		
+		vis.files.forEach(file => {
+			axisAssignments.forEach((assignment, column) => {
+				const oldSeriesId = Object.keys(axisStyles).includes(column) ? 
+					axisStyles[column].originalId : null;
+				if (oldSeriesId) {
+					style_manager.styles.global.automatic_color_assignments.delete(oldSeriesId);
+				}
+			});
+		});
+		
+		// Reassign styles based on the new series definitions
+		series_manager.series_definitions[axis].forEach((seriesDef, newIndex) => {
+			const column = seriesDef.column;
+			
+			if (axisStyles[column]) {
+				// This series had persistent styling - restore it with new ID
+				vis.files.forEach((file, fileIndex) => {
+					const newSeriesId = `${file.filename}_${axis}_${newIndex}_${fileIndex}`;
+					style_manager.styles.persistent_styles[newSeriesId] = axisStyles[column].style;
+					
+					// Restore automatic assignment if it existed
+					if (axisAssignments.has(column)) {
+						style_manager.styles.global.automatic_color_assignments.set(newSeriesId, axisAssignments.get(column));
+					}
+				});
+			}
+		});
 	},
 	
 	apply_series_search: (seriesId) => {
@@ -426,7 +502,8 @@ const series_manager = {
 	
 	get_multi_series_style: (axis, seriesIndex, fileIndex) => {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
-		const series_id = `multi_${axis}_${seriesIndex}_${fileIndex}`;
+		// Use consistent series ID format with create_multi_series
+		const series_id = `${vis.files[fileIndex].filename}_${axis}_${seriesIndex}_${fileIndex}`;
 		
 		// Check if we have persistent styling for this series
 		if (style_manager.styles.persistent_styles[series_id]) {
@@ -444,7 +521,7 @@ const series_manager = {
 			color = colors[colorIndex];
 		} else {
 			// Single-file mode: use global color cycling
-			const colorResult = style_manager.get_next_global_color();
+			const colorResult = style_manager.get_next_global_color(series_id);
 			color = colorResult.color;
 		}
 		

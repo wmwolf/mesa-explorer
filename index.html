@@ -525,16 +525,17 @@
 					<div class="border rounded p-3">
 						<div class="mb-3">
 							<label for="colorSchemeSelect" class="form-label">Color Scheme</label>
-							<select class="form-select" id="colorSchemeSelect">
-								<option value="tableau10" selected>Tableau 10</option>
-								<option value="set1">Set 1</option>
-								<option value="set2">Set 2</option>
-								<option value="dark2">Dark 2</option>
-								<option value="viridis">Viridis</option>
-								<option value="magma">Magma</option>
-								<option value="plasma">Plasma</option>
-								<option value="inferno">Inferno</option>
-							</select>
+							<div class="dropdown">
+								<button class="btn btn-outline-secondary dropdown-toggle w-100 d-flex justify-content-between align-items-center" type="button" id="colorSchemeSelect" data-bs-toggle="dropdown" aria-expanded="false">
+									<div class="d-flex align-items-center">
+										<div id="colorSchemePreview" class="d-flex me-2"></div>
+										<span id="colorSchemeName">Tableau 10</span>
+									</div>
+								</button>
+								<ul class="dropdown-menu w-100" id="colorSchemeDropdown" aria-labelledby="colorSchemeSelect">
+									<!-- Color scheme options will be populated by JavaScript -->
+								</ul>
+							</div>
 						</div>
 						<div class="row mb-3">
 							<div class="col-6">
