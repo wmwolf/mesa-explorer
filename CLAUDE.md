@@ -126,10 +126,11 @@ python gen_columns_data.py
    - ✅ Enhancement: Single series axes get colored labels, multiple series axes stay black
    - ✅ Architecture: Robust callback system prevents loading order issues
 
-2. **Inspector mode updates**:
-   - Current: Inspector tooltips may not account for new multi-series architecture
-   - Need: Update mouseover functionality to properly handle multiple series per axis
-   - Enhancement: Show all relevant series data at cursor position
+2. **✅ Inspector mode updates** (COMPLETED):
+   - ✅ Fixed: Inspector tooltips now use axis labels instead of raw data names
+   - ✅ Implemented: Consistent label cleaning and color matching with axis labels
+   - ✅ Resolved: Right axis tracking bug when switching between file modes
+   - ✅ Enhancement: Inspector labels match axis label content and colors exactly
 
 3. **Multi-file mode series styling and naming**:
    - Current: All series in multi-file mode get the same default color
@@ -438,3 +439,78 @@ A comprehensive architectural redesign has been successfully implemented, transf
 - Implemented automatic log detection with smart defaults
 
 **Result**: A much more powerful, intuitive, and consistent user interface that enables complex visualizations while being easier to use.
+
+## ✅ Completed: Inspector Mode Multi-Series Enhancements
+
+### Implementation Status: COMPLETED
+
+The inspector tool has been successfully enhanced to work seamlessly with the multi-series architecture and handle all file mode transitions.
+
+### Key Improvements
+
+**Inspector Label Consistency:**
+- **✅ Axis Label Integration**: Inspector now shows cleaned axis labels from input fields instead of raw column names
+- **✅ Color Matching**: Inspector text colors match axis label colors exactly
+- **✅ Consistent Cleaning**: Uses same log prefix removal as axis labels ("log_L" → "L")
+- **✅ Fallback System**: Gracefully handles missing axis labels with cleaned data names
+
+**Axis Tracking Reliability:**
+- **✅ Mode Transition Fix**: Resolved bug where right axis was not tracked after switching from multi-file to single-file mode
+- **✅ Data Name Restoration**: Automatic restoration of `vis.axes[axis].data_name` from existing series definitions
+- **✅ Cross-Mode Persistence**: Inspector tracking works consistently across all file mode transitions
+
+### Technical Implementation
+
+**Inspector Tooltip Enhancement** (`js/interaction-manager.js`):
+```javascript
+// Get the cleaned axis label from the input field instead of using raw data_name
+let axisLabel;
+const axisLabelInput = d3.select(`#${axis}-axis-label`);
+if (!axisLabelInput.empty() && axisLabelInput.property('value').trim() !== '') {
+    axisLabel = axisLabelInput.property('value').trim();
+} else {
+    // Fallback: clean the data_name with consistent log prefix removal
+    axisLabel = vis.axes[axis].data_name
+        .replace(/^log[_\s]*/i, '')     // Remove "log_" or "log " prefix
+        .replace(/^log(?=[A-Z])/i, '')  // Remove "log" before capitals  
+        .replace(/_/g, ' ');            // Replace underscores with spaces
+}
+```
+
+**Axis Tracking Restoration** (`js/mesa-explorer.js`):
+```javascript
+// Restore axis data_name from existing series definitions if needed
+// This ensures inspector tracking works after mode transitions
+['y', 'yOther'].forEach(axis => {
+    const seriesDefinitions = series_manager.series_definitions[axis];
+    if (seriesDefinitions && seriesDefinitions.length > 0 && seriesDefinitions[0].column) {
+        // Restore data_name from first series if it's not already set
+        if (!vis.axes[axis].data_name) {
+            vis.axes[axis].data_name = seriesDefinitions[0].column;
+            // Also restore axis label if empty
+        }
+    }
+});
+```
+
+### Before vs After
+
+**Before:**
+- Inspector showed raw column names with inconsistent cleaning
+- Right axis tracking lost when switching from multi-file to single-file mode
+- Inspector colors and labels didn't match axis labels
+- Axis tracking depended on unreliable data_name persistence
+
+**After:**
+- Inspector shows clean, consistent axis labels matching the UI
+- All axes track properly across all file mode transitions
+- Inspector colors exactly match axis label colors
+- Robust data_name restoration system ensures reliable tracking
+
+### Testing Results
+
+- ✅ Inspector labels match axis labels in content and color
+- ✅ Right axis tracking works in all file mode transitions
+- ✅ Log prefix cleaning consistent across inspector and axis labels
+- ✅ Fallback system handles edge cases gracefully
+- ✅ No regression in existing inspector functionality

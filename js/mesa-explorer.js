@@ -188,7 +188,8 @@ vis = {
 		Object.keys(vis.axes).forEach(axis => {
 			// For multi-file mode, also reset yOther axis even if columns exist
 			if (!commonColumns.includes(vis.axes[axis].data_name) || (isMultiFile && axis === 'yOther')) {
-				// Reset axis if current column is not available in all files or if hiding yOther
+				// Reset axis if current column is not available in all files 
+				// OR if switching to multi-file mode and this is yOther axis (hide it)
 				if (!(isMultiFile && axis === 'yOther')) {
 					// Don't reset yOther data in multi-file mode - preserve the state
 					vis.axes[axis].data_name = undefined;
@@ -248,6 +249,28 @@ vis = {
 		
 		// Auto-create initial series if none exist
 		series_manager.ensure_initial_series();
+		
+		// Restore axis data_name from existing series definitions if needed
+		// This ensures inspector tracking works after mode transitions
+		['y', 'yOther'].forEach(axis => {
+			const seriesDefinitions = series_manager.series_definitions[axis];
+			if (seriesDefinitions && seriesDefinitions.length > 0 && seriesDefinitions[0].column) {
+				// Restore data_name from first series if it's not already set
+				if (!vis.axes[axis].data_name) {
+					vis.axes[axis].data_name = seriesDefinitions[0].column;
+					
+					// Update axis label if it's empty
+					const axisLabelInput = d3.select(`#${axis}-axis-label`);
+					if (!axisLabelInput.empty() && !axisLabelInput.property('value').trim()) {
+						const cleanedLabel = seriesDefinitions[0].column
+							.replace(/^log[_\s]*/i, '')     // Remove "log_" or "log " prefix
+							.replace(/^log(?=[A-Z])/i, '')  // Remove "log" before capitals
+							.replace(/_/g, ' ');            // Replace underscores with spaces
+						axisLabelInput.property('value', cleanedLabel);
+					}
+				}
+			}
+		});
 		
 		// Update axis label colors based on new series configuration
 		style_manager.update_axis_label_colors();

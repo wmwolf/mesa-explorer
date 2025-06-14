@@ -178,7 +178,26 @@ const interaction_manager = {
 		Object.keys(vis.axes).forEach(axis => {
 			if (vis.axes[axis].data_name && vis.svg[`mouse_${axis[0]}_pixel`] != null) {
 				vis.axes[axis].mouse_val = vis.axes[axis].scale.invert(vis.svg[`mouse_${axis[0]}_pixel`]);
-				label_data.push({axis: vis.axes[axis], val: vis.axes[axis].mouse_val});
+				
+				// Get the cleaned axis label from the input field instead of using raw data_name
+				let axisLabel;
+				const axisLabelInput = d3.select(`#${axis}-axis-label`);
+				if (!axisLabelInput.empty() && axisLabelInput.property('value').trim() !== '') {
+					axisLabel = axisLabelInput.property('value').trim();
+				} else {
+					// Fallback: clean the data_name if no label is set
+					axisLabel = vis.axes[axis].data_name
+						.replace(/^log[_\s]*/i, '')     // Remove "log_" or "log " prefix
+						.replace(/^log(?=[A-Z])/i, '')  // Remove "log" before capitals  
+						.replace(/_/g, ' ');            // Replace underscores with spaces
+				}
+				
+				label_data.push({
+					axis: vis.axes[axis], 
+					val: vis.axes[axis].mouse_val,
+					label: axisLabel
+				});
+				
 				if (vis.axes[axis].mouse_val >= 10000 || vis.axes[axis].mouse_val <= 0.001) {
 					// Use exponential notation with 3 decimal places
 					label_data[label_data.length - 1].val = label_data[label_data.length - 1].val.toExponential(3);
@@ -218,7 +237,7 @@ const interaction_manager = {
 				.attr('y', y + 35)
 				.attr('dy', (d, i) => (i * 1.2).toString() + 'em')
 				.attr('fill', (d) => d.axis.color)
-				.text(d => `${d['axis'].data_name.replace('_', ' ').replace(/log\s*/g, '')}: ${d['val']}`);
+				.text(d => `${d.label}: ${d.val}`);
 			
 			// Update background rectangle
 			let bbox = mouse_text.node().getBBox();
