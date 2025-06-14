@@ -181,8 +181,22 @@ controls_manager = {
 		//  "min" (left/bottom) and "max" (right/top) limits
 		d3.selectAll('div.limits input').on('keyup', function() {
 			elt = d3.select(this);
-			vis.axes[elt.attr('data-axis')][elt.attr('data-lim')] = parseFloat(elt.property('value'));
+			const axis = elt.attr('data-axis');
+			vis.axes[axis][elt.attr('data-lim')] = parseFloat(elt.property('value'));
+			
+			// Update inversion button state after changing limits
+			vis.update_inversion_button_state(axis);
+			
 			vis.update_plot();
+		});
+
+		// Set up handlers for axis inversion buttons
+		d3.selectAll('[id$="-invert-button"]').on('click', function() {
+			const button = d3.select(this);
+			const buttonId = button.attr('id');
+			// Extract axis name from button ID (e.g., "x-invert-button" -> "x")
+			const axis = buttonId.replace('-invert-button', '');
+			vis.toggle_axis_inversion(axis);
 		});
 
 		d3.select('#redraw').on('click', () => {

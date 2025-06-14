@@ -84,6 +84,7 @@ vis = {
 			min: undefined,
 			max: undefined,
 			color: 'Black',
+			inverted: false,
 		},
 		y: {
 			generic_html: '<var>y</var>',
@@ -95,6 +96,7 @@ vis = {
 			min: undefined,
 			max: undefined,
 			color: '#1f77b4', // Tableau10 blue (first color)
+			inverted: false,
 		},
 		yOther: {
 			generic_html: 'other <var>y</var>',
@@ -106,6 +108,7 @@ vis = {
 			min: undefined,
 			max: undefined,
 			color: '#ff7f0e', // Tableau10 orange (second color)
+			inverted: false,
 		},
 	},
 	// minimum and maximum data coordinates to display on plot
@@ -394,6 +397,66 @@ vis = {
 				return false;
 			});
 	},
+
+	// Axis inversion functions
+	is_axis_inverted: axis => {
+		// Check if axis is inverted by comparing min/max values
+		// An axis is considered inverted if min > max (i.e., left > right for x-axis, or bottom > top for y-axis)
+		const min_val = vis.axes[axis].min;
+		const max_val = vis.axes[axis].max;
+		
+		// If explicit limits are set, check if min > max
+		if (min_val !== undefined && max_val !== undefined && !isNaN(min_val) && !isNaN(max_val)) {
+			return min_val > max_val;
+		}
+		
+		// If no explicit limits, check the inverted flag
+		return vis.axes[axis].inverted;
+	},
+
+	toggle_axis_inversion: axis => {
+		const min_val = vis.axes[axis].min;
+		const max_val = vis.axes[axis].max;
+		
+		// If explicit limits are set, swap them
+		if (min_val !== undefined && max_val !== undefined && !isNaN(min_val) && !isNaN(max_val)) {
+			vis.axes[axis].min = max_val;
+			vis.axes[axis].max = min_val;
+			
+			// Update the UI input fields
+			const minInput = d3.select(`#${axis}-axis-${axis === 'x' ? 'left' : 'bottom'}`);
+			const maxInput = d3.select(`#${axis}-axis-${axis === 'x' ? 'right' : 'top'}`);
+			minInput.property('value', max_val);
+			maxInput.property('value', min_val);
+		} else {
+			// If no explicit bounds, toggle the inverted flag (affects auto-calculated bounds)
+			vis.axes[axis].inverted = !vis.axes[axis].inverted;
+		}
+		
+		// Update the inversion button state
+		vis.update_inversion_button_state(axis);
+		
+		// Redraw the plot
+		vis.update_plot();
+	},
+
+	update_inversion_button_state: axis => {
+		const button = d3.select(`#${axis}-invert-button`);
+		if (!button.empty()) {
+			const isInverted = vis.is_axis_inverted(axis);
+			button.classed('active', isInverted);
+			
+			// Update button appearance based on Bootstrap theme
+			if (isInverted) {
+				button.classed('btn-outline-secondary', false)
+					  .classed('btn-secondary', true);
+			} else {
+				button.classed('btn-secondary', false)
+					  .classed('btn-outline-secondary', true);
+			}
+		}
+	},
+
 	make_scale: axis => {
 		// set up right scaling
 		let shouldCreateScale = false;
@@ -415,7 +478,37 @@ vis = {
 				vis.axes[axis].scale = d3.scaleLinear();
 			}
 			// now set domain and range using helper functions
-			vis.axes[axis].scale.domain([data_utils.min_data(axis), data_utils.max_data(axis)]).range([vis.min_display(axis), vis.max_display(axis)]);
+			// For inverted axes, we need to handle the domain setting differently
+			let min_domain, max_domain;
+			
+			// Get the actual data bounds (ignoring explicit limits for now)
+			const explicit_min = vis.axes[axis].min;
+			const explicit_max = vis.axes[axis].max;
+			
+			// Temporarily clear explicit limits to get auto-calculated bounds
+			vis.axes[axis].min = undefined;
+			vis.axes[axis].max = undefined;
+			const auto_min = data_utils.min_data(axis);
+			const auto_max = data_utils.max_data(axis);
+			
+			// Restore explicit limits
+			vis.axes[axis].min = explicit_min;
+			vis.axes[axis].max = explicit_max;
+			
+			// Determine the final domain bounds
+			if (explicit_min !== undefined && !isNaN(explicit_min)) {
+				min_domain = explicit_min;
+			} else {
+				min_domain = vis.axes[axis].inverted ? auto_max : auto_min;
+			}
+			
+			if (explicit_max !== undefined && !isNaN(explicit_max)) {
+				max_domain = explicit_max;
+			} else {
+				max_domain = vis.axes[axis].inverted ? auto_min : auto_max;
+			}
+			
+			vis.axes[axis].scale.domain([min_domain, max_domain]).range([vis.min_display(axis), vis.max_display(axis)]);
 		}
 	},
 	make_scales: () => {
@@ -775,6 +868,11 @@ vis = {
 			vis.make_scales();
 			vis.add_axes(force_light);
 		}
+		
+		// Update inversion button states for all axes
+		Object.keys(vis.axes).forEach(axis => {
+			vis.update_inversion_button_state(axis);
+		});
 		
 		// Sync mini plot if visible
 		if (typeof sync_mini_plot === 'function') {
