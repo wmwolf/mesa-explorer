@@ -13,7 +13,8 @@ style_manager = {
 			default_line_width: 2.0,
 			default_marker_size: 4,
 			default_opacity: 1.0,
-			font_size: 12
+			font_size: 16,
+			global_color_index: 0  // Global color cycling counter
 		},
 		
 		// Available color schemes
@@ -95,6 +96,8 @@ style_manager = {
 			// Update color property for backward compatibility
 			if (style_updates.color) {
 				series.color = style_updates.color;
+				// Update axis label colors if series color changed
+				style_manager.update_axis_label_colors();
 			}
 			
 			// Refresh plot
@@ -107,28 +110,42 @@ style_manager = {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		
 		if (vis.series && vis.series.length > 0) {
-			// Group series by file to maintain proper color relationships
-			const seriesByFile = {};
-			vis.series.forEach(series => {
-				const fileName = series.file_reference.filename;
-				if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
-				seriesByFile[fileName].push(series);
-			});
+			// Reset color counter and assign colors to existing series
+			style_manager.reset_global_color_counter();
 			
-			// Update series with axis-aware colors
-			Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
-				seriesByFile[fileName].forEach(series => {
-					// Use axis-specific color logic
-					let colorIndex;
-					if (series.target_axis === 'y') {
-						colorIndex = fileIndex % colors.length;
-					} else if (series.target_axis === 'yOther') {
-						colorIndex = (fileIndex + 1) % colors.length;
-					} else {
-						colorIndex = fileIndex % colors.length;
-					}
-					
+			if (vis.files && vis.files.length > 1) {
+				// Multi-file mode: Group series by file to maintain proper color relationships
+				const seriesByFile = {};
+				vis.series.forEach(series => {
+					const fileName = series.file_reference.filename;
+					if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
+					seriesByFile[fileName].push(series);
+				});
+				
+				// Update series with file-based colors  
+				Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
+					const colorIndex = fileIndex % colors.length;
 					const new_color = colors[colorIndex];
+					
+					seriesByFile[fileName].forEach(series => {
+						// Update series style
+						series.style.color = new_color;
+						series.style.line_width = style_manager.styles.global.default_line_width;
+						series.style.marker_size = style_manager.styles.global.default_marker_size;
+						series.style.opacity = style_manager.styles.global.default_opacity;
+						
+						// Update legacy color for compatibility
+						series.color = new_color;
+						
+						// Update persistent storage
+						style_manager.styles.persistent_styles[series.series_id] = { ...series.style };
+					});
+				});
+			} else {
+				// Single-file mode: Use global color cycling for each series
+				vis.series.forEach(series => {
+					const colorResult = style_manager.get_next_global_color();
+					const new_color = colorResult.color;
 					
 					// Update series style
 					series.style.color = new_color;
@@ -142,7 +159,7 @@ style_manager = {
 					// Update persistent storage
 					style_manager.styles.persistent_styles[series.series_id] = { ...series.style };
 				});
-			});
+			}
 		}
 		
 		// Also update any other persistent styles not currently displayed
@@ -156,11 +173,8 @@ style_manager = {
 			style.opacity = style_manager.styles.global.default_opacity;
 		});
 		
-		// Update axis colors to match new color scheme (but only in single-file mode)
-		if (!d3.select('#yOther-data').classed('d-none')) {
-			vis.axes.y.color = colors[0]; // first color (blue in tableau10)
-			vis.axes.yOther.color = colors[1]; // second color (orange in tableau10)
-		}
+		// Update axis label colors based on new series configuration
+		style_manager.update_axis_label_colors();
 		
 		vis.update_plot();
 		style_manager.update_style_panel();
@@ -560,6 +574,60 @@ style_manager = {
 						style_manager.update_series_style(d.series_id, { marker_every: parseInt(this.value) });
 					});
 			});
+	},
+	
+	// Global color cycling functions
+	get_next_global_color: () => {
+		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
+		const colorIndex = style_manager.styles.global.global_color_index;
+		const color = colors[colorIndex % colors.length];
+		
+		// Increment for next time
+		style_manager.styles.global.global_color_index = (colorIndex + 1) % colors.length;
+		
+		return { color, index: colorIndex };
+	},
+	
+	reset_global_color_counter: () => {
+		style_manager.styles.global.global_color_index = 0;
+	},
+	
+	// Dynamic axis label coloring based on series counts
+	update_axis_label_colors: () => {
+		if (!vis.series || vis.series.length === 0) {
+			// No series - use black for all axis labels
+			vis.axes.y.color = 'Black';
+			vis.axes.yOther.color = 'Black';
+			return;
+		}
+		
+		// Count series per axis
+		const leftSeries = vis.series.filter(s => s.target_axis === 'y');
+		const rightSeries = vis.series.filter(s => s.target_axis === 'yOther');
+		
+		// Default to black
+		vis.axes.y.color = 'Black';
+		vis.axes.yOther.color = 'Black';
+		
+		// Apply coloring rules:
+		// - Both axes have series AND at least one axis has only one series
+		// - Then any axis with only one series gets colored to match that series
+		if (leftSeries.length > 0 && rightSeries.length > 0) {
+			// Both axes have series
+			if (leftSeries.length === 1) {
+				// Left axis has only one series - color it to match
+				vis.axes.y.color = leftSeries[0].style.color;
+			}
+			if (rightSeries.length === 1) {
+				// Right axis has only one series - color it to match
+				vis.axes.yOther.color = rightSeries[0].style.color;
+			}
+		}
+		
+		// Force plot refresh to apply new colors
+		if (!vis.pause) {
+			vis.update_plot();
+		}
 	},
 	
 };

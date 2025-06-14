@@ -130,7 +130,7 @@ const series_manager = {
 			.attr('placeholder', 'Series label')
 			.on('input', function() {
 				seriesDefinition.label = this.value;
-				vis.register_new_files(); // Refresh plot
+				file_manager.invoke_file_change_callbacks(); // Refresh plot
 			});
 		
 		labelDiv.append('label')
@@ -168,7 +168,7 @@ const series_manager = {
 				.on('change', function() {
 					if (this.checked) {
 						seriesDefinition.data_transformations.rescale = transform;
-						vis.register_new_files(); // Refresh plot
+						file_manager.invoke_file_change_callbacks(); // Refresh plot
 					}
 				});
 			
@@ -200,7 +200,7 @@ const series_manager = {
 			.attr('value', '0')
 			.on('input', function() {
 				seriesDefinition.data_transformations.rezero = parseFloat(this.value) || 0;
-				vis.register_new_files(); // Refresh plot
+				file_manager.invoke_file_change_callbacks(); // Refresh plot
 			});
 		
 		zeroDiv.append('label')
@@ -221,7 +221,7 @@ const series_manager = {
 			.attr('id', `${seriesId}-absval`)
 			.on('change', function() {
 				seriesDefinition.data_transformations.absval = this.checked;
-				vis.register_new_files(); // Refresh plot
+				file_manager.invoke_file_change_callbacks(); // Refresh plot
 			});
 		
 		absDiv.append('label')
@@ -261,7 +261,7 @@ const series_manager = {
 		});
 		
 		// Refresh plot
-		vis.register_new_files();
+		file_manager.invoke_file_change_callbacks();
 	},
 	
 	apply_series_search: (seriesId) => {
@@ -382,7 +382,7 @@ const series_manager = {
 		}
 		
 		// Refresh plot
-		vis.register_new_files();
+		file_manager.invoke_file_change_callbacks();
 	},
 	
 	create_multi_series: (file, fileIndex, targetAxis, seriesDefinition, seriesIndex) => {
@@ -434,26 +434,22 @@ const series_manager = {
 		}
 		
 		// Create new style with smart color assignment
-		let colorIndex;
+		let color;
 		
 		// In multi-file mode, assign colors by file index (each file gets different color)
-		// In single-file mode, assign colors by series index (each series gets different color)
+		// In single-file mode, use global color cycling across both axes
 		if (vis.files && vis.files.length > 1) {
 			// Multi-file mode: color by file index so each file is distinct
-			colorIndex = fileIndex % colors.length;
+			const colorIndex = fileIndex % colors.length;
+			color = colors[colorIndex];
 		} else {
-			// Single-file mode: color by series index for axis-aware cycling
-			if (axis === 'y') {
-				// Left axis: cycle through colors starting with blue
-				colorIndex = seriesIndex % colors.length;
-			} else {
-				// Right axis: start with orange (index 1) then continue cycling
-				colorIndex = (seriesIndex + 1) % colors.length;
-			}
+			// Single-file mode: use global color cycling
+			const colorResult = style_manager.get_next_global_color();
+			color = colorResult.color;
 		}
 		
 		const style = {
-			color: colors[colorIndex],
+			color: color,
 			line_width: style_manager.styles.global.default_line_width,
 			marker_size: style_manager.styles.global.default_marker_size,
 			marker_shape: 'circle',

@@ -24,22 +24,71 @@ setup = () => {
 		true
 	);
 
-	file_manager.setup();
-	vis.setup();
-	style_manager.setup_style_handlers();
-	series_manager.setup();
-	
-	// Setup files panel hide/show toggle
-	setup_files_panel_toggle();
+	// Will be called after all scripts are loaded
+	window.mesa_ready_for_initialization = true;
 	
 	// Setup miniature plot functionality
 	setup_mini_plot();
 	
-	// Setup responsive plot resizing
-	setup_plot_resize_observer();
-	
 	// Setup collapsible axis settings
 	setup_axis_settings_collapse();
+}
+
+// Central application initialization function with promises
+// This provides robust initialization order guarantees
+window.initialize_application = async function() {
+	try {
+		console.log('Starting Mesa Explorer initialization...');
+		
+		// Phase 1: Initialize core modules that don't depend on others
+		console.log('Phase 1: Initializing core modules...');
+		await initializeModule('file_manager', () => file_manager.setup());
+		await initializeModule('style_manager', () => style_manager.setup_style_handlers());
+		await initializeModule('series_manager', () => series_manager.setup());
+		
+		// Phase 2: Initialize visualization engine
+		console.log('Phase 2: Initializing visualization engine...');
+		await initializeModule('vis', () => vis.setup());
+		
+		// Phase 3: Set up cross-module communication callbacks
+		console.log('Phase 3: Setting up cross-module communication...');
+		file_manager.register_file_change_callback(() => {
+			if (typeof vis.register_new_files === 'function') {
+				vis.register_new_files();
+			}
+		});
+		
+		// Phase 4: Setup UI utilities that depend on other modules
+		console.log('Phase 4: Setting up UI utilities...');
+		await initializeModule('files_panel', () => setup_files_panel_toggle());
+		await initializeModule('plot_resize', () => setup_plot_resize_observer());
+		
+		console.log('Mesa Explorer initialization completed successfully!');
+		
+	} catch (error) {
+		console.error('Mesa Explorer initialization failed:', error);
+		throw error;
+	}
+};
+
+// Helper function to initialize individual modules with error handling
+async function initializeModule(moduleName, initFunction) {
+	return new Promise((resolve, reject) => {
+		try {
+			console.log(`  Initializing ${moduleName}...`);
+			const result = initFunction();
+			
+			// Handle both sync and async init functions
+			if (result && typeof result.then === 'function') {
+				result.then(resolve).catch(reject);
+			} else {
+				resolve(result);
+			}
+		} catch (error) {
+			console.error(`Failed to initialize ${moduleName}:`, error);
+			reject(error);
+		}
+	});
 };
 
 // Track if files panel is hidden

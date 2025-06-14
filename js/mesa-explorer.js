@@ -214,7 +214,16 @@ vis = {
 		});
 
 		// Create series data using multi-series model
+		const hadExistingSeries = vis.series && vis.series.length > 0;
 		vis.series = [];
+		
+		// Only reset global color counter when files change or no existing series
+		// Also reset when switching between single-file and multi-file modes
+		const wasSingleFile = !d3.select('#yOther-data').classed('d-none'); // yOther visible = single file mode
+		
+		if (!hadExistingSeries || (isMultiFile === wasSingleFile)) { // mode changed
+			style_manager.reset_global_color_counter();
+		}
 		
 		// Process series definitions from UI
 		['y', 'yOther'].forEach(axis => {
@@ -239,6 +248,9 @@ vis = {
 		
 		// Auto-create initial series if none exist
 		series_manager.ensure_initial_series();
+		
+		// Update axis label colors based on new series configuration
+		style_manager.update_axis_label_colors();
 
 		// Use first file's column structure for interface (since all have same columns due to intersection)
 		vis.name_data = vis.files[0].data.bulk_names
@@ -277,16 +289,8 @@ vis = {
 			}
 		});
 		
-		// Update axis colors based on mode
-		if (show) {
-			// Single file mode: restore original colors using current color scheme
-			const currentColors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
-			vis.axes.y.color = currentColors[0]; // first color (blue in tableau10)
-			vis.axes.yOther.color = currentColors[1]; // second color (orange in tableau10)
-		} else {
-			// Multi-file mode: neutral color for y-axis
-			vis.axes.y.color = vis.axes.x.color; // same as x-axis (black)
-		}
+		// Update axis colors based on series configuration
+		style_manager.update_axis_label_colors();
 		
 		// Force plot refresh to update axis colors
 		if (!vis.pause) {
@@ -617,9 +621,11 @@ vis = {
 		const legendWidth = leftPadding + lineLength + lineToTextGap + maxTextWidth + rightPadding;
 		const legendHeight = legendData.length * lineHeight + 10;
 		// Legend rectangle extends leftward from anchor, so anchor should be at right edge
-		const legendX = vis.max_display('x');
+		// Add 15px margin from right spine
+		const legendX = vis.max_display('x') - 15;
 		// Legend rectangle extends downward from anchor-5, so anchor should account for that
-		const legendY = vis.max_display('y') + 5;
+		// Add 15px margin from top spine
+		const legendY = vis.max_display('y') + 5 + 15;
 		
 		const legend = vis.svg.append('g')
 			.attr('id', 'legend')
@@ -753,4 +759,22 @@ vis = {
 		}
 	},
 };
+
+// Initialize the application after all scripts are loaded
+if (typeof window.initialize_application === 'function') {
+	window.initialize_application().catch(error => {
+		console.error('Failed to initialize Mesa Explorer:', error);
+		// Show user-friendly error message
+		document.body.innerHTML = `
+			<div class="container mt-5">
+				<div class="alert alert-danger" role="alert">
+					<h4 class="alert-heading">Initialization Error</h4>
+					<p>Mesa Explorer failed to initialize properly. Please refresh the page and try again.</p>
+					<hr>
+					<p class="mb-0">Check the browser console for technical details.</p>
+				</div>
+			</div>
+		`;
+	});
+}
 

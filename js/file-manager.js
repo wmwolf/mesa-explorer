@@ -11,6 +11,8 @@ file_manager = {
 	current_mode: 'multi',
 	// Track active file in single mode
 	active_file: null,
+	// Callback system for cross-module communication
+	file_change_callbacks: [],
 	setup: () => {
 		document.querySelector('#mesa-input').addEventListener('change', event => {
 			file_manager.load_all_files(event.target);
@@ -342,8 +344,8 @@ file_manager = {
 		// Update select all checkbox state
 		file_manager.update_select_all_state();
 		
-		// Notify visualization
-		vis.register_new_files();
+		// Notify visualization via callback system
+		file_manager.invoke_file_change_callbacks();
 	},
 	// Handle select all checkbox
 	handle_select_all: function(selectAllCheckbox) {
@@ -383,8 +385,8 @@ file_manager = {
 		// Update active files array
 		file_manager.active_files = file_manager.files.filter(f => f.selected);
 		
-		// Notify visualization
-		vis.register_new_files();
+		// Notify visualization via callback system
+		file_manager.invoke_file_change_callbacks();
 	},
 	// Update the select all checkbox state based on current selections
 	update_select_all_state: function() {
@@ -470,7 +472,7 @@ file_manager = {
 		}
 		
 		// Notify visualization to update
-		vis.register_new_files();
+		file_manager.invoke_file_change_callbacks();
 	},
 	// Switch to single file mode
 	switch_to_single_mode: function() {
@@ -500,7 +502,7 @@ file_manager = {
 		
 		// Update UI and visualization
 		file_manager.update_ui_for_mode();
-		vis.register_new_files();
+		file_manager.invoke_file_change_callbacks();
 		
 		// Update files summary if panel is hidden
 		if (files_panel_hidden && typeof update_files_summary === 'function') {
@@ -525,7 +527,7 @@ file_manager = {
 		
 		// Update UI and visualization
 		file_manager.update_ui_for_mode();
-		vis.register_new_files();
+		file_manager.invoke_file_change_callbacks();
 		
 		// Update files summary if panel is hidden
 		if (files_panel_hidden && typeof update_files_summary === 'function') {
@@ -597,8 +599,8 @@ file_manager = {
 		d3.selectAll('.file-item button')
 			.style('display', d => d === file ? 'none' : 'inline-block');
 		
-		// Notify visualization
-		vis.register_new_files();
+		// Notify visualization via callback system
+		file_manager.invoke_file_change_callbacks();
 		
 		// Update files summary if panel is hidden
 		if (files_panel_hidden && typeof update_files_summary === 'function') {
@@ -648,5 +650,22 @@ file_manager = {
 		
 		// Switch to new file
 		file_manager.handle_single_file_click(selectableFiles[newIndex]);
+	},
+	
+	// Callback system for cross-module communication
+	register_file_change_callback: function(callback) {
+		if (typeof callback === 'function') {
+			file_manager.file_change_callbacks.push(callback);
+		}
+	},
+	
+	invoke_file_change_callbacks: function() {
+		file_manager.file_change_callbacks.forEach(callback => {
+			try {
+				callback();
+			} catch (error) {
+				console.error('Error in file change callback:', error);
+			}
+		});
 	},
 };

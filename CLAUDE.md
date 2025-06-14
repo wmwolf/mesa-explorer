@@ -120,70 +120,72 @@ python gen_columns_data.py
 ### Known Issues & Future Improvements
 
 #### High Priority
-1. **Color cycle intelligence** (single-file mode):
-   - Current: Second series on left axis and first series on right axis both use orange
-   - Need: Smart color assignment avoiding conflicts between axes
-   - Solution: Implement axis-aware color cycling
+1. **✅ Color cycle intelligence and axis label management** (COMPLETED):
+   - ✅ Fixed: Global color cycling across both axes prevents color conflicts
+   - ✅ Implemented: Dynamic axis label coloring based on series counts
+   - ✅ Enhancement: Single series axes get colored labels, multiple series axes stay black
+   - ✅ Architecture: Robust callback system prevents loading order issues
 
-2. **Axis label color management**:
-   - Current: Axis labels hard-coded as blue/orange
-   - Need: Dynamic color matching - single series matches axis color, multiple series use black
-   - Enhancement: Better visual hierarchy for axis identification
-
-3. **Inspector mode updates**:
+2. **Inspector mode updates**:
    - Current: Inspector tooltips may not account for new multi-series architecture
    - Need: Update mouseover functionality to properly handle multiple series per axis
    - Enhancement: Show all relevant series data at cursor position
 
-4. **Multi-file mode series styling and naming**:
+3. **Multi-file mode series styling and naming**:
    - Current: All series in multi-file mode get the same default color
    - Need: Default series colors should cycle through color schemes to distinguish files
    - Current: Series names in multi-file mode may not default to file names
    - Need: Series should default to using file display names (local_name) in multi-file mode
    - Enhancement: Better visual distinction between files when plotting multiple files
 
-5. **Series styling persistence issues**:
+4. **Series styling persistence issues**:
    - Current: Adding a new series may reset individual style changes made to existing series
    - Need: Individual series style changes should persist when new series are added
    - Issue: Style management may not properly maintain individual customizations during series creation
 
-6. **✅ Y-axis dropdown UI inconsistency** (COMPLETED):
+5. **✅ Y-axis dropdown UI inconsistency** (COMPLETED):
    - ✅ Fixed: Y-axis dropdowns now match X-axis behavior and appearance
    - ✅ Implemented: Full keyboard navigation (arrow keys, return to select, immediate search active state)
    - ✅ Resolution: Users can navigate y-axis selections entirely with keyboard
 
-7. **✅ Multi-file mode legend labeling** (COMPLETED):
+6. **✅ Multi-file mode legend labeling** (COMPLETED):
    - ✅ Fixed: Legend labels now show only file names in multi-file mode
    - ✅ Enhancement: Cleaner legend presentation for multi-file comparisons
 
-8. **✅ Multi-file mode color cycling** (COMPLETED):
+7. **✅ Multi-file mode color cycling** (COMPLETED):
    - ✅ Fixed: Each file now gets distinct color from color cycle
    - ✅ Resolution: Multi-file mode properly assigns colors by file index
 
-9. **✅ Logarithmic column detection and transformation system** (COMPLETED):
+8. **✅ Logarithmic column detection and transformation system** (COMPLETED):
    - ✅ Implemented: Complete per-series transformation architecture
    - ✅ Fixed: Auto-detection of log columns with automatic rescaling and axis suggestions
    - ✅ Enhanced: Per-series data transformations (Linear/Log/Exp, Zero-point, Absolute Value)
    - ✅ UI Redesign: Moved transformation controls into series boxes with consistent layout
    - ✅ X-axis Integration: X-axis transformations now work properly with automatic log detection
 
-10. **✅ UI architecture and consistency** (COMPLETED):
+9. **✅ UI architecture and consistency** (COMPLETED):
    - ✅ Fixed: X-axis label positioning moved above dropdown for consistency
    - ✅ Enhanced: Uniform layout across all axis controls
    - ✅ Improved: All axes have identical "Axis Settings" sections with consistent styling
    - ✅ Terminology: Clear distinction between "Rescale" (data) and "Scale" (axis display)
 
-11. **Files panel hide/minimize button not working**:
-   - Current: Button to hide files panel no longer functions
-   - Need: Restore panel toggle functionality 
-   - Issue: Files panel cannot be collapsed/expanded
+10. **✅ Files panel hide/minimize button not working** (COMPLETED):
+   - ✅ Fixed: Button to hide files panel now functions properly
+   - ✅ Resolution: Files panel can be collapsed/expanded as expected
 
-12. **Legend responsive sizing and typography**:
+11. **Legend responsive sizing and typography**:
    - Current: Legend width is fixed and doesn't scale with legend content size
    - Current: Legend text size may not match other UI text elements
    - Need: Legend width should auto-adjust based on legend handle size and content
    - Need: Legend text should use consistent font size with rest of interface
    - Enhancement: Better visual integration and responsive design
+
+12. **Y-axis label and series name cleaning for log columns**:
+   - Current: Y-axis labels and series names keep "log_" or "log" prefix from column names
+   - Expected: Should remove "log_" or "log" prefix when generating labels, similar to X-axis behavior
+   - Issue: X-axis properly cleans "log_" from column names but Y-axis does not
+   - Need: Consistent label cleaning across all axes for better readability
+   - Example: "log_L" should become "L" in axis labels and series names
 
 #### Code Architecture
 
@@ -279,7 +281,11 @@ The codebase has been successfully modularized into focused, manageable componen
 - Better suited for AI collaboration and human development
 - Improved code organization and readability
 
-### Loading Order
+### Loading Order and Initialization Architecture
+
+**CRITICAL**: The application uses a centralized initialization system to resolve cross-module dependencies. This prevents the circular dependency issues that plagued earlier versions.
+
+#### Script Loading Order
 ```html
 <!-- Core utilities -->
 <script src="/js/file-manager.js"></script>
@@ -297,6 +303,80 @@ The codebase has been successfully modularized into focused, manageable componen
 <!-- Core visualization engine -->
 <script src="/js/mesa-explorer.js"></script>
 ```
+
+#### Async Initialization System (`initialize_application()`)
+
+The `initialize_application()` function in `ui-utils.js` uses async/await for robust startup guarantees:
+
+```javascript
+window.initialize_application = async function() {
+    // Phase 1: Initialize core modules that don't depend on others
+    await initializeModule('file_manager', () => file_manager.setup());
+    await initializeModule('style_manager', () => style_manager.setup_style_handlers());
+    await initializeModule('series_manager', () => series_manager.setup());
+    
+    // Phase 2: Initialize visualization engine  
+    await initializeModule('vis', () => vis.setup());
+    
+    // Phase 3: Set up cross-module communication via callback system
+    file_manager.register_file_change_callback(() => vis.register_new_files());
+    
+    // Phase 4: Setup UI utilities that depend on other modules
+    await initializeModule('files_panel', () => setup_files_panel_toggle());
+    await initializeModule('plot_resize', () => setup_plot_resize_observer());
+}
+```
+
+**Key Benefits of Async Approach:**
+- **Guaranteed order**: Each phase waits for the previous to complete
+- **Error handling**: Comprehensive try/catch with detailed logging
+- **Debugging**: Console logs show exactly which module failed to initialize
+- **Future-proof**: Modules can return promises if they need async initialization
+
+#### Cross-Module Communication Pattern
+
+**DO NOT** call other modules' functions directly during initialization or from event handlers. Instead:
+
+**❌ Wrong (causes loading order issues):**
+```javascript
+// In file-manager.js
+handle_file_selection: () => {
+    // BAD: Direct call to vis object
+    vis.register_new_files();
+}
+```
+
+**✅ Correct (uses callback system):**
+```javascript
+// In file-manager.js
+handle_file_selection: () => {
+    // GOOD: Uses callback system
+    file_manager.invoke_file_change_callbacks();
+}
+
+// In ui-utils.js initialize_application()
+file_manager.register_file_change_callback(() => {
+    if (typeof vis.register_new_files === 'function') {
+        vis.register_new_files();
+    }
+});
+```
+
+#### Key Benefits
+
+- **Eliminates circular dependencies**: Modules don't directly reference each other
+- **Guaranteed initialization order**: Async/await ensures each phase completes before the next begins
+- **Comprehensive error handling**: Try/catch blocks with detailed logging for debugging
+- **Robust startup**: Modules are guaranteed to be loaded and initialized before cross-module calls
+- **Easy debugging**: Console logs show exactly which module succeeded/failed during initialization
+- **Future-proof**: New modules can easily integrate and can return promises if needed
+
+#### Common Pitfalls to Avoid
+
+1. **Never call `vis.*` functions directly from other modules during initialization**
+2. **Never assume other modules are ready during your module's setup**
+3. **Always use the callback system for cross-module communication**
+4. **Don't modify the script loading order without updating the initialization phases**
 
 The modularization provides a solid foundation for future development with clear separation of concerns and excellent maintainability.
 
