@@ -589,9 +589,36 @@ vis = {
 		
 		// X-axis
 		if (vis.axes.x.data_name && vis.axes.x.scale) {
+			// Create axis with custom formatting for log scales
+			let xAxisTop = d3.axisTop(vis.axes.x.scale).tickSizeOuter(0);
+			let xAxisBottom = d3.axisBottom(vis.axes.x.scale).tickSizeOuter(0);
+			
+			if (vis.axes.x.type === 'log') {
+				// Custom formatter for major ticks only (powers of 10)
+				const superscriptFormat = (d, i, ticks) => {
+					const log10 = Math.log10(d);
+					// Only format perfect powers of 10, let D3 handle others as empty
+					if (Math.abs(log10 - Math.round(log10)) < 0.01) {
+						const exponent = Math.round(log10);
+						// Convert digits to superscript unicode characters
+						const superscriptDigits = {
+							'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+							'5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+							'-': '⁻', '+': '⁺'
+						};
+						const superscriptExp = exponent.toString().split('').map(char => superscriptDigits[char] || char).join('');
+						return `10${superscriptExp}`;
+					}
+					return ''; // No label for minor ticks
+				};
+				
+				xAxisTop.tickFormat(superscriptFormat);
+				xAxisBottom.tickFormat(superscriptFormat);
+			}
+			
 			vis.svg
 				.append('g')
-				.call(d3.axisTop(vis.axes.x.scale).tickSizeOuter(0))
+				.call(xAxisTop)
 				.attr('transform', `translate(0,${vis.min_display('y')})`)
 				.selectAll('text')
 				.attr('text-anchor', 'top')
@@ -600,7 +627,7 @@ vis = {
 				.attr('transform', `translate(0, ${vis.tick_offset() + 2})`);
 			vis.svg
 				.append('g')
-				.call(d3.axisBottom(vis.axes.x.scale).tickSizeOuter(0))
+				.call(xAxisBottom)
 				.attr('transform', `translate(0,${vis.max_display('y')})`)
 				.selectAll('text')
 				.remove();
@@ -609,9 +636,34 @@ vis = {
 		// Left Y-axis (y)
 		const hasYSeries = vis.has_y_series();
 		if (hasYSeries && vis.axes.y.scale) {
+			// Create axis with custom formatting for log scales
+			let yAxisLeft = d3.axisRight(vis.axes.y.scale).tickSizeOuter(0);
+			
+			if (vis.axes.y.type === 'log') {
+				// Custom formatter for major ticks only (powers of 10)
+				const superscriptFormat = (d, i, ticks) => {
+					const log10 = Math.log10(d);
+					// Only format perfect powers of 10, let D3 handle others as empty
+					if (Math.abs(log10 - Math.round(log10)) < 0.01) {
+						const exponent = Math.round(log10);
+						// Convert digits to superscript unicode characters
+						const superscriptDigits = {
+							'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+							'5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+							'-': '⁻', '+': '⁺'
+						};
+						const superscriptExp = exponent.toString().split('').map(char => superscriptDigits[char] || char).join('');
+						return `10${superscriptExp}`;
+					}
+					return ''; // No label for minor ticks
+				};
+				
+				yAxisLeft.tickFormat(superscriptFormat);
+			}
+			
 			vis.svg
 				.append('g')
-				.call(d3.axisRight(vis.axes.y.scale).tickSizeOuter(0))
+				.call(yAxisLeft)
 				.attr('transform', `translate(${vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'end')
@@ -622,9 +674,34 @@ vis = {
 		// Right Y-axis (yOther)
 		const hasYOtherSeries = vis.has_yOther_series();
 		if (hasYOtherSeries && vis.axes.yOther.scale) {
+			// Create axis with custom formatting for log scales
+			let yAxisRight = d3.axisLeft(vis.axes.yOther.scale).tickSizeOuter(0);
+			
+			if (vis.axes.yOther.type === 'log') {
+				// Custom formatter for major ticks only (powers of 10)
+				const superscriptFormat = (d, i, ticks) => {
+					const log10 = Math.log10(d);
+					// Only format perfect powers of 10, let D3 handle others as empty
+					if (Math.abs(log10 - Math.round(log10)) < 0.01) {
+						const exponent = Math.round(log10);
+						// Convert digits to superscript unicode characters
+						const superscriptDigits = {
+							'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+							'5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+							'-': '⁻', '+': '⁺'
+						};
+						const superscriptExp = exponent.toString().split('').map(char => superscriptDigits[char] || char).join('');
+						return `10${superscriptExp}`;
+					}
+					return ''; // No label for minor ticks
+				};
+				
+				yAxisRight.tickFormat(superscriptFormat);
+			}
+			
 			vis.svg
 				.append('g')
-				.call(d3.axisLeft(vis.axes.yOther.scale).tickSizeOuter(0))
+				.call(yAxisRight)
 				.attr('transform', `translate(${vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'start')
