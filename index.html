@@ -225,7 +225,19 @@
 						<button class="btn btn-primary btn-lg" type="button" data-bs-toggle="offcanvas" data-bs-target="#styleOffcanvas" aria-controls="styleOffcanvas">
 							<i class="bi bi-palette"></i> Style Controls
 						</button>
-						<button class="btn btn-success btn-lg ms-2" type="button" id="download">Download SVG</button>
+						<div class="btn-group ms-2">
+							<button class="btn btn-success btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+								<i class="bi bi-download"></i> Download
+							</button>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#" id="download-svg">
+									<i class="bi bi-filetype-svg"></i> Download SVG
+								</a></li>
+								<li><a class="dropdown-item" href="#" id="download-png">
+									<i class="bi bi-image"></i> Download PNG
+								</a></li>
+							</ul>
+						</div>
 					</div>
 
 					<div id="basics" class="my-4">
@@ -625,6 +637,7 @@
 		<!-- UI management -->
 		<script src="/js/series-manager.js"></script>
 		<script src="/js/interaction-manager.js"></script>
+		<script src="/js/download-manager.js"></script>
 		<script src="/js/controls-manager.js"></script>
 		
 		<!-- Core visualization engine -->
@@ -636,6 +649,7 @@
 		<!-- <script src="/mesa-explorer/js/data-utils.js"></script> -->
 		<!-- <script src="/mesa-explorer/js/series-manager.js"></script> -->
 		<!-- <script src="/mesa-explorer/js/interaction-manager.js"></script> -->
+		<!-- <script src="/mesa-explorer/js/download-manager.js"></script> -->
 		<!-- <script src="/mesa-explorer/js/controls-manager.js"></script> -->
 		<!-- <script src="/mesa-explorer/js/mesa-explorer.js"></script> -->
 		<!-- <script data-goatcounter="https://wmwolf.goatcounter.com/count" -->

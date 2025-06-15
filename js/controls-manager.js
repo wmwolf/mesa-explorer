@@ -203,26 +203,19 @@ controls_manager = {
 			vis.update_plot();
 		});
 		
-		// Set download button handler
-		d3.select('#download').on('click', () => {
-			// if in dark mode, need to tweak xaxis label color before exporting to
-			// svg. Kind of kludgy, but it works for now.
+		// Set download button handlers
+		d3.select('#download-svg').on('click', (event) => {
+			event.preventDefault();
+			download_manager.handleDarkModeExport(() => {
+				download_manager.downloadSVG('plot');
+			});
+		});
 
-			// get current x-axis color, conditionally change and redraw if needed
-			let dark_mode = false;
-			let x_color = vis.axes.x.color;
-			if (x_color != 'Black') {
-				dark_mode = true;
-				vis.axes.x.color = 'Black';
-				vis.update_plot(force_light = true);
-			}
-			controls_manager.downloadSVG('plot');
-
-			// restore x-axis color if needed
-			if (dark_mode) {
-				vis.axes.x.color = x_color;
-				vis.update_plot();
-			}
+		d3.select('#download-png').on('click', (event) => {
+			event.preventDefault();
+			download_manager.handleDarkModeExport(() => {
+				download_manager.downloadPNG('plot');
+			});
 		});
 	},
 
@@ -244,135 +237,4 @@ controls_manager = {
 	},
 
 
-	// Downloads an SVG on the webpage, accessed by its class name
-	// @param {String} svgClassName -- name of the SVG class (e.g. "amazingSVG")
-	downloadSVG: function(svgIDName) {
-		var doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
-
-		window.URL = window.URL || window.webkitURL;
-
-		var body = document.body;
-
-		var prefix = {
-			xmlns: 'http://www.w3.org/2000/xmlns/',
-			xlink: 'http://www.w3.org/1999/xlink',
-			svg: 'http://www.w3.org/2000/svg',
-		};
-
-		initialize();
-
-		function initialize() {
-			var documents = [window.document],
-				SVGSources = [];
-			(iframes = document.querySelectorAll('iframe')), (objects = document.querySelectorAll('object'));
-
-			[].forEach.call(iframes, function(el) {
-				try {
-					if (el.contentDocument) {
-						documents.push(el.contentDocument);
-					}
-				} catch (err) {
-					console.log(err);
-				}
-			});
-
-			[].forEach.call(objects, function(el) {
-				try {
-					if (el.contentDocument) {
-						documents.push(el.contentDocument);
-					}
-				} catch (err) {
-					console.log(err);
-				}
-			});
-
-			documents.forEach(function(doc) {
-				var newSources = getSources(doc);
-				// because of prototype on NYT pages
-				for (var i = 0; i < newSources.length; i++) {
-					SVGSources.push(newSources[i]);
-				}
-			});
-			if (SVGSources.length > 1) {
-				console.log('too many options!');
-			} else if (SVGSources.length > 0) {
-				download(SVGSources[0]);
-			} else {
-				alert('The Crowbar could not find any SVG nodes.');
-			}
-		}
-
-		function cleanup() {
-			var crowbarElements = document.querySelectorAll('.svg-crowbar');
-
-			[].forEach.call(crowbarElements, function(el) {
-				el.parentNode.removeChild(el);
-			});
-		}
-
-		function getSources(doc) {
-			var svgInfo = [],
-				svg = doc.querySelector('#' + svgIDName);
-
-			svg.setAttribute('version', '1.1');
-
-			var defsEl = document.createElement('defs');
-			svg.insertBefore(defsEl, svg.firstChild); //TODO   .insert("defs", ":first-child")
-			// defsEl.setAttribute("class", "svg-crowbar");
-
-			// removing attributes so they aren't doubled up
-			svg.removeAttribute('xmlns');
-			svg.removeAttribute('xlink');
-
-			// These are needed for the svg
-			if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns')) {
-				svg.setAttributeNS(prefix.xmlns, 'xmlns', prefix.svg);
-			}
-
-			if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns:xlink')) {
-				svg.setAttributeNS(prefix.xmlns, 'xmlns:xlink', prefix.xlink);
-			}
-
-			var source = new XMLSerializer().serializeToString(svg);
-			var rect = svg.getBoundingClientRect();
-			svgInfo.push({
-				top: rect.top,
-				left: rect.left,
-				width: vis.width(),
-				height: vis.height(),
-				class: svg.getAttribute('class'),
-				id: svg.getAttribute('id'),
-				childElementCount: svg.childElementCount,
-				source: [doctype + source],
-			});
-
-			return svgInfo;
-		}
-
-		function download(source) {
-			var filename = 'untitled';
-
-			if (source.id) {
-				filename = source.id;
-			} else if (source.class) {
-				filename = source.class;
-			} else if (window.document.title) {
-				filename = window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-			}
-
-			var url = window.URL.createObjectURL(new Blob(source.source, { type: 'text/xml' }));
-
-			var a = document.createElement('a');
-			body.appendChild(a);
-			a.setAttribute('class', 'svg-crowbar');
-			a.setAttribute('download', filename + '.svg');
-			a.setAttribute('href', url);
-			a.style['display'] = 'none';
-			a.click();
-
-			setTimeout(function() {
-				window.URL.revokeObjectURL(url);
-			}, 10);
-		}
-	}
 };
