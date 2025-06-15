@@ -119,9 +119,9 @@ python gen_columns_data.py
 
 ### Known Issues & Future Improvements
 
-#### High Priority
+#### High Priority - All Completed! 🎉
 
-**11 out of 12 high priority issues have been completed! 🎉**
+**All 12 high priority issues have been completed!**
 
 The following issues have been successfully resolved:
 1. **✅ Color cycle intelligence and axis label management** (COMPLETED):
@@ -173,12 +173,10 @@ The following issues have been successfully resolved:
    - ✅ Fixed: Button to hide files panel now functions properly
    - ✅ Resolution: Files panel can be collapsed/expanded as expected
 
-10. **Legend responsive sizing and typography**:
-   - Current: Legend width is fixed and doesn't scale with legend content size  
-   - Current: Legend text size may not match other UI text elements
-   - Need: Legend width should auto-adjust based on legend handle size and content
-   - Need: Legend text should use consistent font size with rest of interface
-   - Enhancement: Better visual integration and responsive design
+10. **✅ Legend responsive sizing and typography** (COMPLETED):
+   - ✅ Fixed: Legend width now auto-adjusts based on content using canvas text measurement
+   - ✅ Enhancement: Consistent typography and better visual integration
+   - ✅ Improvement: Responsive design with proper padding and spacing
 
 11. **✅ Y-axis label and series name cleaning for log columns** (COMPLETED):
    - ✅ Fixed: Y-axis series and axis labels now properly remove "log_" or "log" prefix from column names
@@ -191,6 +189,16 @@ The following issues have been successfully resolved:
    - ✅ Resolution: Added e.preventDefault() and e.stopPropagation() to all Enter key handlers
    - ✅ Enhancement: Dropdowns close automatically and page stays at current scroll position
    - ✅ Consistency: All dropdowns (X-axis, left Y-axis, right Y-axis) have identical keyboard navigation
+
+13. **✅ Dark mode y-axis label visibility and SVG export consistency** (COMPLETED):
+   - ✅ Fixed: Y-axis labels now dynamically switch between black (light mode) and light gray (dark mode)
+   - ✅ Enhanced: SVG export forces all axis labels to black for publication-ready output
+   - ✅ Implementation: Theme-aware color system with force_light support for consistent export
+   - ✅ Consistency: All axis labels (X, left Y, right Y) follow same dark/light mode behavior
+
+14. **✅ X-axis label positioning improvement** (COMPLETED):
+   - ✅ Fixed: X-axis label moved up 10px to prevent descender cutoff
+   - ✅ Enhancement: Better readability and professional appearance
 
 #### Code Architecture
 

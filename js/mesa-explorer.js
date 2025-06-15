@@ -648,15 +648,11 @@ vis = {
 		}
 	},
 	add_axis_labels: (force_light = false) => {
-		if (!force_light && document.documentElement.getAttribute('data-bs-theme') == 'dark') {
-			vis.axes.x.color = 'rgb(223,226,230)';
-		} else {
-			vis.axes.x.color = 'Black';
-		}
+		vis.axes.x.color = style_manager.get_theme_text_color(force_light);
 		if (vis.axes.x.data_name) {
 			const label = vis.svg
 				.append('text')
-				.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 10})`)
+				.attr('transform', `translate(${vis.min_display('x') + 0.5 * (vis.max_display('x') - vis.min_display('x'))}, ${vis.height() - 20})`)
 				.attr('dominant-baseline', 'bottom')
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-x-label')
@@ -832,6 +828,11 @@ vis = {
 			return;
 		}
 		vis.clear_plot();
+		
+		// Update axis label colors to match current theme
+		if (typeof style_manager !== 'undefined' && style_manager.update_axis_label_colors) {
+			style_manager.update_axis_label_colors(force_light);
+		}
 		
 		// Check if we have any valid axes to display
 		const hasXAxis = vis.axes.x.data_name;

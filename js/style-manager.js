@@ -813,12 +813,22 @@ style_manager = {
 		style_manager.styles.global.global_color_index = 0;
 	},
 	
+	// Get appropriate text color based on current theme (dark/light mode)
+	get_theme_text_color: (force_light = false) => {
+		if (force_light || document.documentElement.getAttribute('data-bs-theme') != 'dark') {
+			return 'Black'; // Dark color for light mode or forced light mode
+		} else {
+			return 'rgb(223,226,230)'; // Light color for dark mode
+		}
+	},
+
 	// Dynamic axis label coloring based on series counts
-	update_axis_label_colors: () => {
+	update_axis_label_colors: (force_light = false) => {
 		if (!vis.series || vis.series.length === 0) {
-			// No series - use black for all axis labels
-			vis.axes.y.color = 'Black';
-			vis.axes.yOther.color = 'Black';
+			// No series - use theme-appropriate color for all axis labels
+			const themeColor = style_manager.get_theme_text_color(force_light);
+			vis.axes.y.color = themeColor;
+			vis.axes.yOther.color = themeColor;
 			return;
 		}
 		
@@ -826,9 +836,10 @@ style_manager = {
 		const leftSeries = vis.series.filter(s => s.target_axis === 'y');
 		const rightSeries = vis.series.filter(s => s.target_axis === 'yOther');
 		
-		// Default to black
-		vis.axes.y.color = 'Black';
-		vis.axes.yOther.color = 'Black';
+		// Default to theme-appropriate color
+		const themeColor = style_manager.get_theme_text_color(force_light);
+		vis.axes.y.color = themeColor;
+		vis.axes.yOther.color = themeColor;
 		
 		// Apply coloring rules:
 		// - Both axes have series AND at least one axis has only one series
@@ -845,10 +856,8 @@ style_manager = {
 			}
 		}
 		
-		// Force plot refresh to apply new colors
-		if (!vis.pause) {
-			vis.update_plot();
-		}
+		// Note: Plot refresh is handled by the caller (vis.update_plot())
+		// to avoid circular calls between update_axis_label_colors and update_plot
 	},
 	
 };
