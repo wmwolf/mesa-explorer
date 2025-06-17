@@ -31,6 +31,28 @@ file_manager = {
 		// Setup keyboard navigation
 		file_manager.setup_keyboard_navigation();
 	},
+
+	// Helper function to ensure unique local names
+	ensure_unique_local_name: (new_file, existing_files) => {
+		const original_local_name = new_file.local_name;
+		
+		// Check if local_name conflicts with any existing file
+		if (existing_files.some(f => f.local_name === new_file.local_name)) {
+			let counter = 1;
+			let candidate = `${original_local_name} (${counter})`;
+			
+			// Keep incrementing until we find a unique name
+			while (existing_files.some(f => f.local_name === candidate)) {
+				counter++;
+				candidate = `${original_local_name} (${counter})`;
+			}
+			
+			new_file.local_name = candidate;
+			console.log(`Renamed duplicate file "${original_local_name}" to "${new_file.local_name}"`);
+		}
+		
+		return new_file;
+	},
 	// Starts empty, but newest files are always added to the beginning when
 	// the user selects a new file
 	files: [],
@@ -59,6 +81,13 @@ file_manager = {
 			})
 		).then(new_files => {
 			// once data from the files have been ingested into each file object,
+			// ensure unique local names before merging
+			new_files.forEach((new_file, index) => {
+				// Check against existing files AND previously processed new files
+				const all_existing = file_manager.files.concat(new_files.slice(0, index));
+				file_manager.ensure_unique_local_name(new_file, all_existing);
+			});
+			
 			// save them to the global file manager object
 			// merge new files into existing files
 			file_manager.files = file_manager.files.concat(new_files);
