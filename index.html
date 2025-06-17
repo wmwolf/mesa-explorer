@@ -23,6 +23,20 @@
 	<!-- <script src="/mesa-explorer/js/color-modes.js"></script> -->
 
 	<body onload="setup()">
+		<!-- Toast notification container -->
+		<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+			<div id="preferencesToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+				<div class="toast-header">
+					<i class="bi bi-gear-fill me-2 text-primary"></i>
+					<strong class="me-auto">Preferences Loaded</strong>
+					<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+				<div class="toast-body">
+					Your saved style preferences have been applied.
+				</div>
+			</div>
+		</div>
+
 		<nav class="navbar navbar-expand-lg border-bottom border-bottom-dark z-index-3">
 			<div class="container">
 				<a class="navbar-brand" href="#">
@@ -596,8 +610,9 @@
 							</div>
 						</div>
 						<div class="d-grid gap-2">
-							<button class="btn btn-outline-secondary" id="applyGlobalStyles">Apply Global Changes</button>
-							<button class="btn btn-outline-warning" id="resetAllStyles">Reset All Styles</button>
+							<button class="btn btn-outline-success" id="saveDefaultPreferences">Save Styles as My Defaults</button>
+							<button class="btn btn-outline-primary" id="resetToMyDefaults">Reset to My Defaults</button>
+							<button class="btn btn-outline-secondary" id="resetToSystemDefaults">Reset to System Defaults</button>
 						</div>
 					</div>
 				</div>
@@ -610,16 +625,6 @@
 					</div>
 				</div>
 
-				<!-- Save/Load Presets -->
-				<div class="mt-4">
-					<h6>Presets</h6>
-					<div class="border rounded p-3">
-						<div class="d-grid gap-2">
-							<button class="btn btn-outline-info" id="saveStylePreset">Save Current Styles</button>
-							<button class="btn btn-outline-info" id="loadStylePreset">Load Saved Styles</button>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 

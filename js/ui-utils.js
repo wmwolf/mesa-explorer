@@ -44,6 +44,11 @@ window.initialize_application = async function() {
 		console.log('Phase 1: Initializing core modules...');
 		await initializeModule('file_manager', () => file_manager.setup());
 		await initializeModule('style_manager', () => style_manager.setup_style_handlers());
+		
+		// Load user preferences after style manager is set up
+		console.log('Loading user preferences...');
+		style_manager.load_user_preferences_on_startup();
+		
 		await initializeModule('series_manager', () => series_manager.setup());
 		
 		// Phase 2: Initialize visualization engine

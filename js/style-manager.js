@@ -53,6 +53,227 @@ style_manager = {
 		}
 	},
 
+	// System defaults (for reset functionality)
+	system_defaults: {
+		color_scheme: 'tableau10',
+		default_line_width: 2.0,
+		default_marker_size: 4,
+		default_opacity: 1.0,
+		font_size: 16
+	},
+
+	// User preferences functions
+	get_user_global_preferences: () => {
+		// Extract only the preference-relevant parts of global settings
+		return {
+			color_scheme: style_manager.styles.global.color_scheme,
+			default_line_width: style_manager.styles.global.default_line_width,
+			default_marker_size: style_manager.styles.global.default_marker_size,
+			default_opacity: style_manager.styles.global.default_opacity,
+			font_size: style_manager.styles.global.font_size
+		};
+	},
+
+	apply_global_preferences: (preferences) => {
+		// Apply preferences to global settings, with fallback to system defaults
+		const color_schemes = Object.keys(style_manager.styles.color_schemes);
+		
+		const oldColorScheme = style_manager.styles.global.color_scheme;
+		
+		style_manager.styles.global.color_scheme = 
+			color_schemes.includes(preferences.color_scheme) ? 
+			preferences.color_scheme : style_manager.system_defaults.color_scheme;
+		
+		style_manager.styles.global.default_line_width = 
+			preferences.default_line_width || style_manager.system_defaults.default_line_width;
+		
+		style_manager.styles.global.default_marker_size = 
+			preferences.default_marker_size || style_manager.system_defaults.default_marker_size;
+		
+		style_manager.styles.global.default_opacity = 
+			preferences.default_opacity || style_manager.system_defaults.default_opacity;
+		
+		style_manager.styles.global.font_size = 
+			preferences.font_size || style_manager.system_defaults.font_size;
+		
+		// Update UI to reflect the loaded preferences
+		style_manager.update_global_controls();
+		
+		// Auto-apply to existing series (same logic as manual control changes)
+		if (vis.series) {
+			vis.series.forEach(series => {
+				// Apply non-color settings to all series
+				series.style.line_width = style_manager.styles.global.default_line_width;
+				series.style.marker_size = style_manager.styles.global.default_marker_size;
+				series.style.opacity = style_manager.styles.global.default_opacity;
+				
+				// Update persistent storage
+				style_manager.styles.persistent_styles[series.series_id].line_width = style_manager.styles.global.default_line_width;
+				style_manager.styles.persistent_styles[series.series_id].marker_size = style_manager.styles.global.default_marker_size;
+				style_manager.styles.persistent_styles[series.series_id].opacity = style_manager.styles.global.default_opacity;
+			});
+			
+			// Handle color scheme change if it actually changed
+			if (oldColorScheme !== style_manager.styles.global.color_scheme) {
+				style_manager.apply_color_scheme_change();
+			}
+			
+			vis.update_plot();
+			style_manager.update_style_panel();
+		}
+	},
+
+	reset_to_system_defaults: () => {
+		// Store old color scheme to detect changes
+		const oldColorScheme = style_manager.styles.global.color_scheme;
+		
+		// Reset global settings to system defaults
+		style_manager.styles.global.color_scheme = style_manager.system_defaults.color_scheme;
+		style_manager.styles.global.default_line_width = style_manager.system_defaults.default_line_width;
+		style_manager.styles.global.default_marker_size = style_manager.system_defaults.default_marker_size;
+		style_manager.styles.global.default_opacity = style_manager.system_defaults.default_opacity;
+		style_manager.styles.global.font_size = style_manager.system_defaults.font_size;
+		
+		// Clear color cycling state
+		style_manager.styles.global.global_color_index = 0;
+		style_manager.styles.global.manual_color_overrides.clear();
+		style_manager.styles.global.automatic_color_assignments.clear();
+		
+		// Update UI controls
+		style_manager.update_global_controls();
+		
+		// Auto-apply to existing series (same logic as loading preferences)
+		if (vis.series && vis.series.length > 0) {
+			vis.series.forEach(series => {
+				// Apply non-color settings to all series
+				series.style.line_width = style_manager.styles.global.default_line_width;
+				series.style.marker_size = style_manager.styles.global.default_marker_size;
+				series.style.opacity = style_manager.styles.global.default_opacity;
+				
+				// Update persistent storage
+				style_manager.styles.persistent_styles[series.series_id].line_width = style_manager.styles.global.default_line_width;
+				style_manager.styles.persistent_styles[series.series_id].marker_size = style_manager.styles.global.default_marker_size;
+				style_manager.styles.persistent_styles[series.series_id].opacity = style_manager.styles.global.default_opacity;
+			});
+			
+			// Handle color scheme change if it actually changed
+			if (oldColorScheme !== style_manager.styles.global.color_scheme) {
+				style_manager.apply_color_scheme_change();
+			}
+			
+			vis.update_plot();
+			style_manager.update_style_panel();
+		}
+	},
+
+	update_global_controls: () => {
+		// Update all global control UI elements to reflect current settings
+		style_manager.update_color_scheme_button(style_manager.styles.global.color_scheme);
+		d3.select('#defaultLineWidth').property('value', style_manager.styles.global.default_line_width);
+		d3.select('#defaultMarkerSize').property('value', style_manager.styles.global.default_marker_size);
+		d3.select('#defaultOpacity').property('value', style_manager.styles.global.default_opacity);
+		d3.select('#defaultOpacityValue').text(style_manager.styles.global.default_opacity.toFixed(1));
+		d3.select('#globalFontSize').property('value', style_manager.styles.global.font_size);
+		d3.select('#globalFontSizeValue').text(style_manager.styles.global.font_size + 'px');
+	},
+
+	load_user_preferences_on_startup: () => {
+		// Load user preferences from localStorage on application startup
+		const saved = localStorage.getItem('mesa_explorer_global_preferences');
+		if (saved) {
+			try {
+				const preferences = JSON.parse(saved);
+				style_manager.apply_global_preferences(preferences);
+				// Show toast notification
+				style_manager.show_preferences_toast();
+				return true;
+			} catch (error) {
+				console.warn('Failed to load user preferences:', error);
+				return false;
+			}
+		}
+		return false;
+	},
+
+	show_preferences_toast: () => {
+		// Show Bootstrap toast notification
+		const toastElement = document.getElementById('preferencesToast');
+		if (toastElement) {
+			const toast = new bootstrap.Toast(toastElement, { 
+				autohide: true, 
+				delay: 3000 
+			});
+			toast.show();
+		}
+	},
+
+	apply_color_scheme_change: () => {
+		// Apply new color scheme to existing series, respecting manual overrides
+		if (!vis.series || vis.series.length === 0) return;
+		
+		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
+		
+		if (vis.files && vis.files.length > 1) {
+			// Multi-file mode: Update colors by file, respecting manual overrides
+			const seriesByFile = {};
+			vis.series.forEach(series => {
+				const fileName = series.file_reference.filename;
+				if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
+				seriesByFile[fileName].push(series);
+			});
+			
+			Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
+				const colorIndex = fileIndex % colors.length;
+				const newColor = colors[colorIndex];
+				
+				seriesByFile[fileName].forEach(series => {
+					// Only update if this series hasn't been manually overridden
+					if (!style_manager.styles.global.manual_color_overrides.has(series.series_id)) {
+						series.style.color = newColor;
+						series.color = newColor; // Legacy compatibility
+						style_manager.styles.persistent_styles[series.series_id].color = newColor;
+						
+						// Track this as an automatic assignment
+						style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
+					}
+				});
+			});
+		} else {
+			// Single-file mode: Systematic assignment (left Y then right Y) respecting manual overrides
+			const leftYSeries = vis.series.filter(s => s.target_axis === 'y').sort((a, b) => {
+				const aIndex = parseInt(a.series_id.split('_')[2]) || 0;
+				const bIndex = parseInt(b.series_id.split('_')[2]) || 0;
+				return aIndex - bIndex;
+			});
+			
+			const rightYSeries = vis.series.filter(s => s.target_axis === 'yOther').sort((a, b) => {
+				const aIndex = parseInt(a.series_id.split('_')[2]) || 0;
+				const bIndex = parseInt(b.series_id.split('_')[2]) || 0;
+				return aIndex - bIndex;
+			});
+			
+			const systematicOrder = [...leftYSeries, ...rightYSeries];
+			
+			systematicOrder.forEach((series, index) => {
+				// Only update if this series hasn't been manually overridden
+				if (!style_manager.styles.global.manual_color_overrides.has(series.series_id)) {
+					const colorIndex = index % colors.length;
+					const newColor = colors[colorIndex];
+					
+					series.style.color = newColor;
+					series.color = newColor; // Legacy compatibility
+					style_manager.styles.persistent_styles[series.series_id].color = newColor;
+					
+					// Track this as an automatic assignment
+					style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
+				}
+			});
+		}
+		
+		// Update axis label colors
+		style_manager.update_axis_label_colors();
+	},
+
 	// Style management functions
 	get_series_id: (file, index) => {
 		return `${file.local_name}_${index}`;
@@ -112,116 +333,6 @@ style_manager = {
 		}
 	},
 
-	apply_global_style_changes: () => {
-		// Apply global settings to all currently displayed series
-		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
-		
-		// Clear manual override tracking when color scheme changes - everything gets reassigned systematically
-		style_manager.styles.global.manual_color_overrides.clear();
-		style_manager.styles.global.automatic_color_assignments.clear();
-		style_manager.reset_global_color_counter();
-		
-		if (vis.series && vis.series.length > 0) {
-			if (vis.files && vis.files.length > 1) {
-				// Multi-file mode: Group series by file to maintain proper color relationships
-				const seriesByFile = {};
-				vis.series.forEach(series => {
-					const fileName = series.file_reference.filename;
-					if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
-					seriesByFile[fileName].push(series);
-				});
-				
-				// Update series with file-based colors  
-				Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
-					const colorIndex = fileIndex % colors.length;
-					const new_color = colors[colorIndex];
-					
-					seriesByFile[fileName].forEach(series => {
-						// Update series style
-						series.style.color = new_color;
-						series.style.line_width = style_manager.styles.global.default_line_width;
-						series.style.marker_size = style_manager.styles.global.default_marker_size;
-						series.style.opacity = style_manager.styles.global.default_opacity;
-						
-						// Update legacy color for compatibility
-						series.color = new_color;
-						
-						// Track as automatic assignment
-						style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
-						
-						// Update persistent storage
-						style_manager.styles.persistent_styles[series.series_id] = { ...series.style };
-					});
-				});
-			} else {
-				// Single-file mode: Systematic color assignment (left Y top-to-bottom, then right Y top-to-bottom)
-				// Sort series by axis and order for systematic assignment
-				const leftYSeries = vis.series.filter(s => s.target_axis === 'y').sort((a, b) => {
-					// Sort by series creation order or index
-					const aIndex = parseInt(a.series_id.split('_')[2]) || 0;
-					const bIndex = parseInt(b.series_id.split('_')[2]) || 0;
-					return aIndex - bIndex;
-				});
-				
-				const rightYSeries = vis.series.filter(s => s.target_axis === 'yOther').sort((a, b) => {
-					// Sort by series creation order or index
-					const aIndex = parseInt(a.series_id.split('_')[2]) || 0;
-					const bIndex = parseInt(b.series_id.split('_')[2]) || 0;
-					return aIndex - bIndex;
-				});
-				
-				// Systematic assignment: left Y first, then right Y
-				const systematicOrder = [...leftYSeries, ...rightYSeries];
-				
-				systematicOrder.forEach((series, index) => {
-					const colorIndex = index % colors.length;
-					const new_color = colors[colorIndex];
-					
-					// Update series style
-					series.style.color = new_color;
-					series.style.line_width = style_manager.styles.global.default_line_width;
-					series.style.marker_size = style_manager.styles.global.default_marker_size;
-					series.style.opacity = style_manager.styles.global.default_opacity;
-					
-					// Update legacy color for compatibility
-					series.color = new_color;
-					
-					// Track as automatic assignment
-					style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
-					
-					// Update persistent storage
-					style_manager.styles.persistent_styles[series.series_id] = { ...series.style };
-				});
-				
-				// Update color counter to continue from where systematic assignment left off
-				style_manager.styles.global.global_color_index = systematicOrder.length % colors.length;
-			}
-		}
-		
-		// Also update any other persistent styles not currently displayed
-		Object.keys(style_manager.styles.persistent_styles).forEach((series_id, index) => {
-			// Skip if this series is already handled above
-			if (!vis.series || !vis.series.find(s => s.series_id === series_id)) {
-				const style = style_manager.styles.persistent_styles[series_id];
-				const colorIndex = index % colors.length;
-				const new_color = colors[colorIndex];
-				
-				style.color = new_color;
-				style.line_width = style_manager.styles.global.default_line_width;
-				style.marker_size = style_manager.styles.global.default_marker_size;
-				style.opacity = style_manager.styles.global.default_opacity;
-				
-				// Track as automatic assignment
-				style_manager.styles.global.automatic_color_assignments.set(series_id, colorIndex);
-			}
-		});
-		
-		// Update axis label colors based on new series configuration
-		style_manager.update_axis_label_colors();
-		
-		vis.update_plot();
-		style_manager.update_style_panel();
-	},
 
 	// New flexible series creation system
 	create_axis_series: (file, fileIndex, targetAxis) => {
@@ -377,8 +488,13 @@ style_manager = {
 			})
 			.classed('active', true);
 		
-		// Apply the changes
-		style_manager.apply_global_style_changes();
+		// Apply color scheme changes to existing series
+		style_manager.apply_color_scheme_change();
+		
+		// Update plot if series exist
+		if (vis.series && vis.series.length > 0) {
+			vis.update_plot();
+		}
 		
 		// Close the dropdown
 		const dropdownToggle = document.getElementById('colorSchemeSelect');
@@ -464,30 +580,105 @@ style_manager = {
 			vis.update_plot();
 		});
 		
-		d3.select('#applyGlobalStyles').on('click', () => {
-			style_manager.apply_global_style_changes();
+		// New preference handlers
+		d3.select('#saveDefaultPreferences').on('click', () => {
+			const preferences = style_manager.get_user_global_preferences();
+			localStorage.setItem('mesa_explorer_global_preferences', JSON.stringify(preferences));
+			
+			// Show success notification using Bootstrap toast
+			const toastHTML = `
+				<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="toast-header">
+						<i class="bi bi-check-circle-fill me-2 text-success"></i>
+						<strong class="me-auto">Preferences Saved</strong>
+						<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+					</div>
+					<div class="toast-body">
+						Your style preferences have been saved as defaults.
+					</div>
+				</div>
+			`;
+			
+			const toastContainer = document.querySelector('.toast-container');
+			toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+			const newToast = toastContainer.lastElementChild;
+			const toast = new bootstrap.Toast(newToast, { autohide: true, delay: 3000 });
+			toast.show();
+			
+			// Remove toast element after it's hidden
+			newToast.addEventListener('hidden.bs.toast', () => {
+				newToast.remove();
+			});
 		});
 		
-		d3.select('#resetAllStyles').on('click', () => {
-			style_manager.styles.persistent_styles = {};
-			style_manager.apply_global_style_changes();
-		});
-		
-		// Preset handlers
-		d3.select('#saveStylePreset').on('click', () => {
-			localStorage.setItem('mesa_explorer_style_preset', JSON.stringify(style_manager.styles));
-			alert('Style preset saved!');
-		});
-		
-		d3.select('#loadStylePreset').on('click', () => {
-			const saved = localStorage.getItem('mesa_explorer_style_preset');
+		d3.select('#resetToMyDefaults').on('click', () => {
+			const saved = localStorage.getItem('mesa_explorer_global_preferences');
 			if (saved) {
-				Object.assign(style_manager.styles, JSON.parse(saved));
-				style_manager.update_style_panel();
-				vis.update_plot();
-				alert('Style preset loaded!');
+				try {
+					const preferences = JSON.parse(saved);
+					style_manager.apply_global_preferences(preferences);
+					if (vis.series && vis.series.length > 0) {
+						vis.update_plot();
+					}
+					
+					// Show success notification
+					const toastHTML = `
+						<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+							<div class="toast-header">
+								<i class="bi bi-arrow-clockwise me-2 text-primary"></i>
+								<strong class="me-auto">Defaults Restored</strong>
+								<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+							</div>
+							<div class="toast-body">
+								Your saved preferences have been restored.
+							</div>
+						</div>
+					`;
+					
+					const toastContainer = document.querySelector('.toast-container');
+					toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+					const newToast = toastContainer.lastElementChild;
+					const toast = new bootstrap.Toast(newToast, { autohide: true, delay: 3000 });
+					toast.show();
+					
+					newToast.addEventListener('hidden.bs.toast', () => {
+						newToast.remove();
+					});
+				} catch (error) {
+					alert('Failed to load saved preferences. They may be corrupted.');
+				}
 			} else {
-				alert('No saved preset found.');
+				alert('No saved preferences found. Use "Save Styles as My Defaults" first.');
+			}
+		});
+		
+		d3.select('#resetToSystemDefaults').on('click', () => {
+			if (confirm('Reset all style settings to system defaults? This will not affect your saved preferences.')) {
+				style_manager.reset_to_system_defaults();
+				
+				// Show success notification
+				const toastHTML = `
+					<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+						<div class="toast-header">
+							<i class="bi bi-arrow-counterclockwise me-2 text-secondary"></i>
+							<strong class="me-auto">System Defaults Restored</strong>
+							<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+						</div>
+						<div class="toast-body">
+							All settings have been reset to system defaults.
+						</div>
+					</div>
+				`;
+				
+				const toastContainer = document.querySelector('.toast-container');
+				toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+				const newToast = toastContainer.lastElementChild;
+				const toast = new bootstrap.Toast(newToast, { autohide: true, delay: 3000 });
+				toast.show();
+				
+				newToast.addEventListener('hidden.bs.toast', () => {
+					newToast.remove();
+				});
 			}
 		});
 	},
