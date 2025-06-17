@@ -214,19 +214,17 @@ style_manager = {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		
 		if (vis.files && vis.files.length > 1) {
-			// Multi-file mode: Update colors by file, respecting manual overrides
-			const seriesByFile = {};
-			vis.series.forEach(series => {
-				const fileName = series.file_reference.filename;
-				if (!seriesByFile[fileName]) seriesByFile[fileName] = [];
-				seriesByFile[fileName].push(series);
-			});
-			
-			Object.keys(seriesByFile).forEach((fileName, fileIndex) => {
+			// Multi-file mode: Update colors by file index in vis.files, respecting manual overrides
+			vis.files.forEach((file, fileIndex) => {
 				const colorIndex = fileIndex % colors.length;
 				const newColor = colors[colorIndex];
 				
-				seriesByFile[fileName].forEach(series => {
+				// Find all series for this file
+				const fileSeriesList = vis.series.filter(series => 
+					series.file_reference.filename === file.filename
+				);
+				
+				fileSeriesList.forEach(series => {
 					// Only update if this series hasn't been manually overridden
 					if (!style_manager.styles.global.manual_color_overrides.has(series.series_id)) {
 						series.style.color = newColor;
