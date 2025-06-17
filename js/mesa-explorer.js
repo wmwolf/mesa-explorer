@@ -764,6 +764,17 @@ vis = {
 		}
 		vis.have_axis_labels = true;
 	},
+
+	// Update legend text without recreating the entire legend (similar to update_axis_labels)
+	update_legend_text: () => {
+		const legend = vis.svg.select('#legend');
+		if (legend.empty() || !vis.series || vis.series.length <= 1) return;
+
+		// Update legend text to match current series names
+		legend.selectAll('.legend-entry text')
+			.data(vis.series)
+			.text(d => d.name);
+	},
 	// Set axis labels to be whatever is in the input field that controls them.
 	// Perhaps this should live in the data model, but it works quite well.
 	update_axis_labels: () => {

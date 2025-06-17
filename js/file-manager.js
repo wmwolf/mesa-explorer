@@ -179,12 +179,20 @@ file_manager = {
 						file_manager.current_mode === 'single' && d === file_manager.active_file) {
 						update_files_summary();
 					}
-				})
-				.on('blur', function(event, d) {
-					// Update plot and legend when user finishes editing filename
-					// This ensures legend reflects the new local_name in multi-file mode
+					
+					// In multi-file mode, immediately update series names and legend
 					if (file_manager.current_mode === 'multi' && vis.series && vis.series.length > 0) {
-						vis.update_plot();
+						// Update series names for all series that reference this file
+						vis.series.forEach(series => {
+							if (series.file_reference === d) {
+								series.name = d.local_name;
+							}
+						});
+						
+						// Update legend text without full redraw
+						if (typeof vis.update_legend_text === 'function') {
+							vis.update_legend_text();
+						}
 					}
 				});
 
