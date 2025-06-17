@@ -179,6 +179,13 @@ file_manager = {
 						file_manager.current_mode === 'single' && d === file_manager.active_file) {
 						update_files_summary();
 					}
+				})
+				.on('blur', function(event, d) {
+					// Update plot and legend when user finishes editing filename
+					// This ensures legend reflects the new local_name in multi-file mode
+					if (file_manager.current_mode === 'multi' && vis.series && vis.series.length > 0) {
+						vis.update_plot();
+					}
 				});
 
 			// Add original filename as small text
