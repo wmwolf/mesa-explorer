@@ -214,27 +214,27 @@ style_manager = {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		
 		if (vis.files && vis.files.length > 1) {
-			// Multi-file mode: Update colors by file index in vis.files, respecting manual overrides
-			vis.files.forEach((file, fileIndex) => {
+			// Multi-file mode: Update colors based on fileIndex embedded in series_id, respecting manual overrides
+			vis.series.forEach(series => {
+				// Extract fileIndex from series_id format: filename_axis_seriesIndex_fileIndex
+				const series_id_parts = series.series_id.split('_');
+				const fileIndex = parseInt(series_id_parts[series_id_parts.length - 1]);
+				
+				// Skip if fileIndex extraction failed
+				if (isNaN(fileIndex)) return;
+				
 				const colorIndex = fileIndex % colors.length;
 				const newColor = colors[colorIndex];
 				
-				// Find all series for this file
-				const fileSeriesList = vis.series.filter(series => 
-					series.file_reference.filename === file.filename
-				);
-				
-				fileSeriesList.forEach(series => {
-					// Only update if this series hasn't been manually overridden
-					if (!style_manager.styles.global.manual_color_overrides.has(series.series_id)) {
-						series.style.color = newColor;
-						series.color = newColor; // Legacy compatibility
-						style_manager.styles.persistent_styles[series.series_id].color = newColor;
-						
-						// Track this as an automatic assignment
-						style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
-					}
-				});
+				// Only update if this series hasn't been manually overridden
+				if (!style_manager.styles.global.manual_color_overrides.has(series.series_id)) {
+					series.style.color = newColor;
+					series.color = newColor; // Legacy compatibility
+					style_manager.styles.persistent_styles[series.series_id].color = newColor;
+					
+					// Track this as an automatic assignment
+					style_manager.styles.global.automatic_color_assignments.set(series.series_id, colorIndex);
+				}
 			});
 		} else {
 			// Single-file mode: Systematic assignment (left Y then right Y) respecting manual overrides
