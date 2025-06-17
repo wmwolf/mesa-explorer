@@ -335,7 +335,7 @@ style_manager = {
 	// New flexible series creation system
 	create_axis_series: (file, fileIndex, targetAxis) => {
 		// Generate unique series ID based on file and axis
-		const series_id = `${file.filename}_${targetAxis}_${fileIndex}`;
+		const series_id = `${file.local_name}_${targetAxis}_${fileIndex}`;
 		
 		// Get axis-specific styling
 		const style = style_manager.get_axis_specific_style(targetAxis, fileIndex);
@@ -369,7 +369,7 @@ style_manager = {
 
 	get_axis_specific_style: (axis, fileIndex) => {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
-		const series_id = `${vis.files[fileIndex]?.filename}_${axis}_${fileIndex}`;
+		const series_id = `${vis.files[fileIndex]?.local_name}_${axis}_${fileIndex}`;
 		
 		// Check if we have persistent styling for this series
 		if (style_manager.styles.persistent_styles[series_id]) {

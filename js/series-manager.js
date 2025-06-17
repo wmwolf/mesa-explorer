@@ -328,7 +328,7 @@ const series_manager = {
 			if (axisStyles[column]) {
 				// This series had persistent styling - restore it with new ID
 				vis.files.forEach((file, fileIndex) => {
-					const newSeriesId = `${file.filename}_${axis}_${newIndex}_${fileIndex}`;
+					const newSeriesId = `${file.local_name}_${axis}_${newIndex}_${fileIndex}`;
 					style_manager.styles.persistent_styles[newSeriesId] = axisStyles[column].style;
 					
 					// Restore automatic assignment if it existed
@@ -450,7 +450,7 @@ const series_manager = {
 	
 	create_multi_series: (file, fileIndex, targetAxis, seriesDefinition, seriesIndex) => {
 		// Generate unique series ID
-		const series_id = `${file.filename}_${targetAxis}_${seriesIndex}_${fileIndex}`;
+		const series_id = `${file.local_name}_${targetAxis}_${seriesIndex}_${fileIndex}`;
 		
 		// Get style for this series
 		const style = series_manager.get_multi_series_style(targetAxis, seriesIndex, fileIndex);
@@ -490,7 +490,7 @@ const series_manager = {
 	get_multi_series_style: (axis, seriesIndex, fileIndex) => {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		// Use consistent series ID format with create_multi_series
-		const series_id = `${vis.files[fileIndex].filename}_${axis}_${seriesIndex}_${fileIndex}`;
+		const series_id = `${vis.files[fileIndex].local_name}_${axis}_${seriesIndex}_${fileIndex}`;
 		
 		// Check if we have persistent styling for this series
 		if (style_manager.styles.persistent_styles[series_id]) {
