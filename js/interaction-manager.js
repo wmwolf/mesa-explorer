@@ -5,6 +5,7 @@ const interaction_manager = {
 	// Tool state management
 	interaction: {
 		current_tool: 'inspector',
+		previous_tool: 'inspector',
 		is_dragging: false,
 		drag_start: null,
 		drag_end: null
@@ -20,23 +21,29 @@ const interaction_manager = {
 	// Set up tool selection button handlers
 	setup_tool_handlers: () => {
 		d3.select('#inspector-tool').on('click', () => {
+			interaction_manager.interaction.previous_tool = interaction_manager.interaction.current_tool;
 			interaction_manager.interaction.current_tool = 'inspector';
 			interaction_manager.update_tool_ui();
 		});
 
 		d3.select('#pan-tool').on('click', () => {
+			interaction_manager.interaction.previous_tool = interaction_manager.interaction.current_tool;
 			interaction_manager.interaction.current_tool = 'pan';
 			interaction_manager.update_tool_ui();
 		});
 
 		d3.select('#box-zoom-tool').on('click', () => {
+			interaction_manager.interaction.previous_tool = interaction_manager.interaction.current_tool;
 			interaction_manager.interaction.current_tool = 'box-zoom';
 			interaction_manager.update_tool_ui();
 		});
 
 		d3.select('#reset-view-tool').on('click', () => {
-			interaction_manager.interaction.current_tool = 'reset-view';
+			// Save current tool before reset, then execute reset and return to it
+			const tool_before_reset = interaction_manager.interaction.current_tool;
 			interaction_manager.reset_view();
+			interaction_manager.interaction.current_tool = tool_before_reset;
+			interaction_manager.update_tool_ui();
 		});
 	},
 
@@ -54,6 +61,7 @@ const interaction_manager = {
 			.on('mousedown', function(event) {
 				const [x, y] = d3.pointer(event, vis.svg.node());
 				if (interaction_manager.interaction.current_tool === 'pan' || interaction_manager.interaction.current_tool === 'box-zoom') {
+					event.preventDefault(); // Prevent text selection during drag
 					interaction_manager.interaction.is_dragging = true;
 					interaction_manager.interaction.drag_start = {x, y};
 					interaction_manager.interaction.drag_end = {x, y};
@@ -68,7 +76,7 @@ const interaction_manager = {
 							.attr('width', 0)
 							.attr('height', 0)
 							.attr('fill', 'none')
-							.attr('stroke', 'blue')
+							.attr('stroke', 'gray')
 							.attr('stroke-width', 2)
 							.attr('stroke-dasharray', '5,5');
 					}
@@ -134,9 +142,14 @@ const interaction_manager = {
 
 	// Update tool UI (button states and cursor)
 	update_tool_ui: () => {
-		// Update button active states
+		// Update button active states - reset view is never shown as active since it's momentary
 		d3.selectAll('#plot-tools button').classed('active', false);
-		d3.select(`#${interaction_manager.interaction.current_tool}-tool`).classed('active', true);
+		if (interaction_manager.interaction.current_tool !== 'reset-view') {
+			d3.select(`#${interaction_manager.interaction.current_tool}-tool`).classed('active', true);
+		}
+		
+		// Style reset view button differently to show it's a momentary action
+		d3.select('#reset-view-tool').classed('btn-outline-danger', true).classed('btn-outline-secondary', false);
 		
 		// Update cursor style
 		const plotContainer = d3.select('#main-plot-container');
@@ -172,6 +185,18 @@ const interaction_manager = {
 		vis.update_plot();
 	},
 
+	// Convert exponential notation to scientific notation with superscripts
+	format_scientific_notation: (value, precision = 3) => {
+		const expStr = value.toExponential(precision);
+		const [mantissa, exponent] = expStr.split('e');
+		const exp = parseInt(exponent);
+		
+		// Remove leading + from positive exponents
+		const expDisplay = exp >= 0 ? exp.toString() : exp.toString();
+		
+		return `${mantissa} × 10^{${expDisplay}}`;
+	},
+
 	// Show inspector tooltip with axis values
 	show_inspector_tooltip: (x, y) => {
 		let label_data = [];
@@ -199,8 +224,8 @@ const interaction_manager = {
 				});
 				
 				if (vis.axes[axis].mouse_val >= 10000 || vis.axes[axis].mouse_val <= 0.001) {
-					// Use exponential notation with 3 decimal places
-					label_data[label_data.length - 1].val = label_data[label_data.length - 1].val.toExponential(3);
+					// Use scientific notation with superscripts
+					label_data[label_data.length - 1].val = interaction_manager.format_scientific_notation(label_data[label_data.length - 1].val, 3);
 				} else {
 					// Convert number to string with 4 significant digits
 					const str = label_data[label_data.length - 1].val.toPrecision(4);
@@ -288,7 +313,7 @@ const interaction_manager = {
 					
 					// Calculate what percentage of the visual height we moved
 					const plotHeight = vis.axes[axis].scale.range()[0] - vis.axes[axis].scale.range()[1]; // range is [bottom, top]
-					const visualPercent = -pixelDy / plotHeight; // negative because SVG y is inverted
+					const visualPercent = pixelDy / plotHeight; // SVG coordinate to data coordinate mapping
 					
 					// Apply this percentage to the current data range
 					deltaData = visualPercent * currentRange;
