@@ -234,6 +234,9 @@ const series_manager = {
 		// Populate dropdown with available columns
 		series_manager.update_series_choices(seriesId);
 		
+		// Note: Don't apply smart labeling here - series has no column yet
+		// Smart labeling will be applied when user selects a column
+		
 		return seriesDefinition;
 	},
 	
@@ -263,6 +266,9 @@ const series_manager = {
 				// Update all input ids and labels... (this would be more complex in full implementation)
 			}
 		});
+		
+		// Always update axis label after series removal (like x-axis does)
+		series_manager.update_axis_label_direct(axis);
 		
 		// Refresh plot
 		file_manager.invoke_file_change_callbacks();
@@ -369,7 +375,25 @@ const series_manager = {
 			.attr('class', 'dropdown-item')
 			.attr('href', 'javascript: void(0)')
 			.attr('data-name', d => d.key)
-			.html(d => `<samp>${d.key}</samp>`)
+			.html(d => {
+				// Get metadata for this column (includes isotope auto-detection)
+				const metadata = metadata_manager.get_metadata(d.key);
+				
+				// Create dual-line display: raw name + formatted name with units
+				let html = `<samp>${d.key}</samp>`;
+				
+				// Add formatted line if different from raw name or has units
+				const formattedName = metadata.series_name;
+				const hasUnits = metadata.units && metadata.units.trim() !== '';
+				
+				if (formattedName !== d.key || hasUnits) {
+					const unitsPart = hasUnits ? ` [${text_markup.markup_to_html(metadata.units)}]` : '';
+					const formattedNameHtml = text_markup.markup_to_html(formattedName);
+					html += `<br><small class="opacity-75">${formattedNameHtml}${unitsPart}</small>`;
+				}
+				
+				return html;
+			})
 			.on('click', function(event, d) {
 				event.preventDefault();
 				series_manager.handle_series_column_selection(seriesId, d, this);
@@ -384,50 +408,32 @@ const series_manager = {
 		// Update series definition
 		seriesDefinition.column = columnData.key;
 		
-		// Automatic log detection (needed for label cleaning)
-		const isLogColumn = /^log[_\s]|^log(?=[A-Z])/i.test(columnData.key);
+		// Get metadata for intelligent defaults
+		const metadata = metadata_manager.get_metadata(columnData.key);
 		
-		// Update series label to match the selected column (with log cleaning)
-		let cleanedSeriesName = columnData.key;
-		if (isLogColumn) {
-			cleanedSeriesName = columnData.key
-				.replace(/^log[_\s]*/i, '')  // Remove log prefix
-				.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
-		}
-		cleanedSeriesName = cleanedSeriesName.replace(/_/g, ' ');
-		seriesDefinition.label = cleanedSeriesName;
+		// Use metadata for series label (prefer formatted name over cleaned raw name)
+		seriesDefinition.label = metadata.series_name;
 		
 		// Update the series label input field in the UI
 		const labelInput = d3.select(`#${seriesId}-label`);
 		if (!labelInput.empty()) {
-			labelInput.property('value', cleanedSeriesName);
+			labelInput.property('value', metadata.series_name);
 		}
 		
 		// Set axis data_name for the first series (needed for axis labels to appear)
 		if (parseInt(seriesIndex) === 0) {
 			vis.axes[axis].data_name = columnData.key;
 			vis.axes[axis].data_type = columnData.scale || 'linear';
-			
-			// Update the axis label when the first series is updated (with log cleaning)
-			const axisLabelInput = d3.select(`#${axis}-axis-label`);
-			if (!axisLabelInput.empty()) {
-				let cleanedAxisName = columnData.key;
-				if (isLogColumn) {
-					cleanedAxisName = columnData.key
-						.replace(/^log[_\s]*/i, '')  // Remove log prefix
-						.replace(/^log(?=[A-Z])/i, ''); // Remove log before capital letters
-				}
-				cleanedAxisName = cleanedAxisName.replace(/_/g, ' ');
-				axisLabelInput.property('value', cleanedAxisName);
-			}
 		}
 		
-		// Update dropdown button text
-		d3.select(`#${seriesId}-dropdown`).html(d3.select(element).html());
-		if (isLogColumn) {
-			// Set data transformation to exponentiate
+		// Always update axis label when series change (like x-axis does)
+		series_manager.update_axis_label_direct(axis);
+		
+		// Intelligent logarithmic behavior based on metadata
+		// Apply 4-case logic: data_logarithmic vs display_logarithmic
+		if (metadata.data_logarithmic && metadata.display_logarithmic) {
+			// Case 1: Data is log, display as log → exponentiate data, use log axis
 			seriesDefinition.data_transformations.rescale = 'exp';
-			// Update the UI to reflect this
 			d3.select(`#${seriesId}-data-trans-exp`).property('checked', true);
 			d3.select(`#${seriesId}-data-trans-linear`).property('checked', false);
 			
@@ -437,7 +443,32 @@ const series_manager = {
 				d3.select(`#${axis}-scale-linear`).property('checked', false);
 				vis.axes[axis].type = 'log';
 			}
+		} else if (metadata.data_logarithmic && !metadata.display_logarithmic) {
+			// Case 2: Data is log, display as linear → keep data as-is, use linear axis
+			seriesDefinition.data_transformations.rescale = 'linear';
+			d3.select(`#${seriesId}-data-trans-linear`).property('checked', true);
+			d3.select(`#${seriesId}-data-trans-exp`).property('checked', false);
+		} else if (!metadata.data_logarithmic && metadata.display_logarithmic) {
+			// Case 3: Data is linear, display as log → raw data, use log axis
+			seriesDefinition.data_transformations.rescale = 'linear';
+			d3.select(`#${seriesId}-data-trans-linear`).property('checked', true);
+			d3.select(`#${seriesId}-data-trans-exp`).property('checked', false);
+			
+			// Suggest logarithmic axis scale for the first series
+			if (parseInt(seriesIndex) === 0) {
+				d3.select(`#${axis}-scale-log`).property('checked', true);
+				d3.select(`#${axis}-scale-linear`).property('checked', false);
+				vis.axes[axis].type = 'log';
+			}
+		} else {
+			// Case 4: Data is linear, display as linear → raw data, use linear axis (default)
+			seriesDefinition.data_transformations.rescale = 'linear';
+			d3.select(`#${seriesId}-data-trans-linear`).property('checked', true);
+			d3.select(`#${seriesId}-data-trans-exp`).property('checked', false);
 		}
+		
+		// Update dropdown button text
+		d3.select(`#${seriesId}-dropdown`).html(d3.select(element).html());
 		
 		// Update the SVG label immediately if it exists (for first series)
 		if (parseInt(seriesIndex) === 0 && vis.have_axis_labels) {
@@ -452,8 +483,8 @@ const series_manager = {
 		// Generate unique series ID
 		const series_id = `${file.local_name}_${targetAxis}_${seriesIndex}_${fileIndex}`;
 		
-		// Get style for this series
-		const style = series_manager.get_multi_series_style(targetAxis, seriesIndex, fileIndex);
+		// Get style for this series (pass seriesDefinition for linestyle assignment)
+		const style = series_manager.get_multi_series_style(targetAxis, seriesIndex, fileIndex, seriesDefinition);
 		
 		// Override style with series definition preferences
 		style.show_line = seriesDefinition.style.show_line;
@@ -487,7 +518,7 @@ const series_manager = {
 		};
 	},
 	
-	get_multi_series_style: (axis, seriesIndex, fileIndex) => {
+	get_multi_series_style: (axis, seriesIndex, fileIndex, seriesDefinition = null) => {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 		// Use consistent series ID format with create_multi_series
 		const series_id = `${vis.files[fileIndex].local_name}_${axis}_${seriesIndex}_${fileIndex}`;
@@ -499,6 +530,7 @@ const series_manager = {
 		
 		// Create new style with smart color assignment
 		let color;
+		let line_style = 'solid';  // Default linestyle
 		
 		// In multi-file mode, assign colors by file index (each file gets different color)
 		// In single-file mode, use global color cycling across both axes
@@ -506,15 +538,23 @@ const series_manager = {
 			// Multi-file mode: color by file index so each file is distinct
 			const colorIndex = fileIndex % colors.length;
 			color = colors[colorIndex];
+			
+			// Multi-file mode: linestyle by column name (data type)
+			if (seriesDefinition && seriesDefinition.column) {
+				const linestyleName = style_manager.get_linestyle_for_column(seriesDefinition.column);
+				line_style = linestyleName;
+			}
 		} else {
 			// Single-file mode: use global color cycling
 			const colorResult = style_manager.get_next_global_color(series_id);
 			color = colorResult.color;
+			// Single-file mode: keep solid linestyle (existing behavior)
 		}
 		
 		const style = {
 			color: color,
 			line_width: style_manager.styles.global.default_line_width,
+			line_style: line_style,
 			marker_size: style_manager.styles.global.default_marker_size,
 			marker_shape: 'circle',
 			opacity: style_manager.styles.global.default_opacity,
@@ -635,5 +675,172 @@ const series_manager = {
 				}
 			}
 		});
+	},
+	
+	// Smart Axis Labeling System
+	// Calculate what the axis label should be based on current series configuration
+	calculate_expected_axis_label: (axis) => {
+		// Count active series with valid columns on this axis
+		const activeSeries = series_manager.series_definitions[axis].filter(seriesDef => 
+			seriesDef.column && seriesDef.column.trim() !== ''
+		);
+		
+		if (activeSeries.length === 0) {
+			return ''; // No active series, no label needed
+		}
+		
+		// Get metadata from the first series to determine units and labels
+		const firstSeriesMetadata = metadata_manager.get_metadata(activeSeries[0].column);
+		
+		let axisLabel;
+		if (activeSeries.length === 1) {
+			// Single series: use specific series_name
+			axisLabel = firstSeriesMetadata.series_name;
+		} else {
+			// Multiple series: use generic axis_name, fallback to series_name
+			axisLabel = firstSeriesMetadata.axis_name || firstSeriesMetadata.series_name;
+		}
+		
+		// Add units if available
+		if (firstSeriesMetadata.units && firstSeriesMetadata.units.trim() !== '') {
+			axisLabel += ` [${firstSeriesMetadata.units}]`;
+		}
+		
+		return axisLabel;
+	},
+	
+	// Check if the current axis label has been customized by the user
+	is_axis_label_customized: (axis) => {
+		const axisLabelInput = d3.select(`#${axis}-axis-label`);
+		if (axisLabelInput.empty()) {
+			return false; // No input field, can't be customized
+		}
+		
+		const currentLabel = axisLabelInput.property('value').trim();
+		const expectedLabel = series_manager.calculate_expected_axis_label(axis);
+		
+		console.log(`Customization check: axis=${axis}, current="${currentLabel}", expected="${expectedLabel}"`);
+		
+		// If there are no active series (expected label is empty), 
+		// don't consider the current label as "customized"
+		if (expectedLabel === '') {
+			return false;
+		}
+		
+		// Compare current label with what we would auto-generate
+		// If they're different, the user has customized it
+		const isCustomized = currentLabel !== expectedLabel;
+		console.log(`Customization check: axis=${axis}, isCustomized=${isCustomized}`);
+		return isCustomized;
+	},
+	
+	// Apply smart axis labeling if the label hasn't been customized
+	update_smart_axis_label: (axis) => {
+		const expectedLabel = series_manager.calculate_expected_axis_label(axis);
+		console.log(`Smart labeling: axis=${axis}, expectedLabel="${expectedLabel}"`);
+		
+		// If there are no active series, don't clear existing labels - just return
+		if (expectedLabel === '') {
+			console.log(`Smart labeling: No expected label for axis ${axis}, returning`);
+			return;
+		}
+		
+		// Only update if not customized by user
+		const isCustomized = series_manager.is_axis_label_customized(axis);
+		console.log(`Smart labeling: axis=${axis}, isCustomized=${isCustomized}`);
+		if (isCustomized) {
+			return; // Preserve user's custom label
+		}
+		
+		const axisLabelInput = d3.select(`#${axis}-axis-label`);
+		console.log(`Smart labeling: axis=${axis}, input field exists=${!axisLabelInput.empty()}`);
+		
+		if (!axisLabelInput.empty()) {
+			// Update the input field
+			axisLabelInput.property('value', expectedLabel);
+			console.log(`Smart labeling: Set axis ${axis} label to "${expectedLabel}"`);
+			
+			// Update the SVG axis label immediately if plot exists
+			if (vis.have_axis_labels && expectedLabel) {
+				console.log(`Smart labeling: Calling vis.update_axis_labels()`);
+				vis.update_axis_labels();
+			}
+		}
+	},
+	
+	// Direct axis label update (always update, like x-axis behavior)
+	// Implements user's desired behavior:
+	// - One series: use series_name + units
+	// - Multiple series: use axis_name + units (fallback to series_name)
+	update_axis_label_direct: (axis) => {
+		// Count active series with valid columns on this axis
+		const activeSeries = series_manager.series_definitions[axis].filter(seriesDef => 
+			seriesDef.column && seriesDef.column.trim() !== ''
+		);
+		
+		if (activeSeries.length === 0) {
+			// No active series - clear the axis label
+			const axisLabelInput = d3.select(`#${axis}-axis-label`);
+			if (!axisLabelInput.empty()) {
+				axisLabelInput.property('value', '');
+			}
+			return;
+		}
+		
+		// Get metadata from the first series to determine units and labels
+		const firstSeriesMetadata = metadata_manager.get_metadata(activeSeries[0].column);
+		
+		let axisLabel;
+		if (activeSeries.length === 1) {
+			// Single series: use specific series_name
+			axisLabel = firstSeriesMetadata.series_name;
+		} else {
+			// Multiple series: use generic axis_name, fallback to series_name
+			axisLabel = firstSeriesMetadata.axis_name || firstSeriesMetadata.series_name;
+		}
+		
+		// Add units if available
+		if (firstSeriesMetadata.units && firstSeriesMetadata.units.trim() !== '') {
+			axisLabel += ` [${firstSeriesMetadata.units}]`;
+		}
+		
+		// Always update the input field (no customization checking)
+		const axisLabelInput = d3.select(`#${axis}-axis-label`);
+		if (!axisLabelInput.empty()) {
+			axisLabelInput.property('value', axisLabel);
+		}
+		
+		// Update the SVG axis label immediately if plot exists
+		if (vis.have_axis_labels && axisLabel) {
+			vis.update_axis_labels();
+		}
+	},
+	
+	// Reset a series to default empty state when its column no longer exists
+	reset_series_to_default_state: (axis, seriesIndex) => {
+		const seriesDefinition = series_manager.series_definitions[axis][seriesIndex];
+		if (!seriesDefinition) return;
+		
+		// Reset series definition
+		seriesDefinition.column = null;
+		seriesDefinition.label = '';
+		
+		// Reset UI elements
+		const seriesId = `${axis}-series-${seriesIndex}`;
+		
+		// Reset dropdown button to default text
+		const dropdownButton = d3.select(`#${seriesId}-dropdown`);
+		if (!dropdownButton.empty()) {
+			dropdownButton.html('Select column...');
+		}
+		
+		// Clear series label input
+		const labelInput = d3.select(`#${seriesId}-label`);
+		if (!labelInput.empty()) {
+			labelInput.property('value', '');
+		}
+		
+		// Update axis label since series changed
+		series_manager.update_axis_label_direct(axis);
 	}
 };

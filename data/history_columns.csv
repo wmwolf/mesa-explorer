@@ -1,564 +1,532 @@
-key,scale,html_name,html_units
-model_number,linear,Model Number,
-num_zones,linear,Number of Zones,
-star_age,linear,Star Age,yr
-star_age_sec,linear,Star Age,sec
-star_age_min,linear,Star Age,min
-star_age_hr,linear,Star Age,hr
-star_age_day,linear,Star Age,d
-day,linear,Star Age,d
-log_star_age,log,Star Age,d
-log_star_age_sec,log,Star Age,sec
-time_step,linear,Time Step,yr
-time_step_sec,linear,Time Step,sec
-time_step_days,linear,Time Step,d
-log_dt,log,Time Step,yr
-log_dt_sec,log,Time Step,sec
-log_dt_days,log,Time Step,d
-star_mass,linear,Star Mass,M<sub>&#8857;</sub>
-log_star_mass,log,Star Mass,M<sub>&#8857;</sub>
-star_gravitational_mass,linear,Gravitational Mass,M<sub>&#8857;</sub>
-star_mass_grav_div_mass,linear,M<sub>grav</sub>/M,
-delta_mass,linear,<var>M</var> – <var>M</var><sub>init</sub>,
-log_xmstar,log,Exterior Mass,g
-star_mdot,linear,Mass Change Rate,M<sub>&#8857;</sub>/yr
-log_abs_mdot,log,|<var>M&#775;</var>|,M<sub>&#8857;</sub>/yr
-Tsurf_factor,linear,<samp>Tsurf_factor</samp>,
-tau_factor,linear,<samp>tau_factor</samp>,
-tau_surface,linear,Surface Optical Depth,
-m_center,linear,Central Mass,M<sub>&#8857;</sub>
-m_center_gm,linear,Central Mass,g
-r_center,linear,Central Radius,R<sub>&#8857;</sub>
-r_center_cm,linear,Central Radius,cm
-r_center_km,linear,Central Radius,km
-L_center,linear,Central Luminosity,L<sub>&#8857;</sub>
-log_L_center,log,Central Luminosity,L<sub>&#8857;</sub>
-log_L_center_ergs_s,log,Central Luminosity,erg/s
-v_center,linear,Central Velocity,cm/s
-v_center_kms,linear,Central Velocity,km/s
-max_conv_vel_div_csound,linear,(<var>v</var>/<var>c</var><sub>sound</sub>)<sub>max</sub>,
-max_gradT_div_grada,linear,(&nabla;<sub><var>T</var></sub>/&nabla;<sub><var>a</var></sub>)<sub>max</sub>,
-max_gradT_sub_grada,linear,(&nabla;<sub><var>T</var></sub> – &nabla;<sub><var>a</var></sub>)<sub>max</sub>,
-min_log_mlt_Gamma,log,&Gamma;<sub>MLT,min</sub>
-mass_conv_core,linear,Convective Core Mass,M<sub>&#8857;</sub>
-cz_bot_mass,linear,Convective Base Mass,M<sub>&#8857;</sub>
-cz_mass,linear,Convective Base Mass,M<sub>&#8857;</sub>
-cz_log_xmass,log,Convective Base Exterior Mass,g
-cz_log_xmsun,log,Convective Base Exterior Mass,M<sub>&#8857;</sub>
-cz_xm,linear,Convective Base Exterior Mass,M<sub>&#8857;</sub>
-cz_logT,log,Convective Base Temperature,K
-cz_logRho,log,Convective Base Density,g/cm<sup>3</sup>
-cz_logP,log,Convective Base Pressure,dyn/cm<sup>2</sup>
-cz_bot_radius,linear,Convective Base Radius,R<sub>&#8857;</sub>
-cz_log_column_depth,log,Convective Base Column Depth,g/cm<sup>2</sup>
-cz_log_radial_depth,log,Convective Base Radial Depth,?
-cz_luminosity,linear,Convective Base Luminoisty,L<sub>&#8857;</sub>
-cz_opacity,linear,Convective Base Opacity,cm<sup>2</sup>/g
-cz_log_tau,log,Convective Base Optical Depth,
-cz_eta,linear,Convective Base &eta;,
-cz_log_eps_nuc,log,Convective Base Nuclear Generation,erg/g/s
-cz_t_heat,linear,Convective Base Heating Timescale,sec
-cz_csound,linear,Convective Base Sound Speed,cm/s
-cz_scale_height,linear,Convective Base Scale Height,?
-cz_grav,linear,Convective Base Gravitational Acceleration,cm/s<sup>2</sup>
-cz_omega,linear,Convective Base Rotation Rate,rad/s
-cz_omega_div_omega_crit,linear,Convective Base &Omega;/&Omega;<sub>crit</sub>,
-cz_zone,linear,Convective Base Zone,
-cz_log_xa_h1,log,Convective Base <sup>1</sup>H Mass Fraction,
-cz_log_xa_he4,log,Convective Base <sup>4</sup>He Mass Fraction,
-cz_top_mass,linear,Convective Top Mass,M<sub>&#8857;</sub>
-cz_top_log_xmass,log,Convective Top Exterior Mass,g
-cz_top_log_xmsun,log,Convective Top Exterior Mass,M<sub>&#8857;</sub>
-cz_top_xm,linear,Convective Top Exterior Mass,M<sub>&#8857;</sub>
-cz_top_logT,log,Convective Top Temperature,K
-cz_top_logRho,log,Convective Top Density,g/cm<sup>3</sup>
-cz_top_logP,log,Convective Top Pressure,dyn/cm<sup>2</sup>
-cz_top_radius,linear,Convective Top Radius,R<sub>&#8857;</sub>
-cz_top_log_column_depth,log,Convective Top Column Depth,g/cm<sup>2</sup>
-cz_top_log_radial_depth,log,Convective Top Radial Depth,?
-cz_top_luminosity,linear,Convective Top Luminoisty,L<sub>&#8857;</sub>
-cz_top_opacity,linear,Convective Top Opacity,cm<sup>2</sup>/g
-cz_top_log_tau,log,Convective Top Optical Depth,
-cz_top_eta,linear,Convective Top &eta;,
-cz_top_log_eps_nuc,log,Convective Top Nuclear Generation,erg/g/s
-cz_top_t_heat,linear,Convective Top Heating Timescale,sec
-cz_top_csound,linear,Convective Top Sound Speed,cm/s
-cz_top_scale_height,linear,Convective Top Scale Height,?
-cz_top_grav,linear,Convective Top Gravitational Acceleration,cm/s<sup>2</sup>
-cz_top_omega,linear,Convective Top Rotation Rate,rad/s
-cz_top_omega_div_omega_crit,linear,Convective Top &Omega;/&Omega;<sub>crit</sub>,
-cz_top_zone,linear,Convective Top Zone,
-cz_top_zone_logdq,log,Convective Top Zone Fractional Mass,
-cz_top_log_xa h1,log,Convective Top <sup>1</sup>H Mass Fraction,
-cz_top_log_xa he4,log,Convective Top <sup>4</sup>He Mass Fraction,
-power_h_burn,linear,<var>L</var><sub>H</sub>,L<sub>&#8857;</sub>
-power_he_burn,linear,<var>L</var><sub>He</sub>,L<sub>&#8857;</sub>
-power_photo,linear,<var>L</var><sub>photodisintegration</sub>,L<sub>&#8857;</sub>
-power_z_burn,linear,<var>L</var><sub>Z</sub>,L<sub>&#8857;</sub>
-log_power_nuc_burn,log,<var>L</var><sub>nuc – photodisintegration</sub>,L<sub>&#8857;</sub>
-log_LH,log,<var>L</var><sub>H</sub>,L<sub>&#8857;</sub>
-log_LHe,log,<var>L</var><sub>He</sub>,L<sub>&#8857;</sub>
-log_LZ,log,<var>L</var><sub>Z</sub>,L<sub>&#8857;</sub>
-log_Lnuc,log,<var>L</var><sub>nuc</sub>,L<sub>&#8857;</sub>
-log_Lnuc_ergs_s,log,<var>L</var><sub>nuc</sub>,erg/s
-log_Lnuc_sub_log_L,log,<var>L</var><sub>nuc</sub> – <var>L</var>,L<sub>&#8857;</sub>
-lnuc_photo,linear,P<var>L</var><sub>photodisintegration</sub>,L<sub>&#8857;</sub>
-extra_L,linear,<var>L</var><sub>extra</sub>,L<sub>&#8857;</sub>
-log_extra_L,log,<var>L</var><sub>extra</sub>,L<sub>&#8857;</sub>
-log_Lneu,log,<var>L</var><sub>neu</sub>,L<sub>&#8857;</sub>,
-log_Lneu_nuc,log,<var>L</var><sub>neu (nuc)</sub>,L<sub>&#8857;</sub>
-log_Lneu_nonnuc,log,<var>L</var><sub>neu (thermal)</sub>,<sub>&#8857;</sub>
-mass_loc_of_max_eps_nuc,linear,Mass at Peak Nuclear Burning,M<sub>&#8857;</sub>
-mass_ext_to_max_eps_nuc,linear,Mass exterior to peak nuclear burning,M<sub>&#8857;</sub>
-eps_grav_integral,linear,Integrated Gravitational Luminosity,L<sub>&#8857;</sub>
-log_abs_Lgrav,log,|<var>L</var><sub>grav</sub>|,L<sub>&#8857;</sub>
-pp,log,PP Chain Luminosity,L<sub>&#8857;</sub>
-cno,log,CNO Cycle Luminosity,L<sub>&#8857;</sub>
-tri_alfa,log,Triple Alpha Luminosity,L<sub>&#8857;</sub>
-c_alpha,log,Carbon Alpha Capture Luminosity,L<sub>&#8857;</sub>
-n_alpha,log,Nitrogen Alpha Capture Luminosity,L<sub>&#8857;</sub>
-o_alpha,log,Oxygen Alpha Caputre Luminosity,L<sub>&#8857;</sub>
-ne_alpha,log,Neon Alpha Capture Luminosity,L<sub>&#8857;</sub>
-na_alpha,log,Sodium Alpha Capture Luminosity,L<sub>&#8857;</sub>
-mg_alpha,log,Magnesium Alpha Capture Luminosity,L<sub>&#8857;</sub>
-si_alpha,log,Silicon Alpha Capture Luminosity,L<sub>&#8857;</sub>
-s_alpha,log,Sulfur Alpha Capture Luminosity,L<sub>&#8857;</sub>
-ar_alpha,log,Argon Alpha Capture Luminosity,L<sub>&#8857;</sub>
-ca_alpha,log,Calcium Alpha Capture Luminosity,L<sub>&#8857;</sub>
-ti_alpha,log,Titanium Alpha Capture Luminosity,L<sub>&#8857;</sub>
-fe_co_ni,log,Iron/Cobalt/Nickel Luminosity,L<sub>&#8857;</sub>
-c12_c12,log,<sup>12</sup>C + <sup>12</sup>C Luminosity,L<sub>&#8857;</sub>
-c12_o16,log,<sup>12</sup>C + <sup>16</sup>O Luminosity,L<sub>&#8857;</sub>
-o16_o16,log,<sup>16</sup>O + <sup>16</sup>O Luminosity,L<sub>&#8857;</sub>
-photo,log,Photodisintegration Luminosity,L<sub>&#8857;</sub>
-pnhe4,log,,
-other,log,Other Nuclear Luminosity,L<sub>&#8857;</sub>
-add_raw_rates,linear,,
-raw_rate r_h1_h1_ec_h2,linear,,
-raw_rate r_h1_h1_wk_h2,linear,,
-c_log_eps_burn cno,log,,
-c_log_eps_burn tri_alfa,log,,
-c_d_eps_dlnd cno,linear,,
-c_d_eps_dlnd tri_alfa,linear,,
-c_d_eps_dlnT cno,linear,,
-c_d_eps_dlnT tri_alfa,linear,,
-epsnuc_M_1,linear,,
-epsnuc_M_2,linear,,
-epsnuc_M_3,linear,,
-epsnuc_M_4,linear,,
-epsnuc_M_5,linear,,
-epsnuc_M_6,linear,,
-epsnuc_M_7,linear,,
-epsnuc_M_8,linear,,
-burning_regions <integer>,linear,,
-burn_relr_regions <integer>,linear,,
-he_core_mass,linear,,
-he_core_radius,linear,,
-he_core_lgT,log,,
-he_core_lgRho,log,,
-he_core_L,linear,,
-he_core_v,linear,,
-he_core_omega,linear,,
-he_core_omega_div_omega_crit,linear,,
-he_core_k,linear,,
-co_core_mass,linear,,
-CO_core,linear,,
-co_core_radius,linear,,
-co_core_lgT,log,,
-co_core_lgRho,log,,
-co_core_L,linear,,
-co_core_v,linear,,
-co_core_omega,linear,,
-co_core_omega_div_omega_crit,linear,,
-co_core_k,linear,,
-one_core_mass,linear,,
-one_core_radius,linear,,
-one_core_lgT,log,,
-one_core_lgRho,log,,
-one_core_L,linear,,
-one_core_v,linear,,
-one_core_omega,linear,,
-one_core_omega_div_omega_crit,linear,,
-one_core_k,linear,,
-fe_core_mass,linear,,
-fe_core_radius,linear,,
-fe_core_lgT,log,,
-fe_core_lgRho,log,,
-fe_core_L,linear,,
-fe_core_v,linear,,
-fe_core_omega,linear,,
-fe_core_omega_div_omega_crit,linear,,
-fe_core_k,linear,,
-neutron_rich_core_mass,linear,,
-neutron_rich_core_radius,linear,,
-neutron_rich_core_lgT,log,,
-neutron_rich_core_lgRho,log,,
-neutron_rich_core_L,linear,,
-neutron_rich_core_v,linear,,
-neutron_rich_core_omega,linear,,
-neutron_rich_core_omega_div_omega_crit,linear,,
-neutron_rich_core_k,linear,,
-envelope_mass,linear,,
-envelope_fraction_left,linear,,
-h_rich_layer_mass,linear,,
-he_rich_layer_mass,linear,,
-co_rich_layer_mass,linear,,
-dynamic_timescale,linear,,
-kh_timescale,linear,,
-mdot_timescale,linear,,
-kh_div_mdot_timescales,linear,,
-nuc_timescale,linear,,
-dt_cell_collapse,linear,,
-dt_div_dt_cell_collapse,linear,,
-dt_div_max_tau_conv,linear,,
-dt_div_min_tau_conv,linear,,
-min_dr_div_cs,linear,,
-min_dr_div_cs_k,linear,,
-log_min_dr_div_cs,log,,
-min_dr_div_cs_yr,linear,,
-log_min_dr_div_cs_yr,log,,
-dt_div_min_dr_div_cs,linear,,
-log_dt_div_min_dr_div_cs,log,,
-min_t_eddy,linear,,
-effective_T,linear,,
-Teff,linear,,
-log_Teff,log,Effective Temperature,K
-photosphere_black_body_T,linear,,
-photosphere_cell_T,linear,,
-photosphere_cell_log_T,log,,
-photosphere_cell_density,linear,,
-photosphere_cell_log_density,log,,
-photosphere_cell_opacity,linear,,
-photosphere_cell_log_opacity,log,,
-photosphere_L,linear,,
-photosphere_log_L,log,,
-photosphere_r,linear,,
-photosphere_log_r,log,,
-photosphere_m,linear,,
-photosphere_v_km_s,linear,,
-photosphere_cell_k,linear,,
-photosphere_column_density,linear,,
-photosphere_csound,linear,,
-photosphere_log_column_density,log,,
-photosphere_opacity,linear,,
-photosphere_v_div_cs,linear,,
-photosphere_xm,linear,,
-photosphere_cell_free_e,linear,,
-photosphere_cell_log_free_e,log,,
-photosphere_logg,log,,
-photosphere_T,linear,,
-luminosity,linear,,
-luminosity_ergs_s,linear,,
-log_L,log,,
-log_L_ergs_s,log,,
-radius,linear,,
-log_R,log,,
-radius_cm,linear,,
-log_R_cm,log,,
-log_g,log,,
-gravity,linear,,
-log_Ledd,log,,
-log_L_div_Ledd,log,,
-lum_div_Ledd,linear,,
-log_surf_optical_depth,log,,
-surface_optical_depth,linear,,
-log_surf_cell_opacity,log,,
-log_surf_cell_P,log,,
-log_surf_cell_pressure,log,,
-log_surf_cell_density,log,,
-log_surf_cell_temperature,log,,
-surface_cell_temperature,linear,,
-log_surf_cell_z,log,,
-surface_cell_entropy,linear,,
-v_surf,linear,,
-v_surf_km_s,linear,,
-v_div_csound_surf,linear,,
-v_div_csound_max,linear,,
-v_div_vesc,linear,,
-v_phot_km_s,linear,,
-v_surf_div_escape_v,linear,,
-v_surf_div_v_kh,linear,,
-surf_avg_j_rot,linear,,
-surf_avg_omega,linear,,
-surf_avg_omega_crit,linear,,
-surf_avg_omega_div_omega_crit,linear,,
-surf_avg_v_rot,linear,,
-surf_avg_v_crit,linear,,
-surf_avg_v_div_v_crit,linear,,
-surf_avg_Lrad_div_Ledd,linear,,
-surf_avg_logT,log,,
-surf_avg_logRho,log,,
-surf_avg_opacity,linear,,
-grav_dark_L_polar !Lsun,linear,,
-grav_dark_Teff_polar !K,linear,,
-grav_dark_L_equatorial !Lsun,linear,,
-grav_dark_Teff_equatorial !K,linear,,
-surf_escape_v,linear,,
-v_wind_Km_per_s,linear,,
-rotational_mdot_boost,linear,,
-log_rotational_mdot_boost,log,,
-surf_r_equatorial_div_r_polar,linear,,
-surf_r_equatorial_div_r,linear,,
-surf_r_polar_div_r,linear,,
-log_center_T,log,,
-log_center_Rho,log,,
-log_center_P,log,,
-log_cntr_P,log,,
-log_cntr_Rho,log,,
-log_cntr_T,log,,
-center_T,linear,,
-center_Rho,linear,,
-center_P,linear,,
-center_degeneracy,linear,,
-center_gamma,linear,,
-center_mu,linear,,
-center_ye,linear,,
-center_abar,linear,,
-center_zbar,linear,,
-center_eps_grav,linear,,
-center_non_nuc_neu,linear,,
-center_eps_nuc,linear,,
-d_center_eps_nuc_dlnT,linear,,
-d_center_eps_nuc_dlnd,linear,,
-log_center_eps_nuc,log,,
-center_entropy,linear,,
-max_entropy,linear,,
-fe_core_infall,linear,,
-non_fe_core_infall,linear,,
-non_fe_core_rebound,linear,,
-max_infall_speed,linear,,
-compactness_parameter,linear,,
-compactness,linear,,
-m4,linear,,
-mu4,linear,,
-center_omega,linear,,
-center_omega_div_omega_crit,linear,,
-species,linear,,
-add_center_abundances,linear,,
-add_log_center_abundances,log,,
-center h1,linear,,
-center he4,linear,,
-center c12,linear,,
-center o16,linear,,
-log_center h1,log,,
-log_center he4,log,,
-add_surface_abundances,linear,,
-add_log_surface_abundances,log,,
-surface h1,linear,,
-surface he4,linear,,
-surface c12,linear,,
-surface o16,linear,,
-log_surface h1,log,,
-log_surface he4,log,,
-add_average_abundances,linear,,
-add_log_average_abundances,log,,
-average h1,linear,,
-average he4,linear,,
-log_average h1,log,,
-log_average he4,log,,
-add_total_mass,linear,,
-add_log_total_mass,log,,
-total_mass h1,linear,,
-total_mass he4,linear,,
-log_total_mass h1,log,,
-log_total_mass he4,log,,
-max_T,linear,,
-log_max_T,log,,
-shock_mass,linear,,
-shock_mass_gm,linear,,
-shock_q,linear,,
-shock_radius,linear,,
-shock_radius_cm,linear,,
-shock_velocity,linear,,
-shock_csound,linear,,
-shock_v_div_cs,linear,,
-shock_lgT,log,,
-shock_lgRho,log,,
-shock_lgP,log,,
-shock_gamma1,linear,,
-shock_entropy,linear,,
-shock_tau,linear,,
-shock_k,linear,,
-shock_pre_lgRho,log,,
-delta_nu,linear,,
-delta_Pg,linear,,
-log_delta_Pg,log,,
-nu_max,linear,,
-nu_max_3_4th_div_delta_nu,linear,,
-acoustic_cutoff,linear,,
-acoustic_radius,linear,,
-ng_for_nu_max,linear,,
-gs_per_delta_nu,linear,,
-int_k_r_dr_nu_max_Sl1,linear,,
-int_k_r_dr_2pt0_nu_max_Sl1,linear,,
-int_k_r_dr_0pt5_nu_max_Sl1,linear,,
-int_k_r_dr_nu_max_Sl2,linear,,
-int_k_r_dr_2pt0_nu_max_Sl2,linear,,
-int_k_r_dr_0pt5_nu_max_Sl2,linear,,
-int_k_r_dr_nu_max_Sl3,linear,,
-int_k_r_dr_2pt0_nu_max_Sl3,linear,,
-int_k_r_dr_0pt5_nu_max_Sl3,linear,,
-total_energy,linear,,
-log_total_energy,log,,
-total_energy_after_adjust_mass,linear,,
-tot_E,linear,,
-log_tot_E,log,,
-total_gravitational_energy,linear,,
-log_total_gravitational_energy,log,,
-total_gravitational_energy_after_adjust_mass,linear,,
-tot_PE,linear,,
-log_tot_PE,log,,
-total_internal_energy,linear,,
-log_total_internal_energy,log,,
-total_internal_energy_after_adjust_mass,linear,,
-tot_IE,linear,,
-log_tot_IE,log,,
-total_radial_kinetic_energy,linear,,
-log_total_radial_kinetic_energy,log,,
-total_radial_kinetic_energy_after_adjust_mass,linear,,
-tot_KE,linear,,
-log_tot_KE,log,,
-total_turbulent_energy,linear,,
-log_total_turbulent_energy,log,,
-total_turbulent_energy_after_adjust_mass,linear,,
-tot_Et,linear,,
-log_tot_Et,log,,
-total_energy_foe,linear,,
-tot_IE_div_IE_plus_KE,linear,,
-total_IE_div_IE_plus_KE,linear,,
-total_entropy,linear,,
-total_eps_grav,linear,,
-total_energy_sources_and_sinks,linear,,
-total_nuclear_heating,linear,,
-total_non_nuc_neu_cooling,linear,,
-total_irradiation_heating,linear,,
-total_extra_heating,linear,,
-total_WD_sedimentation_heating,linear,,
-rel_run_E_err,linear,,
-rel_E_err,linear,,
-abs_rel_E_err,linear,,
-log_rel_E_err,log,,
-tot_e_equ_err,linear,,
-tot_e_err,linear,,
-error_in_energy_conservation,linear,,
-cumulative_energy_error,linear,,
-rel_cumulative_energy_error,linear,,
-log_rel_cumulative_energy_error,log,,
-log_rel_run_E_err,log,,
-rel_error_in_energy_conservation,linear,,
-log_rel_error_in_energy_conservation,log,,
-virial_thm_P_avg,linear,,
-virial_thm_rel_err,linear,,
-work_inward_at_center,linear,,
-work_outward_at_surface,linear,,
-total_angular_momentum,linear,,
-log_total_angular_momentum,log,,
-i_rot_total,linear,,
-total_rotational_kinetic_energy,linear,,
-log_total_rotational_kinetic_energy,log,,
-total_rotational_kinetic_energy_after_adjust_mass,linear,,
-avg_abs_v_div_cs,linear,,
-log_avg_abs_v_div_cs,log,,
-max_abs_v_div_cs,linear,,
-log_max_abs_v_div_cs,log,,
-avg_abs_v,linear,,
-log_avg_abs_v,log,,
-max_abs_v,linear,,
-log_max_abs_v,log,,
-u_surf,linear,,
-u_surf_km_s,linear,,
-u_div_csound_surf,linear,,
-u_div_csound_max,linear,,
-infall_div_cs,linear,,
-e_thermal,linear,,
-logQ_max,log,,
-logQ_min,log,,
-gamma1_min,linear,,
-mass_semiconv_core,linear,,
-diffusion_time_H_He_bdy,linear,,
-temperature_H_He_bdy,linear,,
-one_div_yphot,linear,,
-log_one_div_yphot,log,,
-log_min_opacity,log,,
-min_opacity,linear,,
-log_tau_center,log,,
-log_max_tau_conv,log,,
-max_tau_conv,linear,,
-log_min_tau_conv,log,,
-min_tau_conv,linear,,
-tau_qhse_yrs,linear,,
-Lsurf_m,linear,,
-dlnR_dlnM,linear,,
-h1_czb_mass,linear,,
-kh_mdot_limit,linear,,
-log_cntr_dr_cm,log,,
-min_Pgas_div_P,linear,,
-surf_c12_minus_o16,linear,,
-surf_num_c12_div_num_o16,linear,,
-phase_of_evolution,linear,,
-gradT_excess_alpha,linear,,
-gradT_excess_min_beta,linear,,
-gradT_excess_max_lambda,linear,,
-max_L_rad_div_Ledd,linear,,
-max_L_rad_div_Ledd_div_phi_Joss,linear,,
-rti_regions <num>,linear,,
-total_ni_co_56,linear,,
-apsidal_constant_k2,linear,,
-k_below_const_q,linear,,
-q_below_const_q,linear,,
-logxq_below_const_q,log,,
-k_const_mass,linear,,
-q_const_mass,linear,,
-logxq_const_mass,log,,
-k_below_just_added,linear,,
-q_below_just_added,linear,,
-logxq_below_just_added,log,,
-k_for_test_CpT_absMdot_div_L,linear,,
-q_for_test_CpT_absMdot_div_L,linear,,
-logxq_for_test_CpT_absMdot_div_L,log,,
-bc filter,linear,,
-abs_mag filter,linear,,
-add_bc,linear,,
-add_abs_mag,linear,,
-rsp_DeltaMag,linear,,
-rsp_DeltaR,linear,,
-rsp_GREKM,linear,,
-rsp_num_periods,linear,,
-rsp_period_in_days,linear,,
-rsp_phase,linear,,
-num_retries,linear,,
-num_iters,linear,,
-num_solver_iterations,linear,,
-total_num_solver_iterations,linear,,
-avg_num_solver_iters,linear,,
-rotation_solver_steps,linear,,
-diffusion_solver_steps,linear,,
-diffusion_solver_iters,linear,,
-avg_setvars_per_step,linear,,
-avg_skipped_setvars_per_step,linear,,
-avg_solver_setvars_per_step,linear,,
-burn_solver_maxsteps,linear,,
-total_num_solver_calls_converged,linear,,
-total_num_solver_calls_failed,linear,,
-total_num_solver_calls_made,linear,,
-total_num_solver_relax_calls_converged,linear,,
-total_num_solver_relax_calls_failed,linear,,
-total_num_solver_relax_calls_made,linear,,
-total_num_solver_relax_iterations,linear,,
-total_step_attempts,linear,,
-total_step_redos,linear,,
-total_step_retries,linear,,
-total_steps_finished,linear,,
-total_steps_taken,linear,,
-TDC_num_cells,linear,,
-total_relax_step_attempts,linear,,
-total_relax_step_redos,linear,,
-total_relax_step_retries,linear,,
-total_relax_steps_finished,linear,,
-total_relax_steps_taken,linear,,
-log_mesh_adjust_IE_conservation,log,,
-log_mesh_adjust_KE_conservation,log,,
-log_mesh_adjust_PE_conservation,log,,
-num_hydro_merges,linear,,
-num_hydro_splits,linear,,
-elapsed_time,linear,,
+column_name,data_logarithmic,display_logarithmic,series_name,units,axis_name
+model_number,false,false,Model Number,,Model Number
+num_zones,false,false,Number of Zones,,Zone Count
+star_age,false,false,Star Age,yr,Age
+star_age_sec,false,false,Star Age,s,Age
+star_age_min,false,false,Star Age,min,Age
+star_age_hr,false,false,Star Age,hr,Age
+star_age_day,false,false,Star Age,d,Age
+day,false,false,Star Age,d,Age
+log_star_age,true,true,Star Age,yr,Age
+log_star_age_sec,true,true,Star Age,s,Age
+time_step,false,false,Time Step,yr,Time Step
+time_step_sec,false,false,Time Step,s,Time Step
+time_step_days,false,false,Time Step,d,Time Step
+log_dt,true,true,Time Step,yr,Time Step
+log_dt_sec,true,true,Time Step,s,Time Step
+log_dt_days,true,true,Time Step,d,Time Step
+star_mass,false,false,Star Mass,M_{☉},Mass
+log_star_mass,true,true,Star Mass,M_{☉},Mass
+star_gravitational_mass,false,false,Gravitational Mass,M_{☉},Mass
+star_mass_grav_div_mass,false,false,M_grav/M,,Mass Ratio
+delta_mass,false,false,ΔM,M_{☉},Mass Change
+log_xmstar,true,false,Exterior Mass,g,Mass
+star_mdot,false,false,Mass Change Rate,M_{☉}/yr,Mass Change Rate
+log_abs_mdot,true,true,|Ṁ|,M_{☉}/yr,Mass Change Rate
+Tsurf_factor,false,false,T_surf Factor,,Factor
+tau_factor,false,false,τ Factor,,Factor
+tau_surface,false,false,Surface Optical Depth,,Optical Depth
+m_center,false,false,Central Mass,M_{☉},Mass
+m_center_gm,false,false,Central Mass,g,Mass
+r_center,false,false,Central Radius,R_{☉},Radius
+r_center_cm,false,false,Central Radius,cm,Radius
+r_center_km,false,false,Central Radius,km,Radius
+L_center,false,false,Central Luminosity,L_{☉},Luminosity
+log_L_center,true,true,Central Luminosity,L_{☉},Luminosity
+log_L_center_ergs_s,true,true,Central Luminosity,erg/s,Luminosity
+v_center,false,false,Central Velocity,cm/s,Velocity
+v_center_kms,false,false,Central Velocity,km/s,Velocity
+max_conv_vel_div_csound,false,false,(v/c_sound)_max,,Velocity Ratio
+max_gradT_div_grada,false,false,(∇_T/∇_a)_max,,Temperature Gradient
+max_gradT_sub_grada,false,false,(∇_T - ∇_a)_max,,Temperature Gradient
+min_log_mlt_Gamma,true,false,Γ_MLT_min,,MLT Parameter
+mass_conv_core,false,false,Convective Core Mass,M_{☉},Mass
+cz_bot_mass,false,false,Convective Base Mass,M_{☉},Mass
+cz_mass,false,false,Convective Base Mass,M_{☉},Mass
+cz_log_xmass,true,false,Convective Base Exterior Mass,g,Mass
+cz_log_xmsun,true,false,Convective Base Exterior Mass,M_{☉},Mass
+cz_xm,false,false,Convective Base Exterior Mass,M_{☉},Mass
+cz_logT,true,true,Convective Base Temperature,K,Temperature
+cz_logRho,true,true,Convective Base Density,g/cm³,Density
+cz_logP,true,true,Convective Base Pressure,dyn/cm²,Pressure
+cz_bot_radius,false,false,Convective Base Radius,R_{☉},Radius
+cz_log_column_depth,true,true,Convective Base Column Depth,g/cm²,Column Depth
+cz_log_radial_depth,true,true,Convective Base Radial Depth,cm,Radial Depth
+cz_luminosity,false,false,Convective Base Luminosity,L_{☉},Luminosity
+cz_opacity,false,false,Convective Base Opacity,cm²/g,Opacity
+cz_log_tau,true,true,Convective Base Optical Depth,,Optical Depth
+cz_eta,false,false,Convective Base η,,Degeneracy Parameter
+cz_log_eps_nuc,true,true,Convective Base Nuclear Generation,erg/g/s,Nuclear Energy Generation
+cz_t_heat,false,false,Convective Base Heating Timescale,s,Timescale
+cz_csound,false,false,Convective Base Sound Speed,cm/s,Velocity
+cz_scale_height,false,false,Convective Base Scale Height,cm,Length
+cz_grav,false,false,Convective Base Gravitational Acceleration,cm/s²,Acceleration
+cz_omega,false,false,Convective Base Rotation Rate,rad/s,Angular Velocity
+cz_omega_div_omega_crit,false,false,Convective Base Ω/Ω_crit,,Angular Velocity Ratio
+cz_zone,false,false,Convective Base Zone,,Zone Number
+cz_log_xa_h1,true,true,Convective Base ^{1}H Mass Fraction,,Mass Fraction
+cz_log_xa_he4,true,true,Convective Base ^{4}He Mass Fraction,,Mass Fraction
+cz_top_mass,false,false,Convective Top Mass,M_{☉},Mass
+cz_top_log_xmass,true,false,Convective Top Exterior Mass,g,Mass
+cz_top_log_xmsun,true,false,Convective Top Exterior Mass,M_{☉},Mass
+cz_top_xm,false,false,Convective Top Exterior Mass,M_{☉},Mass
+cz_top_logT,true,true,Convective Top Temperature,K,Temperature
+cz_top_logRho,true,true,Convective Top Density,g/cm³,Density
+cz_top_logP,true,true,Convective Top Pressure,dyn/cm²,Pressure
+cz_top_radius,false,false,Convective Top Radius,R_{☉},Radius
+cz_top_log_column_depth,true,true,Convective Top Column Depth,g/cm²,Column Depth
+cz_top_log_radial_depth,true,true,Convective Top Radial Depth,cm,Radial Depth
+cz_top_luminosity,false,false,Convective Top Luminosity,L_{☉},Luminosity
+cz_top_opacity,false,false,Convective Top Opacity,cm²/g,Opacity
+cz_top_log_tau,true,true,Convective Top Optical Depth,,Optical Depth
+cz_top_eta,false,false,Convective Top η,,Degeneracy Parameter
+cz_top_log_eps_nuc,true,true,Convective Top Nuclear Generation,erg/g/s,Nuclear Energy Generation
+cz_top_t_heat,false,false,Convective Top Heating Timescale,s,Timescale
+cz_top_csound,false,false,Convective Top Sound Speed,cm/s,Velocity
+cz_top_scale_height,false,false,Convective Top Scale Height,cm,Length
+cz_top_grav,false,false,Convective Top Gravitational Acceleration,cm/s²,Acceleration
+cz_top_omega,false,false,Convective Top Rotation Rate,rad/s,Angular Velocity
+cz_top_omega_div_omega_crit,false,false,Convective Top Ω/Ω_crit,,Angular Velocity Ratio
+cz_top_zone,false,false,Convective Top Zone,,Zone Number
+cz_top_zone_logdq,true,true,Convective Top Zone Fractional Mass,,Mass Fraction
+cz_top_log_xa_h1,true,true,Convective Top ^{1}H Mass Fraction,,Mass Fraction
+cz_top_log_xa_he4,true,true,Convective Top ^{4}He Mass Fraction,,Mass Fraction
+power_h_burn,false,false,L_H,L_{☉},Luminosity
+power_he_burn,false,false,L_He,L_{☉},Luminosity
+power_photo,false,false,L_photodisintegration,L_{☉},Luminosity
+power_z_burn,false,false,L_Z,L_{☉},Luminosity
+log_power_nuc_burn,true,true,L_nuc - L_photodisintegration,L_{☉},Luminosity
+log_LH,true,true,L_H,L_{☉},Luminosity
+log_LHe,true,true,L_He,L_{☉},Luminosity
+log_LZ,true,true,L_Z,L_{☉},Luminosity
+log_Lnuc,true,true,L_nuc,L_{☉},Luminosity
+log_Lnuc_ergs_s,true,true,L_nuc,erg/s,Luminosity
+log_Lnuc_sub_log_L,true,true,L_nuc - L,L_{☉},Luminosity
+lnuc_photo,false,false,L_photodisintegration,L_{☉},Luminosity
+extra_L,false,false,L_extra,L_{☉},Luminosity
+log_extra_L,true,true,L_extra,L_{☉},Luminosity
+log_Lneu,true,true,L_neu,L_{☉},Luminosity
+log_Lneu_nuc,true,true,L_neu (nuc),L_{☉},Luminosity
+log_Lneu_nonnuc,true,true,L_neu (thermal),L_{☉},Luminosity
+mass_loc_of_max_eps_nuc,false,false,Mass at Peak Nuclear Burning,M_{☉},Mass
+mass_ext_to_max_eps_nuc,false,false,Mass Exterior to Peak Nuclear Burning,M_{☉},Mass
+eps_grav_integral,false,false,Integrated Gravitational Luminosity,L_{☉},Luminosity
+log_abs_Lgrav,true,true,|L_grav|,L_{☉},Luminosity
+pp,true,true,PP Chain Luminosity,L_{☉},Luminosity
+cno,true,true,CNO Cycle Luminosity,L_{☉},Luminosity
+tri_alfa,true,true,Triple Alpha Luminosity,L_{☉},Luminosity
+c_alpha,true,true,Carbon Alpha Capture Luminosity,L_{☉},Luminosity
+n_alpha,true,true,Nitrogen Alpha Capture Luminosity,L_{☉},Luminosity
+o_alpha,true,true,Oxygen Alpha Capture Luminosity,L_{☉},Luminosity
+ne_alpha,true,true,Neon Alpha Capture Luminosity,L_{☉},Luminosity
+na_alpha,true,true,Sodium Alpha Capture Luminosity,L_{☉},Luminosity
+mg_alpha,true,true,Magnesium Alpha Capture Luminosity,L_{☉},Luminosity
+si_alpha,true,true,Silicon Alpha Capture Luminosity,L_{☉},Luminosity
+s_alpha,true,true,Sulfur Alpha Capture Luminosity,L_{☉},Luminosity
+ar_alpha,true,true,Argon Alpha Capture Luminosity,L_{☉},Luminosity
+ca_alpha,true,true,Calcium Alpha Capture Luminosity,L_{☉},Luminosity
+ti_alpha,true,true,Titanium Alpha Capture Luminosity,L_{☉},Luminosity
+fe_co_ni,true,true,Iron/Cobalt/Nickel Luminosity,L_{☉},Luminosity
+c12_c12,true,true,^{12}C + ^{12}C Luminosity,L_{☉},Luminosity
+c12_o16,true,true,^{12}C + ^{16}O Luminosity,L_{☉},Luminosity
+o16_o16,true,true,^{16}O + ^{16}O Luminosity,L_{☉},Luminosity
+photo,true,true,Photodisintegration Luminosity,L_{☉},Luminosity
+pnhe4,true,true,Proton-Neutron-^{4}He Luminosity,L_{☉},Luminosity
+other,true,true,Other Nuclear Luminosity,L_{☉},Luminosity
+he_core_mass,false,false,Helium Core Mass,M_{☉},Mass
+he_core_radius,false,false,Helium Core Radius,R_{☉},Radius
+he_core_lgT,true,true,Helium Core Temperature,K,Temperature
+he_core_lgRho,true,true,Helium Core Density,g/cm³,Density
+he_core_L,false,false,Helium Core Luminosity,L_{☉},Luminosity
+he_core_v,false,false,Helium Core Velocity,cm/s,Velocity
+he_core_omega,false,false,Helium Core Angular Velocity,rad/s,Angular Velocity
+he_core_omega_div_omega_crit,false,false,Helium Core Ω/Ω_crit,,Angular Velocity Ratio
+he_core_k,false,false,Helium Core Zone,,Zone Number
+co_core_mass,false,false,CO Core Mass,M_{☉},Mass
+CO_core,false,false,CO Core Mass,M_{☉},Mass
+co_core_radius,false,false,CO Core Radius,R_{☉},Radius
+co_core_lgT,true,true,CO Core Temperature,K,Temperature
+co_core_lgRho,true,true,CO Core Density,g/cm³,Density
+co_core_L,false,false,CO Core Luminosity,L_{☉},Luminosity
+co_core_v,false,false,CO Core Velocity,cm/s,Velocity
+co_core_omega,false,false,CO Core Angular Velocity,rad/s,Angular Velocity
+co_core_omega_div_omega_crit,false,false,CO Core Ω/Ω_crit,,Angular Velocity Ratio
+co_core_k,false,false,CO Core Zone,,Zone Number
+one_core_mass,false,false,ONe Core Mass,M_{☉},Mass
+one_core_radius,false,false,ONe Core Radius,R_{☉},Radius
+one_core_lgT,true,true,ONe Core Temperature,K,Temperature
+one_core_lgRho,true,true,ONe Core Density,g/cm³,Density
+one_core_L,false,false,ONe Core Luminosity,L_{☉},Luminosity
+one_core_v,false,false,ONe Core Velocity,cm/s,Velocity
+one_core_omega,false,false,ONe Core Angular Velocity,rad/s,Angular Velocity
+one_core_omega_div_omega_crit,false,false,ONe Core Ω/Ω_crit,,Angular Velocity Ratio
+one_core_k,false,false,ONe Core Zone,,Zone Number
+fe_core_mass,false,false,Iron Core Mass,M_{☉},Mass
+fe_core_radius,false,false,Iron Core Radius,R_{☉},Radius
+fe_core_lgT,true,true,Iron Core Temperature,K,Temperature
+fe_core_lgRho,true,true,Iron Core Density,g/cm³,Density
+fe_core_L,false,false,Iron Core Luminosity,L_{☉},Luminosity
+fe_core_v,false,false,Iron Core Velocity,cm/s,Velocity
+fe_core_omega,false,false,Iron Core Angular Velocity,rad/s,Angular Velocity
+fe_core_omega_div_omega_crit,false,false,Iron Core Ω/Ω_crit,,Angular Velocity Ratio
+fe_core_k,false,false,Iron Core Zone,,Zone Number
+neutron_rich_core_mass,false,false,Neutron-Rich Core Mass,M_{☉},Mass
+neutron_rich_core_radius,false,false,Neutron-Rich Core Radius,R_{☉},Radius
+neutron_rich_core_lgT,true,true,Neutron-Rich Core Temperature,K,Temperature
+neutron_rich_core_lgRho,true,true,Neutron-Rich Core Density,g/cm³,Density
+neutron_rich_core_L,false,false,Neutron-Rich Core Luminosity,L_{☉},Luminosity
+neutron_rich_core_v,false,false,Neutron-Rich Core Velocity,cm/s,Velocity
+neutron_rich_core_omega,false,false,Neutron-Rich Core Angular Velocity,rad/s,Angular Velocity
+neutron_rich_core_omega_div_omega_crit,false,false,Neutron-Rich Core Ω/Ω_crit,,Angular Velocity Ratio
+neutron_rich_core_k,false,false,Neutron-Rich Core Zone,,Zone Number
+envelope_mass,false,false,Envelope Mass,M_{☉},Mass
+envelope_fraction_left,false,false,Envelope Fraction Left,,Fraction
+h_rich_layer_mass,false,false,H-Rich Layer Mass,M_{☉},Mass
+he_rich_layer_mass,false,false,He-Rich Layer Mass,M_{☉},Mass
+co_rich_layer_mass,false,false,CO-Rich Layer Mass,M_{☉},Mass
+dynamic_timescale,false,false,Dynamic Timescale,s,Timescale
+kh_timescale,false,false,Kelvin-Helmholtz Timescale,yr,Timescale
+mdot_timescale,false,false,Mass Loss Timescale,yr,Timescale
+kh_div_mdot_timescales,false,false,t_KH/t_Ṁ,,Timescale Ratio
+nuc_timescale,false,false,Nuclear Timescale,yr,Timescale
+dt_cell_collapse,false,false,Cell Collapse Time,s,Timescale
+dt_div_dt_cell_collapse,false,false,dt/t_cell_collapse,,Timescale Ratio
+dt_div_max_tau_conv,false,false,dt/τ_conv_max,,Timescale Ratio
+dt_div_min_tau_conv,false,false,dt/τ_conv_min,,Timescale Ratio
+min_dr_div_cs,false,false,Minimum dr/c_s,s,Timescale
+min_dr_div_cs_k,false,false,Location of Minimum dr/c_s,,Zone Number
+log_min_dr_div_cs,true,true,Minimum dr/c_s,s,Timescale
+min_dr_div_cs_yr,false,false,Minimum dr/c_s,yr,Timescale
+log_min_dr_div_cs_yr,true,true,Minimum dr/c_s,yr,Timescale
+dt_div_min_dr_div_cs,false,false,dt/(dr/c_s)_min,,Timescale Ratio
+log_dt_div_min_dr_div_cs,true,true,dt/(dr/c_s)_min,,Timescale Ratio
+min_t_eddy,false,false,Minimum Eddy Timescale,s,Timescale
+effective_T,false,false,Effective Temperature,K,Temperature
+Teff,false,false,Effective Temperature,K,Temperature
+log_Teff,true,true,Effective Temperature,K,Temperature
+photosphere_black_body_T,false,false,Photosphere Black Body Temperature,K,Temperature
+photosphere_cell_T,false,false,Photosphere Cell Temperature,K,Temperature
+photosphere_cell_log_T,true,true,Photosphere Cell Temperature,K,Temperature
+photosphere_cell_density,false,false,Photosphere Cell Density,g/cm³,Density
+photosphere_cell_log_density,true,true,Photosphere Cell Density,g/cm³,Density
+photosphere_cell_opacity,false,false,Photosphere Cell Opacity,cm²/g,Opacity
+photosphere_cell_log_opacity,true,true,Photosphere Cell Opacity,cm²/g,Opacity
+photosphere_L,false,false,Photosphere Luminosity,L_{☉},Luminosity
+photosphere_log_L,true,true,Photosphere Luminosity,L_{☉},Luminosity
+photosphere_r,false,false,Photosphere Radius,R_{☉},Radius
+photosphere_log_r,true,true,Photosphere Radius,R_{☉},Radius
+photosphere_m,false,false,Photosphere Mass,M_{☉},Mass
+photosphere_v_km_s,false,false,Photosphere Velocity,km/s,Velocity
+photosphere_cell_k,false,false,Photosphere Cell Zone,,Zone Number
+photosphere_column_density,false,false,Photosphere Column Density,g/cm²,Column Density
+photosphere_csound,false,false,Photosphere Sound Speed,cm/s,Velocity
+photosphere_log_column_density,true,true,Photosphere Column Density,g/cm²,Column Density
+photosphere_opacity,false,false,Photosphere Opacity,cm²/g,Opacity
+photosphere_v_div_cs,false,false,Photosphere v/c_s,,Velocity Ratio
+photosphere_xm,false,false,Photosphere Exterior Mass,M_{☉},Mass
+photosphere_cell_free_e,false,false,Photosphere Cell Free Electrons,,Number Density
+photosphere_cell_log_free_e,true,true,Photosphere Cell Free Electrons,,Number Density
+photosphere_logg,true,true,Photosphere Surface Gravity,cm/s²,Surface Gravity
+photosphere_T,false,false,Photosphere Temperature,K,Temperature
+luminosity,false,false,Luminosity,L_{☉},Luminosity
+luminosity_ergs_s,false,false,Luminosity,erg/s,Luminosity
+log_L,true,true,Luminosity,L_{☉},Luminosity
+log_L_ergs_s,true,true,Luminosity,erg/s,Luminosity
+radius,false,false,Radius,R_{☉},Radius
+log_R,true,true,Radius,R_{☉},Radius
+radius_cm,false,false,Radius,cm,Radius
+log_R_cm,true,true,Radius,cm,Radius
+log_g,true,true,Surface Gravity,cm/s²,Surface Gravity
+gravity,false,false,Surface Gravity,cm/s²,Surface Gravity
+log_Ledd,true,true,Eddington Luminosity,L_{☉},Luminosity
+log_L_div_Ledd,true,true,L/L_Edd,,Luminosity Ratio
+lum_div_Ledd,false,false,L/L_Edd,,Luminosity Ratio
+log_surf_optical_depth,true,true,Surface Optical Depth,,Optical Depth
+surface_optical_depth,false,false,Surface Optical Depth,,Optical Depth
+log_surf_cell_opacity,true,true,Surface Cell Opacity,cm²/g,Opacity
+log_surf_cell_P,true,true,Surface Cell Pressure,dyn/cm²,Pressure
+log_surf_cell_pressure,true,true,Surface Cell Pressure,dyn/cm²,Pressure
+log_surf_cell_density,true,true,Surface Cell Density,g/cm³,Density
+log_surf_cell_temperature,true,true,Surface Cell Temperature,K,Temperature
+surface_cell_temperature,false,false,Surface Cell Temperature,K,Temperature
+log_surf_cell_z,true,true,Surface Cell Metallicity,,Metallicity
+surface_cell_entropy,false,false,Surface Cell Entropy,kerg/baryon,Entropy
+v_surf,false,false,Surface Velocity,cm/s,Velocity
+v_surf_km_s,false,false,Surface Velocity,km/s,Velocity
+v_div_csound_surf,false,false,Surface v/c_s,,Velocity Ratio
+v_div_csound_max,false,false,Maximum v/c_s,,Velocity Ratio
+v_div_vesc,false,false,v/v_escape,,Velocity Ratio
+v_phot_km_s,false,false,Photosphere Velocity,km/s,Velocity
+v_surf_div_escape_v,false,false,v_surf/v_escape,,Velocity Ratio
+v_surf_div_v_kh,false,false,v_surf/v_KH,,Velocity Ratio
+surf_avg_j_rot,false,false,Surface Average j_rot,g·cm²/s,Angular Momentum
+surf_avg_omega,false,false,Surface Average Ω,rad/s,Angular Velocity
+surf_avg_omega_crit,false,false,Surface Average Ω_crit,rad/s,Angular Velocity
+surf_avg_omega_div_omega_crit,false,false,Surface Average Ω/Ω_crit,,Angular Velocity Ratio
+surf_avg_v_rot,false,false,Surface Average v_rot,km/s,Velocity
+surf_avg_v_crit,false,false,Surface Average v_crit,km/s,Velocity
+surf_avg_v_div_v_crit,false,false,Surface Average v/v_crit,,Velocity Ratio
+surf_avg_Lrad_div_Ledd,false,false,Surface Average L_rad/L_Edd,,Luminosity Ratio
+surf_avg_logT,true,true,Surface Average Temperature,K,Temperature
+surf_avg_logRho,true,true,Surface Average Density,g/cm³,Density
+surf_avg_opacity,false,false,Surface Average Opacity,cm²/g,Opacity
+grav_dark_L_polar,false,false,Gravity Darkening L_polar,L_{☉},Luminosity
+grav_dark_Teff_polar,false,false,Gravity Darkening T_eff_polar,K,Temperature
+grav_dark_L_equatorial,false,false,Gravity Darkening L_equatorial,L_{☉},Luminosity
+grav_dark_Teff_equatorial,false,false,Gravity Darkening T_eff_equatorial,K,Temperature
+surf_escape_v,false,false,Surface Escape Velocity,cm/s,Velocity
+v_wind_Km_per_s,false,false,Wind Velocity,km/s,Velocity
+rotational_mdot_boost,false,false,Rotational Ṁ Boost,,Factor
+log_rotational_mdot_boost,true,true,Rotational Ṁ Boost,,Factor
+surf_r_equatorial_div_r_polar,false,false,r_eq/r_polar,,Radius Ratio
+surf_r_equatorial_div_r,false,false,r_eq/r,,Radius Ratio
+surf_r_polar_div_r,false,false,r_polar/r,,Radius Ratio
+log_center_T,true,true,Central Temperature,K,Temperature
+log_center_Rho,true,true,Central Density,g/cm³,Density
+log_center_P,true,true,Central Pressure,dyn/cm²,Pressure
+log_cntr_P,true,true,Central Pressure,dyn/cm²,Pressure
+log_cntr_Rho,true,true,Central Density,g/cm³,Density
+log_cntr_T,true,true,Central Temperature,K,Temperature
+center_T,false,false,Central Temperature,K,Temperature
+center_Rho,false,false,Central Density,g/cm³,Density
+center_P,false,false,Central Pressure,dyn/cm²,Pressure
+center_degeneracy,false,false,Central Degeneracy Parameter,,Degeneracy Parameter
+center_gamma,false,false,Central Plasma Parameter,,Plasma Parameter
+center_mu,false,false,Central Mean Molecular Weight,,Mean Molecular Weight
+center_ye,false,false,Central Electron Fraction,,Electron Fraction
+center_abar,false,false,Central Mean Atomic Weight,,Mean Atomic Weight
+center_zbar,false,false,Central Mean Charge,,Mean Charge
+center_eps_grav,false,false,Central Gravitational Energy,erg/g/s,Energy Generation
+center_non_nuc_neu,false,false,Central Non-Nuclear Neutrino Losses,erg/g/s,Energy Generation
+center_eps_nuc,false,false,Central Nuclear Energy,erg/g/s,Energy Generation
+d_center_eps_nuc_dlnT,false,false,Central d(eps_nuc)/d(ln T),,Energy Generation Derivative
+d_center_eps_nuc_dlnd,false,false,Central d(eps_nuc)/d(ln ρ),,Energy Generation Derivative
+log_center_eps_nuc,true,true,Central Nuclear Energy,erg/g/s,Energy Generation
+center_entropy,false,false,Central Entropy,kerg/baryon,Entropy
+max_entropy,false,false,Maximum Entropy,kerg/baryon,Entropy
+fe_core_infall,false,false,Iron Core Infall,cm/s,Velocity
+non_fe_core_infall,false,false,Non-Iron Core Infall,cm/s,Velocity
+non_fe_core_rebound,false,false,Non-Iron Core Rebound,cm/s,Velocity
+max_infall_speed,false,false,Maximum Infall Speed,cm/s,Velocity
+compactness_parameter,false,false,Compactness Parameter,,Compactness
+compactness,false,false,Compactness,,Compactness
+m4,false,false,M(S=4),M_{☉},Mass
+mu4,false,false,μ₄,M_{☉}/(1000 km),Density Parameter
+center_omega,false,false,Central Angular Velocity,rad/s,Angular Velocity
+center_omega_div_omega_crit,false,false,Central Ω/Ω_crit,,Angular Velocity Ratio
+species,false,false,Number of Species,,Species Count
+center_h1,false,false,Central ^{1}H,,Mass Fraction
+center_he4,false,false,Central ^{4}He,,Mass Fraction
+center_c12,false,false,Central ^{12}C,,Mass Fraction
+center_o16,false,false,Central ^{16}O,,Mass Fraction
+log_center_h1,true,false,Central ^{1}H,,Mass Fraction
+log_center_he4,true,false,Central ^{4}He,,Mass Fraction
+surface_h1,false,false,Surface ^{1}H,,Mass Fraction
+surface_he4,false,false,Surface ^{4}He,,Mass Fraction
+surface_c12,false,false,Surface ^{12}C,,Mass Fraction
+surface_o16,false,false,Surface ^{16}O,,Mass Fraction
+log_surface_h1,true,false,Surface ^{1}H,,Mass Fraction
+log_surface_he4,true,false,Surface ^{4}He,,Mass Fraction
+average_h1,false,false,Average ^{1}H,,Mass Fraction
+average_he4,false,false,Average ^{4}He,,Mass Fraction
+log_average_h1,true,false,Average ^{1}H,,Mass Fraction
+log_average_he4,true,false,Average ^{4}He,,Mass Fraction
+total_mass_h1,false,false,Total ^{1}H Mass,M_{☉},Mass
+total_mass_he4,false,false,Total ^{4}He Mass,M_{☉},Mass
+log_total_mass_h1,true,true,Total ^{1}H Mass,M_{☉},Mass
+log_total_mass_he4,true,true,Total ^{4}He Mass,M_{☉},Mass
+max_T,false,false,Maximum Temperature,K,Temperature
+log_max_T,true,true,Maximum Temperature,K,Temperature
+shock_mass,false,false,Shock Mass,M_{☉},Mass
+shock_mass_gm,false,false,Shock Mass,g,Mass
+shock_q,false,false,Shock q,,Mass Coordinate
+shock_radius,false,false,Shock Radius,R_{☉},Radius
+shock_radius_cm,false,false,Shock Radius,cm,Radius
+shock_velocity,false,false,Shock Velocity,cm/s,Velocity
+shock_csound,false,false,Shock Sound Speed,cm/s,Velocity
+shock_v_div_cs,false,false,Shock v/c_s,,Velocity Ratio
+shock_lgT,true,true,Shock Temperature,K,Temperature
+shock_lgRho,true,true,Shock Density,g/cm³,Density
+shock_lgP,true,true,Shock Pressure,dyn/cm²,Pressure
+shock_gamma1,false,false,Shock γ₁,,Adiabatic Index
+shock_entropy,false,false,Shock Entropy,kerg/baryon,Entropy
+shock_tau,false,false,Shock Optical Depth,,Optical Depth
+shock_k,false,false,Shock Zone,,Zone Number
+shock_pre_lgRho,true,true,Pre-Shock Density,g/cm³,Density
+delta_nu,false,false,Large Frequency Separation,μHz,Frequency
+delta_Pg,false,false,g-Mode Period Spacing,s,Period
+log_delta_Pg,true,true,g-Mode Period Spacing,s,Period
+nu_max,false,false,ν_max,μHz,Frequency
+nu_max_3_4th_div_delta_nu,false,false,ν_max^(3/4)/Δν,,Frequency Ratio
+acoustic_cutoff,false,false,Acoustic Cutoff,μHz,Frequency
+acoustic_radius,false,false,Acoustic Radius,s,Timescale
+ng_for_nu_max,false,false,n_g for ν_max,,Mode Number
+gs_per_delta_nu,false,false,g-modes per Δν,,Mode Density
+int_k_r_dr_nu_max_Sl1,false,false,∫k_r dr (ν_max, l=1),cm,Length
+int_k_r_dr_2pt0_nu_max_Sl1,false,false,∫k_r dr (2ν_max, l=1),cm,Length
+int_k_r_dr_0pt5_nu_max_Sl1,false,false,∫k_r dr (ν_max/2, l=1),cm,Length
+int_k_r_dr_nu_max_Sl2,false,false,∫k_r dr (ν_max, l=2),cm,Length
+int_k_r_dr_2pt0_nu_max_Sl2,false,false,∫k_r dr (2ν_max, l=2),cm,Length
+int_k_r_dr_0pt5_nu_max_Sl2,false,false,∫k_r dr (ν_max/2, l=2),cm,Length
+int_k_r_dr_nu_max_Sl3,false,false,∫k_r dr (ν_max, l=3),cm,Length
+int_k_r_dr_2pt0_nu_max_Sl3,false,false,∫k_r dr (2ν_max, l=3),cm,Length
+int_k_r_dr_0pt5_nu_max_Sl3,false,false,∫k_r dr (ν_max/2, l=3),cm,Length
+total_energy,false,false,Total Energy,erg,Energy
+log_total_energy,true,true,Total Energy,erg,Energy
+total_energy_after_adjust_mass,false,false,Total Energy (post-adjust),erg,Energy
+tot_E,false,false,Total Energy,erg,Energy
+log_tot_E,true,true,Total Energy,erg,Energy
+total_gravitational_energy,false,false,Total Gravitational Energy,erg,Energy
+log_total_gravitational_energy,true,true,Total Gravitational Energy,erg,Energy
+total_gravitational_energy_after_adjust_mass,false,false,Total Gravitational Energy (post-adjust),erg,Energy
+tot_PE,false,false,Total Potential Energy,erg,Energy
+log_tot_PE,true,true,Total Potential Energy,erg,Energy
+total_internal_energy,false,false,Total Internal Energy,erg,Energy
+log_total_internal_energy,true,true,Total Internal Energy,erg,Energy
+total_internal_energy_after_adjust_mass,false,false,Total Internal Energy (post-adjust),erg,Energy
+tot_IE,false,false,Total Internal Energy,erg,Energy
+log_tot_IE,true,true,Total Internal Energy,erg,Energy
+total_radial_kinetic_energy,false,false,Total Radial Kinetic Energy,erg,Energy
+log_total_radial_kinetic_energy,true,true,Total Radial Kinetic Energy,erg,Energy
+total_radial_kinetic_energy_after_adjust_mass,false,false,Total Radial Kinetic Energy (post-adjust),erg,Energy
+tot_KE,false,false,Total Kinetic Energy,erg,Energy
+log_tot_KE,true,true,Total Kinetic Energy,erg,Energy
+total_turbulent_energy,false,false,Total Turbulent Energy,erg,Energy
+log_total_turbulent_energy,true,true,Total Turbulent Energy,erg,Energy
+total_turbulent_energy_after_adjust_mass,false,false,Total Turbulent Energy (post-adjust),erg,Energy
+tot_Et,false,false,Total Turbulent Energy,erg,Energy
+log_tot_Et,true,true,Total Turbulent Energy,erg,Energy
+total_energy_foe,false,false,Total Energy,10⁵¹ erg,Energy
+tot_IE_div_IE_plus_KE,false,false,IE/(IE+KE),,Energy Ratio
+total_IE_div_IE_plus_KE,false,false,IE/(IE+KE),,Energy Ratio
+total_entropy,false,false,Total Entropy,kerg/baryon,Entropy
+total_eps_grav,false,false,Total Gravitational Energy Rate,erg/s,Power
+total_energy_sources_and_sinks,false,false,Total Energy Sources and Sinks,erg,Energy
+total_nuclear_heating,false,false,Total Nuclear Heating,erg,Energy
+total_non_nuc_neu_cooling,false,false,Total Non-Nuclear Neutrino Cooling,erg,Energy
+total_irradiation_heating,false,false,Total Irradiation Heating,erg,Energy
+total_extra_heating,false,false,Total Extra Heating,erg,Energy
+total_WD_sedimentation_heating,false,false,Total WD Sedimentation Heating,erg,Energy
+rel_run_E_err,false,false,Relative Running Energy Error,,Error
+rel_E_err,false,false,Relative Energy Error,,Error
+abs_rel_E_err,false,false,Absolute Relative Energy Error,,Error
+log_rel_E_err,true,true,Relative Energy Error,,Error
+tot_e_equ_err,false,false,Total Energy Equation Error,,Error
+tot_e_err,false,false,Total Energy Error,,Error
+error_in_energy_conservation,false,false,Energy Conservation Error,erg,Energy
+cumulative_energy_error,false,false,Cumulative Energy Error,erg,Energy
+rel_cumulative_energy_error,false,false,Relative Cumulative Energy Error,,Error
+log_rel_cumulative_energy_error,true,true,Relative Cumulative Energy Error,,Error
+log_rel_run_E_err,true,true,Relative Running Energy Error,,Error
+rel_error_in_energy_conservation,false,false,Relative Energy Conservation Error,,Error
+log_rel_error_in_energy_conservation,true,true,Relative Energy Conservation Error,,Error
+virial_thm_P_avg,false,false,Virial Theorem Average Pressure,dyn/cm²,Pressure
+virial_thm_rel_err,false,false,Virial Theorem Relative Error,,Error
+work_inward_at_center,false,false,Work Inward at Center,erg,Energy
+work_outward_at_surface,false,false,Work Outward at Surface,erg,Energy
+total_angular_momentum,false,false,Total Angular Momentum,g·cm²/s,Angular Momentum
+log_total_angular_momentum,true,true,Total Angular Momentum,g·cm²/s,Angular Momentum
+i_rot_total,false,false,Total Moment of Inertia,g·cm²,Moment of Inertia
+total_rotational_kinetic_energy,false,false,Total Rotational Kinetic Energy,erg,Energy
+log_total_rotational_kinetic_energy,true,true,Total Rotational Kinetic Energy,erg,Energy
+total_rotational_kinetic_energy_after_adjust_mass,false,false,Total Rotational Kinetic Energy (post-adjust),erg,Energy
+avg_abs_v_div_cs,false,false,Average |v|/c_s,,Velocity Ratio
+log_avg_abs_v_div_cs,true,true,Average |v|/c_s,,Velocity Ratio
+max_abs_v_div_cs,false,false,Maximum |v|/c_s,,Velocity Ratio
+log_max_abs_v_div_cs,true,true,Maximum |v|/c_s,,Velocity Ratio
+avg_abs_v,false,false,Average |v|,cm/s,Velocity
+log_avg_abs_v,true,true,Average |v|,cm/s,Velocity
+max_abs_v,false,false,Maximum |v|,cm/s,Velocity
+log_max_abs_v,true,true,Maximum |v|,cm/s,Velocity
+u_surf,false,false,Surface u,cm/s,Velocity
+u_surf_km_s,false,false,Surface u,km/s,Velocity
+u_div_csound_surf,false,false,Surface u/c_s,,Velocity Ratio
+u_div_csound_max,false,false,Maximum u/c_s,,Velocity Ratio
+infall_div_cs,false,false,Infall/c_s,,Velocity Ratio
+e_thermal,false,false,Thermal Energy,erg,Energy
+logQ_max,true,true,Maximum logQ,,EOS Parameter
+logQ_min,true,true,Minimum logQ,,EOS Parameter
+gamma1_min,false,false,Minimum γ₁,,Adiabatic Index
+mass_semiconv_core,false,false,Semiconvective Core Mass,M_{☉},Mass
+diffusion_time_H_He_bdy,false,false,H-He Boundary Diffusion Time,s,Timescale
+temperature_H_He_bdy,false,false,H-He Boundary Temperature,K,Temperature
+one_div_yphot,false,false,1/Y_phot,,Photosphere Parameter
+log_one_div_yphot,true,true,1/Y_phot,,Photosphere Parameter
+log_min_opacity,true,true,Minimum Opacity,cm²/g,Opacity
+min_opacity,false,false,Minimum Opacity,cm²/g,Opacity
+log_tau_center,true,true,Central Optical Depth,,Optical Depth
+log_max_tau_conv,true,true,Maximum Convective Timescale,s,Timescale
+max_tau_conv,false,false,Maximum Convective Timescale,s,Timescale
+log_min_tau_conv,true,true,Minimum Convective Timescale,s,Timescale
+min_tau_conv,false,false,Minimum Convective Timescale,s,Timescale
+tau_qhse_yrs,false,false,Quasi-HSE Timescale,yr,Timescale
+Lsurf_m,false,false,Surface Luminosity per Unit Mass,L_{☉}/M_{☉},Specific Luminosity
+dlnR_dlnM,false,false,d(ln R)/d(ln M),,Structure Parameter
+h1_czb_mass,false,false,H CZ Base Mass,M_{☉},Mass
+kh_mdot_limit,false,false,KH Ṁ Limit,M_{☉}/yr,Mass Change Rate
+log_cntr_dr_cm,true,true,Central dr,cm,Length
+min_Pgas_div_P,false,false,Minimum P_gas/P,,Pressure Ratio
+surf_c12_minus_o16,false,false,Surface C12 - O16,,Mass Fraction Difference
+surf_num_c12_div_num_o16,false,false,Surface N(C12)/N(O16),,Number Ratio
+phase_of_evolution,false,false,Phase of Evolution,,Evolution Phase
+gradT_excess_alpha,false,false,∇T Excess α,,MLT Parameter
+gradT_excess_min_beta,false,false,∇T Excess Minimum β,,MLT Parameter
+gradT_excess_max_lambda,false,false,∇T Excess Maximum λ,,MLT Parameter
+max_L_rad_div_Ledd,false,false,Maximum L_rad/L_Edd,,Luminosity Ratio
+max_L_rad_div_Ledd_div_phi_Joss,false,false,Maximum (L_rad/L_Edd)/φ_Joss,,Luminosity Ratio
+total_ni_co_56,false,false,Total ^{56}Ni+^{56}Co,M_{☉},Mass
+apsidal_constant_k2,false,false,Apsidal Constant k₂,,Apsidal Constant
+k_below_const_q,false,false,Zone Below Constant q,,Zone Number
+q_below_const_q,false,false,q Below Constant,,Mass Coordinate
+logxq_below_const_q,true,true,1-q Below Constant,,Mass Coordinate
+k_const_mass,false,false,Zone at Constant Mass,,Zone Number
+q_const_mass,false,false,q at Constant Mass,,Mass Coordinate
+logxq_const_mass,true,true,1-q at Constant Mass,,Mass Coordinate
+k_below_just_added,false,false,Zone Below Just Added,,Zone Number
+q_below_just_added,false,false,q Below Just Added,,Mass Coordinate
+logxq_below_just_added,true,true,1-q Below Just Added,,Mass Coordinate
+k_for_test_CpT_absMdot_div_L,false,false,Zone for CpT|Ṁ|/L Test,,Zone Number
+q_for_test_CpT_absMdot_div_L,false,false,q for CpT|Ṁ|/L Test,,Mass Coordinate
+logxq_for_test_CpT_absMdot_div_L,true,true,1-q for CpT|Ṁ|/L Test,,Mass Coordinate
+rsp_DeltaMag,false,false,RSP ΔMag,mag,Magnitude
+rsp_DeltaR,false,false,RSP ΔR,R_{☉},Radius
+rsp_GREKM,false,false,RSP Growth Rate,,Growth Rate
+rsp_num_periods,false,false,RSP Number of Periods,,Period Count
+rsp_period_in_days,false,false,RSP Period,d,Period
+rsp_phase,false,false,RSP Phase,,Phase
+num_retries,false,false,Number of Retries,,Retry Count
+num_iters,false,false,Number of Iterations,,Iteration Count
+num_solver_iterations,false,false,Number of Solver Iterations,,Iteration Count
+total_num_solver_iterations,false,false,Total Number of Solver Iterations,,Iteration Count
+avg_num_solver_iters,false,false,Average Number of Solver Iterations,,Iteration Count
+rotation_solver_steps,false,false,Rotation Solver Steps,,Step Count
+diffusion_solver_steps,false,false,Diffusion Solver Steps,,Step Count
+diffusion_solver_iters,false,false,Diffusion Solver Iterations,,Iteration Count
+avg_setvars_per_step,false,false,Average Setvars per Step,,Variable Count
+avg_skipped_setvars_per_step,false,false,Average Skipped Setvars per Step,,Variable Count
+avg_solver_setvars_per_step,false,false,Average Solver Setvars per Step,,Variable Count
+burn_solver_maxsteps,false,false,Burn Solver Maximum Steps,,Step Count
+total_num_solver_calls_converged,false,false,Total Converged Solver Calls,,Call Count
+total_num_solver_calls_failed,false,false,Total Failed Solver Calls,,Call Count
+total_num_solver_calls_made,false,false,Total Solver Calls Made,,Call Count
+total_num_solver_relax_calls_converged,false,false,Total Converged Relax Calls,,Call Count
+total_num_solver_relax_calls_failed,false,false,Total Failed Relax Calls,,Call Count
+total_num_solver_relax_calls_made,false,false,Total Relax Calls Made,,Call Count
+total_num_solver_relax_iterations,false,false,Total Relax Iterations,,Iteration Count
+total_step_attempts,false,false,Total Step Attempts,,Step Count
+total_step_redos,false,false,Total Step Redos,,Step Count
+total_step_retries,false,false,Total Step Retries,,Step Count
+total_steps_finished,false,false,Total Steps Finished,,Step Count
+total_steps_taken,false,false,Total Steps Taken,,Step Count
+TDC_num_cells,false,false,TDC Number of Cells,,Cell Count
+total_relax_step_attempts,false,false,Total Relax Step Attempts,,Step Count
+total_relax_step_redos,false,false,Total Relax Step Redos,,Step Count
+total_relax_step_retries,false,false,Total Relax Step Retries,,Step Count
+total_relax_steps_finished,false,false,Total Relax Steps Finished,,Step Count
+total_relax_steps_taken,false,false,Total Relax Steps Taken,,Step Count
+log_mesh_adjust_IE_conservation,true,true,Mesh Adjust IE Conservation,,Conservation Error
+log_mesh_adjust_KE_conservation,true,true,Mesh Adjust KE Conservation,,Conservation Error
+log_mesh_adjust_PE_conservation,true,true,Mesh Adjust PE Conservation,,Conservation Error
+num_hydro_merges,false,false,Number of Hydro Merges,,Merge Count
+num_hydro_splits,false,false,Number of Hydro Splits,,Split Count
+elapsed_time,false,false,Elapsed Time,s,Time

@@ -16,7 +16,12 @@ style_manager = {
 			font_size: 16,
 			global_color_index: 0,  // Global color cycling counter
 			manual_color_overrides: new Set(),  // Track manually changed colors
-			automatic_color_assignments: new Map()  // Track series_id -> color_index for automatic assignments
+			automatic_color_assignments: new Map(),  // Track series_id -> color_index for automatic assignments
+			
+			// Linestyle cycling for multi-file mode (by column name)
+			column_linestyle_assignments: new Map(),  // column_name -> linestyle_name
+			available_linestyles: ['solid', 'dashed', 'dotted', 'dashdot'],
+			neutral_legend_color: '#666666'  // Gray color for data type legend entries
 		},
 		
 		// Available color schemes
@@ -996,6 +1001,54 @@ style_manager = {
 		
 		// The color will be tracked as manual override through the persistent styles
 		// and detected by is_color_manually_overridden()
+	},
+	
+	// Linestyle cycling for multi-file mode (by column name)
+	get_linestyle_for_column: (column_name) => {
+		// Check if this column already has a linestyle assigned
+		if (style_manager.styles.global.column_linestyle_assignments.has(column_name)) {
+			return style_manager.styles.global.column_linestyle_assignments.get(column_name);
+		}
+		
+		// Find how many linestyles are already assigned
+		const assignedLinestyles = new Set(style_manager.styles.global.column_linestyle_assignments.values());
+		const availableLinestyles = style_manager.styles.global.available_linestyles;
+		
+		// Find next unassigned linestyle, or cycle back to start
+		let nextLinestyle = null;
+		for (const linestyle of availableLinestyles) {
+			if (!assignedLinestyles.has(linestyle)) {
+				nextLinestyle = linestyle;
+				break;
+			}
+		}
+		
+		// If all linestyles are used, cycle back through them
+		if (!nextLinestyle) {
+			const assignmentCount = style_manager.styles.global.column_linestyle_assignments.size;
+			nextLinestyle = availableLinestyles[assignmentCount % availableLinestyles.length];
+		}
+		
+		// Assign and return
+		style_manager.styles.global.column_linestyle_assignments.set(column_name, nextLinestyle);
+		return nextLinestyle;
+	},
+	
+	// Get all currently assigned column-linestyle pairs for legend
+	get_all_column_linestyles: () => {
+		return Array.from(style_manager.styles.global.column_linestyle_assignments.entries());
+	},
+	
+	// Clear all linestyle assignments (for mode switching)
+	clear_linestyle_assignments: () => {
+		style_manager.styles.global.column_linestyle_assignments.clear();
+	},
+	
+	// Clear all persistent styles (forces fresh style assignment)
+	clear_persistent_styles: () => {
+		style_manager.styles.persistent_styles = {};
+		style_manager.styles.global.manual_color_overrides.clear();
+		style_manager.styles.global.automatic_color_assignments.clear();
 	},
 	
 	reset_global_color_counter: () => {

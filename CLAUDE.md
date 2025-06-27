@@ -117,102 +117,71 @@ python gen_columns_data.py
 - ✅ Color scheme management with persistent styling
 - ✅ Legend generation for multi-series plots
 
-### Known Issues & Future Improvements
+### Outstanding Issues
 
-#### High Priority - All Completed! 🎉
+**Known Bugs:**
+1. **X-axis label positioning**: In small viewports, the x-axis label is pushed up into the x-axis tick labels
 
-**All 12 high priority issues have been completed!**
+## ✅ Enhanced Multi-File Visualization System
 
-The following issues have been successfully resolved:
-1. **✅ Color cycle intelligence and axis label management** (COMPLETED):
-   - ✅ Fixed: Global color cycling across both axes prevents color conflicts
-   - ✅ Implemented: Dynamic axis label coloring based on series counts
-   - ✅ Enhancement: Single series axes get colored labels, multiple series axes stay black
-   - ✅ Architecture: Robust callback system prevents loading order issues
+**Implementation Status: COMPLETED**
 
-2. **✅ Inspector mode updates** (COMPLETED):
-   - ✅ Fixed: Inspector tooltips now use axis labels instead of raw data names
-   - ✅ Implemented: Consistent label cleaning and color matching with axis labels
-   - ✅ Resolved: Right axis tracking bug when switching between file modes
-   - ✅ Enhancement: Inspector labels match axis label content and colors exactly
+Mesa Explorer now features a sophisticated multi-file visualization system that enables powerful multi-series, multi-file plotting with intuitive visual encoding.
 
-3. **✅ Series styling persistence issues** (COMPLETED):
-   - ✅ Fixed: Implemented "cycle independence" color persistence system
-   - ✅ Feature: New series get next color from cycle, manual changes don't affect cycle progression
-   - ✅ Enhancement: Series removal doesn't change existing series colors
-   - ✅ System: Color cycle changes reassign all colors systematically (left Y → right Y)
-   - ✅ Bonus: Added color cycle preview dropdown with visual swatches
+### Key Features
 
-4. **✅ Y-axis dropdown UI inconsistency** (COMPLETED):
-   - ✅ Fixed: Y-axis dropdowns now match X-axis behavior and appearance
-   - ✅ Implemented: Full keyboard navigation (arrow keys, return to select, immediate search active state)
-   - ✅ Resolution: Users can navigate y-axis selections entirely with keyboard
+**Color-by-File, Linestyle-by-Data System:**
+- **File Identity**: Each file gets a distinct color from the color scheme
+- **Data Type Identity**: Each column type gets a distinct linestyle (solid, dashed, dotted, dash-dot)
+- **Cross-Axis Consistency**: Linestyles apply across both left and right Y-axes
 
-5. **✅ Multi-file mode legend labeling** (COMPLETED):
-   - ✅ Fixed: Legend labels now show only file names in multi-file mode
-   - ✅ Enhancement: Cleaner legend presentation for multi-file comparisons
+**Two-Part Legend System:**
+- **Data Types Section**: Shows column names with neutral gray color + assigned linestyles
+- **Files Section**: Shows file names with their assigned colors + solid lines
+- **Seamless Layout**: Data types flow directly into file listings
 
-6. **✅ Multi-file mode color cycling** (COMPLETED):
-   - ✅ Fixed: Each file now gets distinct color from color cycle
-   - ✅ Resolution: Multi-file mode properly assigns colors by file index
+**Always-Visible Right Y-Axis:**
+- Right Y-axis panel now always visible in both single-file and multi-file modes
+- Enables complex multi-series plotting across both axes
 
-7. **✅ Logarithmic column detection and transformation system** (COMPLETED):
-   - ✅ Implemented: Complete per-series transformation architecture
-   - ✅ Fixed: Auto-detection of log columns with automatic rescaling and axis suggestions
-   - ✅ Enhanced: Per-series data transformations (Linear/Log/Exp, Zero-point, Absolute Value)
-   - ✅ UI Redesign: Moved transformation controls into series boxes with consistent layout
-   - ✅ X-axis Integration: X-axis transformations now work properly with automatic log detection
+**Smart Mode Transitions:**
+- **Multi-file → Single-file**: Selects top file, switches to color cycling with solid lines, clears linestyle assignments
+- **Single-file → Multi-file**: Starts fresh with first file getting first color, linestyles assigned in order (left Y → right Y)
 
-8. **✅ UI architecture and consistency** (COMPLETED):
-   - ✅ Fixed: X-axis label positioning moved above dropdown for consistency
-   - ✅ Enhanced: Uniform layout across all axis controls
-   - ✅ Improved: All axes have identical "Axis Settings" sections with consistent styling
-   - ✅ Terminology: Clear distinction between "Rescale" (data) and "Scale" (axis display)
+### Technical Implementation
 
-9. **✅ Files panel hide/minimize button not working** (COMPLETED):
-   - ✅ Fixed: Button to hide files panel now functions properly
-   - ✅ Resolution: Files panel can be collapsed/expanded as expected
+**Linestyle Management** (`js/style-manager.js`):
+- Global linestyle cycling system by column name
+- Four available linestyles: solid, dashed, dotted, dash-dot
+- Consistent assignment across files and axes
 
-10. **✅ Legend responsive sizing and typography** (COMPLETED):
-   - ✅ Fixed: Legend width now auto-adjusts based on content using canvas text measurement
-   - ✅ Enhancement: Consistent typography and better visual integration
-   - ✅ Improvement: Responsive design with proper padding and spacing
+**Enhanced Multi-File Series** (`js/series-manager.js`):
+- File color + column linestyle assignment
+- Mode-aware styling (single-file: color cycling, multi-file: file+linestyle system)
 
-11. **✅ Y-axis label and series name cleaning for log columns** (COMPLETED):
-   - ✅ Fixed: Y-axis series and axis labels now properly remove "log_" or "log" prefix from column names
-   - ✅ Enhancement: Consistent label cleaning across all axes (X-axis, left Y-axis, right Y-axis)
-   - ✅ Implementation: Applied log cleaning immediately when setting labels instead of conditional logic
-   - ✅ Result: "log_L" becomes "L" in both axis labels and series names consistently
+**Intelligent Legend System** (`js/mesa-explorer.js`):
+- Single-file mode: Traditional series legend
+- Multi-file mode: Two-part legend (data types + files)
+- Proper linestyle rendering with SVG stroke-dasharray
+- Robust mode transition handling with linestyle reassignment
 
-12. **✅ Y-axis series dropdown keyboard selection behavior** (COMPLETED):
-   - ✅ Fixed: Pressing Return in Y-axis series column dropdowns now behaves identically to X-axis dropdowns
-   - ✅ Resolution: Added e.preventDefault() and e.stopPropagation() to all Enter key handlers
-   - ✅ Enhancement: Dropdowns close automatically and page stays at current scroll position
-   - ✅ Consistency: All dropdowns (X-axis, left Y-axis, right Y-axis) have identical keyboard navigation
+### Example Use Case
 
-13. **✅ Dark mode y-axis label visibility and SVG export consistency** (COMPLETED):
-   - ✅ Fixed: Y-axis labels now dynamically switch between black (light mode) and light gray (dark mode)
-   - ✅ Enhanced: SVG export forces all axis labels to black for publication-ready output
-   - ✅ Implementation: Theme-aware color system with force_light support for consistent export
-   - ✅ Consistency: All axis labels (X, left Y, right Y) follow same dark/light mode behavior
+**Two profile files with Tableau color scheme:**
+- **X-axis**: mass coordinate
+- **Left Y-axis**: h1 (hydrogen) and he4 (helium) mass fractions  
+- **Right Y-axis**: logT (temperature)
 
-14. **✅ X-axis label positioning improvement** (COMPLETED):
-   - ✅ Fixed: X-axis label moved up 10px to prevent descender cutoff
-   - ✅ Enhancement: Better readability and professional appearance
+**Result**: 6 lines total:
+- **Profile1** (blue): h1 (solid), he4 (dashed), logT (dotted)
+- **Profile2** (orange): h1 (solid), he4 (dashed), logT (dotted)
 
-#### Code Architecture
-
-1. **✅ File modularity** (COMPLETED - reduced from ~3500 to ~550 lines):
-   - ✅ Completed: `file-manager.js` - File upload, parsing, validation (651 lines)
-   - ✅ Completed: `ui-utils.js` - UI layout utilities, panel toggle, mini plot (266 lines)
-   - ✅ Completed: `style-manager.js` - Style management and theming (~300 lines)
-   - ✅ Completed: `data-utils.js` - Data processing and transformations (173 lines)
-   - ✅ Completed: `series-manager.js` - Multi-series logic and styling (308 lines)
-   - ✅ Completed: `interaction-manager.js` - Mouse tools, tool palette, pan/zoom controls (398 lines)
-   - ✅ Completed: `controls-manager.js` - UI controls coordination (~200 lines)
-   - ✅ Completed: `mesa-explorer.js` - Core D3.js plotting and rendering (~550 lines)
-   - **Total reduction: 58% (1304 → 550 lines for core visualization)**
-   - Benefits: Excellent separation of concerns, improved maintainability, enhanced AI/human collaboration
+**Legend shows**:
+- h1 (gray, solid)
+- he4 (gray, dashed) 
+- logT (gray, dotted)
+- profile1.mesa (blue, solid)
+- profile2.mesa (orange, solid)
 
 #### Future Enhancements
 - Data persistence and plot configuration save/load functionality
@@ -222,81 +191,11 @@ The following issues have been successfully resolved:
 - Export enhancements (multiple formats, publication-ready layouts)
 - Comprehensive testing suite
 
-## ✅ Completed: Enhanced Mouse Controls (Tool Palette System)
 
-### Implementation Status: COMPLETED
-
-The tool palette system has been successfully implemented with all four interaction tools:
-
-- ✅ **Inspector Tool**: Mouseover tooltips showing axis values (default mode)
-- ✅ **Pan Tool**: Click-and-drag to pan plot view with real-time feedback
-- ✅ **Box Zoom Tool**: Draw rectangle to zoom into specific regions
-- ✅ **Reset View Tool**: One-click reset to auto-scale all axes
-
-### Technical Implementation
-
-**Architecture**: Extracted into `js/interaction-manager.js` (398 lines) for better modularity
-
-**Key Features**:
-
-- Tool palette located below main plot container
-- Axis limits integration - zoom/pan operations update input fields
-- Cross-file persistence - axis limits remain active when switching files
-- Visual feedback - zoom rectangle preview, cursor changes, real-time pan
-- Error handling - validates axis limits, handles edge cases for log scales
-
-**Testing Results**:
-
-- ✅ All four tools function independently
-- ✅ Axis limits update correctly for zoom/pan operations
-- ✅ Legend dragging unaffected by tool changes
-- ✅ Reset tool clears all limits and restores auto-scaling
-- ✅ Tool palette responsive behavior with files panel
-- ✅ Cross-file limit persistence works as expected
-- ✅ Visual feedback appropriate for each tool
-- ✅ No conflicts between tool interactions
-
-## ✅ Completed: Comprehensive Code Modularization
-
-### Implementation Status: COMPLETED
-
-The codebase has been successfully modularized into focused, manageable components with excellent separation of concerns.
-
-### Modular Architecture Summary
-
-| **Module** | **Lines** | **Purpose** | **Key Features** |
-|------------|-----------|-------------|------------------|
-| `file-manager.js` | 651 | File operations | Upload, parsing, validation, type detection |
-| `ui-utils.js` | 266 | UI utilities | Panel toggle, mini plot, responsive layout |
-| `style-manager.js` | ~300 | Style system | Theming, color schemes, persistent styling |
-| `data-utils.js` | 173 | **Data layer** | Pure functions, transformations, accessors |
-| `series-manager.js` | 308 | **Series UI** | Multi-series management, configuration |
-| `interaction-manager.js` | 398 | Mouse tools | Pan, zoom, inspector, tool palette |
-| `controls-manager.js` | ~200 | UI controls | Controls coordination and management |
-| `mesa-explorer.js` | ~550 | **Core viz** | D3.js rendering, axes, legends, plotting |
-
-### Key Achievements
-
-**Massive Size Reduction**: 
-- Original `mesa-explorer.js`: ~3500 lines
-- Final `mesa-explorer.js`: ~550 lines
-- **Total reduction: 84% (2950 lines extracted)**
-
-**Clean Module Boundaries**:
-- **Data Layer**: Pure, testable functions in `data-utils.js`
-- **UI Layer**: Focused managers for series, interactions, and styling
-- **Visualization Core**: Streamlined D3.js rendering engine
-- **Clear Dependencies**: Proper loading order and integration points
-
-**Enhanced Maintainability**:
-- Each module has single responsibility
-- Easy to locate and modify specific functionality
-- Better suited for AI collaboration and human development
-- Improved code organization and readability
 
 ### Loading Order and Initialization Architecture
 
-**CRITICAL**: The application uses a centralized initialization system to resolve cross-module dependencies. This prevents the circular dependency issues that plagued earlier versions.
+**CRITICAL**: The application uses a centralized initialization system to resolve cross-module dependencies.
 
 #### Script Loading Order
 ```html
@@ -316,298 +215,3 @@ The codebase has been successfully modularized into focused, manageable componen
 <!-- Core visualization engine -->
 <script src="/js/mesa-explorer.js"></script>
 ```
-
-#### Async Initialization System (`initialize_application()`)
-
-The `initialize_application()` function in `ui-utils.js` uses async/await for robust startup guarantees:
-
-```javascript
-window.initialize_application = async function() {
-    // Phase 1: Initialize core modules that don't depend on others
-    await initializeModule('file_manager', () => file_manager.setup());
-    await initializeModule('style_manager', () => style_manager.setup_style_handlers());
-    await initializeModule('series_manager', () => series_manager.setup());
-    
-    // Phase 2: Initialize visualization engine  
-    await initializeModule('vis', () => vis.setup());
-    
-    // Phase 3: Set up cross-module communication via callback system
-    file_manager.register_file_change_callback(() => vis.register_new_files());
-    
-    // Phase 4: Setup UI utilities that depend on other modules
-    await initializeModule('files_panel', () => setup_files_panel_toggle());
-    await initializeModule('plot_resize', () => setup_plot_resize_observer());
-}
-```
-
-**Key Benefits of Async Approach:**
-- **Guaranteed order**: Each phase waits for the previous to complete
-- **Error handling**: Comprehensive try/catch with detailed logging
-- **Debugging**: Console logs show exactly which module failed to initialize
-- **Future-proof**: Modules can return promises if they need async initialization
-
-#### Cross-Module Communication Pattern
-
-**DO NOT** call other modules' functions directly during initialization or from event handlers. Instead:
-
-**❌ Wrong (causes loading order issues):**
-```javascript
-// In file-manager.js
-handle_file_selection: () => {
-    // BAD: Direct call to vis object
-    vis.register_new_files();
-}
-```
-
-**✅ Correct (uses callback system):**
-```javascript
-// In file-manager.js
-handle_file_selection: () => {
-    // GOOD: Uses callback system
-    file_manager.invoke_file_change_callbacks();
-}
-
-// In ui-utils.js initialize_application()
-file_manager.register_file_change_callback(() => {
-    if (typeof vis.register_new_files === 'function') {
-        vis.register_new_files();
-    }
-});
-```
-
-#### Key Benefits
-
-- **Eliminates circular dependencies**: Modules don't directly reference each other
-- **Guaranteed initialization order**: Async/await ensures each phase completes before the next begins
-- **Comprehensive error handling**: Try/catch blocks with detailed logging for debugging
-- **Robust startup**: Modules are guaranteed to be loaded and initialized before cross-module calls
-- **Easy debugging**: Console logs show exactly which module succeeded/failed during initialization
-- **Future-proof**: New modules can easily integrate and can return promises if needed
-
-#### Common Pitfalls to Avoid
-
-1. **Never call `vis.*` functions directly from other modules during initialization**
-2. **Never assume other modules are ready during your module's setup**
-3. **Always use the callback system for cross-module communication**
-4. **Don't modify the script loading order without updating the initialization phases**
-
-The modularization provides a solid foundation for future development with clear separation of concerns and excellent maintainability.
-
-## ✅ Completed: Major UI Architecture Transformation (Per-Series Data Transformations)
-
-### Implementation Status: COMPLETED
-
-A comprehensive architectural redesign has been successfully implemented, transforming the user interface from axis-wide to per-series data transformations.
-
-### Key Achievements
-
-**New UI Architecture:**
-- **✅ Consistent Axis Layout**: All axes (X, Left Y, Right Y) now have identical structure
-- **✅ Axis Settings Sections**: Gray-background sections at top of each axis for scale and limits
-- **✅ Per-Series Controls**: Each series has individual data transformation controls
-- **✅ Intuitive Workflow**: Select data → Transform data → Style series → Set axis display
-
-**Enhanced Data Processing:**
-- **✅ Per-Series Transformations**: Each Y-axis series can have independent rescaling (Linear/Log/Exp)
-- **✅ Smart Log Detection**: Automatic detection of log columns with auto-rescaling and axis suggestions  
-- **✅ Label Cleaning**: "log_L" → "L" with proper exponential transformation
-- **✅ X-axis Integration**: X-axis transformations fully functional with existing architecture
-
-**UI Consistency Improvements:**
-- **✅ Keyboard Navigation**: Full keyboard support for all dropdown menus
-- **✅ Layout Uniformity**: Consistent positioning and styling across all controls
-- **✅ Clear Terminology**: "Rescale" for data transformations vs "Scale" for axis display
-- **✅ Removed Complexity**: Eliminated confusing tabbed "More Details" section
-
-**Multi-File Mode Fixes:**
-- **✅ Clean Legend Labels**: Multi-file legends show only file names
-- **✅ Distinct Colors**: Each file gets unique color in multi-file mode
-- **✅ Proper Series Handling**: Multi-file series creation and styling works correctly
-
-### Before vs After
-
-**Before:**
-- Axis-wide transformations affected all series equally
-- Confusing tabbed interface separated from data selection
-- Inconsistent dropdown behavior between X and Y axes
-- Broken multi-file mode styling and labeling
-
-**After:**  
-- Per-series transformations allow complex mixed plots
-- Integrated controls right where users select data
-- Consistent, keyboard-navigable interface across all axes
-- Clean, functional multi-file mode
-
-### Technical Implementation
-
-**Data Processing Updates:**
-- Modified `data-utils.js` to handle per-series transformations
-- Updated `series_accessor()` to use individual series transformation settings
-- Enhanced `get_axis_data_values()` for proper extent calculations
-
-**UI Architecture:**
-- Redesigned series creation in `series-manager.js` with integrated transformation controls
-- Added proper event handlers in `controls-manager.js` for X-axis transformations
-- Implemented automatic log detection with smart defaults
-
-**Result**: A much more powerful, intuitive, and consistent user interface that enables complex visualizations while being easier to use.
-
-## ✅ Completed: Inspector Mode Multi-Series Enhancements
-
-### Implementation Status: COMPLETED
-
-The inspector tool has been successfully enhanced to work seamlessly with the multi-series architecture and handle all file mode transitions.
-
-### Key Improvements
-
-**Inspector Label Consistency:**
-- **✅ Axis Label Integration**: Inspector now shows cleaned axis labels from input fields instead of raw column names
-- **✅ Color Matching**: Inspector text colors match axis label colors exactly
-- **✅ Consistent Cleaning**: Uses same log prefix removal as axis labels ("log_L" → "L")
-- **✅ Fallback System**: Gracefully handles missing axis labels with cleaned data names
-
-**Axis Tracking Reliability:**
-- **✅ Mode Transition Fix**: Resolved bug where right axis was not tracked after switching from multi-file to single-file mode
-- **✅ Data Name Restoration**: Automatic restoration of `vis.axes[axis].data_name` from existing series definitions
-- **✅ Cross-Mode Persistence**: Inspector tracking works consistently across all file mode transitions
-
-### Technical Implementation
-
-**Inspector Tooltip Enhancement** (`js/interaction-manager.js`):
-```javascript
-// Get the cleaned axis label from the input field instead of using raw data_name
-let axisLabel;
-const axisLabelInput = d3.select(`#${axis}-axis-label`);
-if (!axisLabelInput.empty() && axisLabelInput.property('value').trim() !== '') {
-    axisLabel = axisLabelInput.property('value').trim();
-} else {
-    // Fallback: clean the data_name with consistent log prefix removal
-    axisLabel = vis.axes[axis].data_name
-        .replace(/^log[_\s]*/i, '')     // Remove "log_" or "log " prefix
-        .replace(/^log(?=[A-Z])/i, '')  // Remove "log" before capitals  
-        .replace(/_/g, ' ');            // Replace underscores with spaces
-}
-```
-
-**Axis Tracking Restoration** (`js/mesa-explorer.js`):
-```javascript
-// Restore axis data_name from existing series definitions if needed
-// This ensures inspector tracking works after mode transitions
-['y', 'yOther'].forEach(axis => {
-    const seriesDefinitions = series_manager.series_definitions[axis];
-    if (seriesDefinitions && seriesDefinitions.length > 0 && seriesDefinitions[0].column) {
-        // Restore data_name from first series if it's not already set
-        if (!vis.axes[axis].data_name) {
-            vis.axes[axis].data_name = seriesDefinitions[0].column;
-            // Also restore axis label if empty
-        }
-    }
-});
-```
-
-### Before vs After
-
-**Before:**
-- Inspector showed raw column names with inconsistent cleaning
-- Right axis tracking lost when switching from multi-file to single-file mode
-- Inspector colors and labels didn't match axis labels
-- Axis tracking depended on unreliable data_name persistence
-
-**After:**
-- Inspector shows clean, consistent axis labels matching the UI
-- All axes track properly across all file mode transitions
-- Inspector colors exactly match axis label colors
-- Robust data_name restoration system ensures reliable tracking
-
-### Testing Results
-
-- ✅ Inspector labels match axis labels in content and color
-- ✅ Right axis tracking works in all file mode transitions
-- ✅ Log prefix cleaning consistent across inspector and axis labels
-- ✅ Fallback system handles edge cases gracefully
-- ✅ No regression in existing inspector functionality
-
-## ✅ Completed: Series Color Persistence and Visual Preview System
-
-### Implementation Status: COMPLETED
-
-The series color management system has been completely overhauled with cycle independence and visual color scheme previews.
-
-### Key Improvements
-
-**Cycle Independence Color Persistence:**
-- **✅ Smart Color Assignment**: New series get next available color, skipping manually overridden colors
-- **✅ Manual Override Tracking**: System tracks which colors are manual vs automatic assignments
-- **✅ Series Removal Stability**: Removing series doesn't affect colors of remaining series
-- **✅ Systematic Reassignment**: Color scheme changes apply systematic ordering (left Y → right Y)
-
-**Visual Color Scheme Preview:**
-- **✅ Custom Dropdown**: Replaced standard select with Bootstrap dropdown showing color swatches
-- **✅ Real-time Preview**: Button shows current color scheme with mini swatches
-- **✅ Full Color Display**: Dropdown shows up to 8 colors per scheme for complete preview
-- **✅ Seamless Integration**: Maintains all existing functionality with enhanced UX
-
-### Technical Implementation
-
-**Color Persistence System** (`js/style-manager.js`):
-```javascript
-// Cycle independence with manual override tracking
-get_next_global_color: (series_id = null) => {
-    // Find next available automatic color (skip manually overridden ones)
-    while (attempts < maxAttempts) {
-        const isManuallyOverridden = style_manager.is_color_manually_overridden(currentColor);
-        if (!isManuallyOverridden) {
-            // Track automatic assignment and advance counter
-            style_manager.styles.global.automatic_color_assignments.set(series_id, finalIndex);
-            return { color: finalColor, index: finalIndex };
-        }
-        colorIndex = (colorIndex + 1) % colors.length; // Try next color
-    }
-}
-```
-
-**Visual Preview System** (`index.html` + `js/style-manager.js`):
-```html
-<div class="dropdown">
-    <button class="btn btn-outline-secondary dropdown-toggle">
-        <div class="d-flex align-items-center">
-            <div id="colorSchemePreview" class="d-flex me-2"></div>
-            <span id="colorSchemeName">Tableau 10</span>
-        </div>
-    </button>
-    <ul class="dropdown-menu" id="colorSchemeDropdown">
-        <!-- Populated with color swatches by JavaScript -->
-    </ul>
-</div>
-```
-
-### Before vs After
-
-**Before:**
-- Manual color changes disrupted automatic cycle progression
-- Adding series could reset previous color customizations
-- No way to preview color schemes before selection
-- Series removal caused unpredictable color shifts
-
-**After:**
-- Manual changes are invisible to the automatic cycle (true independence)
-- Individual customizations persist when adding new series
-- Visual preview shows exactly what colors to expect
-- Predictable, systematic color assignment and management
-
-### User Experience Benefits
-
-- **Predictable**: Users know exactly what color their next series will get
-- **Flexible**: Manual customizations don't interfere with automatic assignments
-- **Visual**: Color scheme selection shows immediate previews
-- **Stable**: Series operations (add/remove) don't cause unexpected color changes
-- **Systematic**: Color scheme changes apply logical, consistent ordering
-
-### Testing Results
-
-- ✅ New series get correct next color even after manual overrides
-- ✅ Manual color changes properly tracked and preserved
-- ✅ Series removal leaves other colors unchanged
-- ✅ Color scheme changes apply systematic reassignment
-- ✅ Visual dropdown shows accurate color previews
-- ✅ All existing color functionality preserved

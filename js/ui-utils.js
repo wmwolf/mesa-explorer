@@ -44,6 +44,7 @@ window.initialize_application = async function() {
 		console.log('Phase 1: Initializing core modules...');
 		await initializeModule('file_manager', () => file_manager.setup());
 		await initializeModule('style_manager', () => style_manager.setup_style_handlers());
+		await initializeModule('metadata_manager', () => metadata_manager.setup());
 		
 		// Load user preferences after style manager is set up
 		console.log('Loading user preferences...');
@@ -67,8 +68,10 @@ window.initialize_application = async function() {
 		console.log('Phase 4: Setting up UI utilities...');
 		await initializeModule('files_panel', () => setup_files_panel_toggle());
 		await initializeModule('plot_resize', () => setup_plot_resize_observer());
+		await initializeModule('markup_validation', () => text_markup.setup_markup_validation());
 		
 		console.log('Mesa Explorer initialization completed successfully!');
+		console.log('💡 Tip: Type text_markup.show_markup_help() in console for LaTeX-style markup examples!');
 		
 	} catch (error) {
 		console.error('Mesa Explorer initialization failed:', error);

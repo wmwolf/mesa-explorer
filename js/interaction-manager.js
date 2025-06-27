@@ -226,18 +226,27 @@ const interaction_manager = {
 					.attr('font-size', style_manager.styles.global.font_size);
 			}
 			
-			// Update position and content
+			// Update position and clear existing content
 			mouse_text.attr('x', x + 20).attr('y', y + 35);
 			mouse_text.selectAll('tspan').remove();
-			mouse_text.selectAll('tspan')
-				.data(label_data)
-				.enter()
-				.append('tspan')
-				.attr('x', x + 20)
-				.attr('y', y + 35)
-				.attr('dy', (d, i) => (i * 1.2).toString() + 'em')
-				.attr('fill', (d) => d.axis.color)
-				.text(d => `${d.label}: ${d.val}`);
+			
+			// Create multi-line inspector tooltip with proper markup rendering
+			label_data.forEach((d, i) => {
+				// Create container tspan for this line
+				const lineSpan = mouse_text.append('tspan')
+					.attr('x', x + 20)
+					.attr('y', y + 35)
+					.attr('dy', (i * 1.2).toString() + 'em')
+					.attr('fill', d.axis.color)
+					.attr('dominant-baseline', 'baseline'); // Consistent with axis labels
+				
+				// Apply markup rendering to the label part
+				const labelWithValue = `${d.label}: ${d.val}`;
+				text_markup.apply_inline_markup(lineSpan, labelWithValue, {
+					fontSize: style_manager.styles.global.font_size,
+					fill: d.axis.color
+				});
+			});
 			
 			// Update background rectangle
 			let bbox = mouse_text.node().getBBox();

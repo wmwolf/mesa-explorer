@@ -25,6 +25,9 @@ vis = {
 			controls_manager.setup();
 		}
 		
+		// Initialize file mode tracking
+		vis.lastFileMode = false; // Start with single-file mode assumption
+		
 	},
 
 	breakpoints: {
@@ -177,12 +180,12 @@ vis = {
 			return;
 		}
 
-		// Determine if we should show right axis controls (only for single file)
-		const isMultiFile = vis.files.length > 1;
-		vis.show_right_axis_controls(!isMultiFile);
+		// Always show right axis controls in both single and multi-file modes
+		vis.show_right_axis_controls(true);
 
 		// Find intersection of column names across all selected files
 		vis.pause = true;
+		const isMultiFile = vis.files.length > 1;
 		const allColumnNames = vis.files.map(f => f.data.bulk_names.map(elt => elt.key));
 		const commonColumns = allColumnNames.length > 0 ? 
 			allColumnNames.reduce((a, b) => a.filter(c => b.includes(c))) : [];
@@ -223,18 +226,29 @@ vis = {
 		
 		// Only reset global color counter when files change or no existing series
 		// Also reset when switching between single-file and multi-file modes
-		const wasSingleFile = !d3.select('#yOther-data').classed('d-none'); // yOther visible = single file mode
+		// Detect mode changes for proper style resetting
 		
-		if (!hadExistingSeries || (isMultiFile === wasSingleFile)) { // mode changed
+		if (!hadExistingSeries || vis.lastFileMode !== isMultiFile) { // mode changed or first run
 			style_manager.reset_global_color_counter();
+			
+			// Handle specific mode transitions
+			if (vis.lastFileMode === true && isMultiFile === false) {
+				// Multi-file → single-file: clear linestyles, keep only top file, use color cycling
+				style_manager.clear_linestyle_assignments();
+				// Clear persistent styles to force fresh color assignment
+				style_manager.clear_persistent_styles();
+			} else if (vis.lastFileMode === false && isMultiFile === true) {
+				// Single → multi-file: start fresh with both colors and linestyles
+				style_manager.clear_linestyle_assignments();
+				style_manager.clear_persistent_styles();
+			}
+			
+			vis.lastFileMode = isMultiFile;
 		}
 		
 		// Process series definitions from UI
 		['y', 'yOther'].forEach(axis => {
-			// Skip yOther if controls are hidden (multi-file mode)
-			if (axis === 'yOther' && d3.select('#yOther-data').classed('d-none')) {
-				return;
-			}
+			// Always process yOther axis (no longer conditional on visibility)
 			
 			const seriesDefinitions = series_manager.series_definitions[axis];
 			if (seriesDefinitions && seriesDefinitions.length > 0) {
@@ -245,6 +259,9 @@ vis = {
 							const series = series_manager.create_multi_series(file, fileIndex, axis, seriesDef, seriesIndex);
 							if (series) vis.series.push(series);
 						});
+					} else if (seriesDef.column) {
+						// Column no longer exists in new file set - reset to default state
+						series_manager.reset_series_to_default_state(axis, seriesIndex);
 					}
 				});
 			}
@@ -343,20 +360,23 @@ vis = {
 			.attr('data-name', d => d.key)
 			.attr('href', 'javascript: void(0)')
 			.html(d => {
-				let res = `<samp>${d.key}</samp>`;
-				// Used to do fancy stuff with interpreting name and styling it. Lots
-				// of work to create this data, and we can't even use html in the svg
-				// pane, so skip it for now.
-				// if (d.html_name) {
-				//   res = d.html_name;
-				//   if (d.scale == 'log') {
-				//     res = `log ${res}`;
-				//   }
-				//   if (d.html_units) {
-				//     res = `${res} <small class="text-muted">(${d.html_units})</span>`;
-				//   }
-				// }
-				return res;
+				// Get metadata for this column (includes isotope auto-detection)
+				const metadata = metadata_manager.get_metadata(d.key);
+				
+				// Create dual-line display: raw name + formatted name with units
+				let html = `<samp>${d.key}</samp>`;
+				
+				// Add formatted line if different from raw name or has units
+				const formattedName = metadata.series_name;
+				const hasUnits = metadata.units && metadata.units.trim() !== '';
+				
+				if (formattedName !== d.key || hasUnits) {
+					const unitsPart = hasUnits ? ` [${text_markup.markup_to_html(metadata.units)}]` : '';
+					const formattedNameHtml = text_markup.markup_to_html(formattedName);
+					html += `<br><small class="opacity-75">${formattedNameHtml}${unitsPart}</small>`;
+				}
+				
+				return html;
 			})
 			.on('click', function(event) {
 				event.preventDefault();
@@ -369,26 +389,38 @@ vis = {
 				vis.axes[axis].data_name = option.attr('data-name');
 				vis.axes[axis].data_type = option.datum().scale;
 
+				// Get metadata for intelligent defaults
+				const metadata = metadata_manager.get_metadata(vis.axes[axis].data_name);
+				
 				// Update interface: button label (remember what was clicked), default
-				// axis label in text field,
-				// scale radio buttons and main plot
+				// axis label in text field, scale radio buttons and main plot
 				vis.pause = true;
 				d3.select(`#${axis}-label`).html(option.html());
-				d3.select(`#${axis}-axis-label`).property(
-					'value',
-					option
-						.text()
-						.replace(/^log[_\s]*/i, '')     // Remove "log_" or "log " prefix
-						.replace(/^log(?=[A-Z])/i, '')  // Remove "log" before capitals  
-						.replace(/_/g, ' ')             // Replace underscores with spaces
-				);
-				// Set scale to correspond with reported data type (log/linear)
-				const selector = `#${axis}-scale-${option.datum().scale}`;
-				document.querySelector(selector).click();
-				// Exponentiate logarithmic data, but preserve linear data
-				if (option.datum().scale == 'log') {
+				
+				// Update axis label using metadata (prefer axis_name with units, fallback to series_name)
+				let axisLabel = metadata.axis_name || metadata.series_name;
+				if (metadata.units && metadata.units.trim() !== '') {
+					axisLabel += ` [${metadata.units}]`;
+				}
+				d3.select(`#${axis}-axis-label`).property('value', axisLabel);
+				
+				// Intelligent logarithmic behavior based on metadata
+				// Apply 4-case logic: data_logarithmic vs display_logarithmic
+				if (metadata.data_logarithmic && metadata.display_logarithmic) {
+					// Case 1: Data is log, display as log → exponentiate data, use log axis
+					document.querySelector(`#${axis}-scale-log`).click();
 					document.querySelector(`#${axis}-data-trans-exp`).click();
+				} else if (metadata.data_logarithmic && !metadata.display_logarithmic) {
+					// Case 2: Data is log, display as linear → keep data as-is, use linear axis
+					document.querySelector(`#${axis}-scale-linear`).click();
+					document.querySelector(`#${axis}-data-trans-linear`).click();
+				} else if (!metadata.data_logarithmic && metadata.display_logarithmic) {
+					// Case 3: Data is linear, display as log → raw data, use log axis
+					document.querySelector(`#${axis}-scale-log`).click();
+					document.querySelector(`#${axis}-data-trans-linear`).click();
 				} else {
+					// Case 4: Data is linear, display as linear → raw data, use linear axis
+					document.querySelector(`#${axis}-scale-linear`).click();
 					document.querySelector(`#${axis}-data-trans-linear`).click();
 				}
 				vis.pause = false;
@@ -736,31 +768,63 @@ vis = {
 				.attr('font-family', 'sans-serif')
 				.attr('fill', vis.axes.x.color)
 				.attr('font-size', style_manager.styles.global.font_size)
-				.text(d3.select('#x-axis-label').property('value'));
+			
+			// Apply markup rendering for x-axis label
+			const xLabelText = d3.select('#x-axis-label').property('value');
+			const xLabelElement = vis.svg.select('#svg-x-label');
+			const xParsedMarkup = text_markup.parse_markup(xLabelText);
+			text_markup.render_svg_markup(xParsedMarkup, xLabelElement, {
+				fontSize: style_manager.styles.global.font_size,
+				fill: vis.axes.x.color
+			});
 		}
 		if (vis.has_y_series()) {
-			vis.svg
+			// Create a group for rotation, then add text inside without rotation
+			const yLabelGroup = vis.svg
+				.append('g')
+				.attr('transform', `translate(15, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`);
+			
+			yLabelGroup
 				.append('text')
-				.attr('transform', `translate(5, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`)
-				.attr('dominant-baseline', 'hanging')
+				.attr('dominant-baseline', 'bottom')
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-y-label')
 				.attr('fill', vis.axes.y.color)
 				.attr('font-family', 'sans-serif')
 				.attr('font-size', style_manager.styles.global.font_size)
-				.text(d3.select('#y-axis-label').property('value'));
+			
+			// Apply markup rendering for y-axis label
+			const yLabelText = d3.select('#y-axis-label').property('value');
+			const yLabelElement = vis.svg.select('#svg-y-label');
+			const yParsedMarkup = text_markup.parse_markup(yLabelText);
+			text_markup.render_svg_markup(yParsedMarkup, yLabelElement, {
+				fontSize: style_manager.styles.global.font_size,
+				fill: vis.axes.y.color
+			});
 		}
 		if (vis.has_yOther_series()) {
-			vis.svg
+			// Create a group for rotation, then add text inside without rotation
+			const yOtherLabelGroup = vis.svg
+				.append('g')
+				.attr('transform', `translate(${vis.width() - 20}, ${vis.max_display('yOther') + 0.5 * (vis.min_display('yOther') - vis.max_display('yOther'))}) rotate(90)`);
+			
+			yOtherLabelGroup
 				.append('text')
-				.attr('transform', `translate(${vis.width() - 5}, ${vis.max_display('yOther') + 0.5 * (vis.min_display('yOther') - vis.max_display('yOther'))}) rotate(90)`)
-				.attr('dominant-baseline', 'hanging')
+				.attr('dominant-baseline', 'bottom')
 				.attr('text-anchor', 'middle')
 				.attr('id', 'svg-yOther-label')
 				.attr('fill', vis.axes.yOther.color)
 				.attr('font-family', 'sans-serif')
 				.attr('font-size', style_manager.styles.global.font_size)
-				.text(d3.select('#yOther-axis-label').property('value'));
+			
+			// Apply markup rendering for yOther-axis label
+			const yOtherLabelText = d3.select('#yOther-axis-label').property('value');
+			const yOtherLabelElement = vis.svg.select('#svg-yOther-label');
+			const yOtherParsedMarkup = text_markup.parse_markup(yOtherLabelText);
+			text_markup.render_svg_markup(yOtherParsedMarkup, yOtherLabelElement, {
+				fontSize: style_manager.styles.global.font_size,
+				fill: vis.axes.yOther.color
+			});
 		}
 		vis.have_axis_labels = true;
 	},
@@ -770,10 +834,17 @@ vis = {
 		const legend = vis.svg.select('#legend');
 		if (legend.empty() || !vis.series || vis.series.length <= 1) return;
 
-		// Update legend text to match current series names
+		// Update legend text to match current series names with scan-and-replace markup rendering
 		legend.selectAll('.legend-entry text')
 			.data(vis.series)
-			.text(d => d.name);
+			.each(function(d) {
+				const textElement = d3.select(this);
+				const parsedMarkup = text_markup.parse_markup(d.name);
+				text_markup.render_svg_markup(parsedMarkup, textElement, {
+					fontSize: style_manager.styles.global.font_size,
+					fill: vis.axes.x.color
+				});
+			});
 	},
 	// Set axis labels to be whatever is in the input field that controls them.
 	// Perhaps this should live in the data model, but it works quite well.
@@ -781,30 +852,128 @@ vis = {
 		// Update x-axis label if it exists
 		const xLabel = d3.select('#svg-x-label');
 		if (!xLabel.empty()) {
-			xLabel.text(d3.select('#x-axis-label').property('value'));
+			const xLabelText = d3.select('#x-axis-label').property('value');
+			// Try complex markup first, fallback to simple Unicode
+			try {
+				const xParsedMarkup = text_markup.parse_markup(xLabelText);
+				text_markup.render_svg_markup(xParsedMarkup, xLabel, {
+					fontSize: style_manager.styles.global.font_size,
+					fill: vis.axes.x.color
+				});
+			} catch (error) {
+				console.warn('X-axis markup rendering failed, using Unicode fallback:', error);
+				text_markup.render_simple_markup(xLabelText, xLabel);
+			}
 		}
 		
 		// Update y-axis label if it exists
 		const yLabel = d3.select('#svg-y-label');
 		if (!yLabel.empty()) {
-			yLabel.text(d3.select('#y-axis-label').property('value'));
+			const yLabelText = d3.select('#y-axis-label').property('value');
+			// Try complex markup first, fallback to simple Unicode
+			try {
+				const yParsedMarkup = text_markup.parse_markup(yLabelText);
+				text_markup.render_svg_markup(yParsedMarkup, yLabel, {
+					fontSize: style_manager.styles.global.font_size,
+					fill: vis.axes.y.color
+				});
+			} catch (error) {
+				console.warn('Y-axis markup rendering failed, using Unicode fallback:', error);
+				text_markup.render_simple_markup(yLabelText, yLabel);
+			}
 		}
 		
 		// Update yOther-axis label if it exists
 		const yOtherLabel = d3.select('#svg-yOther-label');
 		if (!yOtherLabel.empty()) {
-			yOtherLabel.text(d3.select('#yOther-axis-label').property('value'));
+			const yOtherLabelText = d3.select('#yOther-axis-label').property('value');
+			// Try complex markup first, fallback to simple Unicode
+			try {
+				const yOtherParsedMarkup = text_markup.parse_markup(yOtherLabelText);
+				text_markup.render_svg_markup(yOtherParsedMarkup, yOtherLabel, {
+					fontSize: style_manager.styles.global.font_size,
+					fill: vis.axes.yOther.color
+				});
+			} catch (error) {
+				console.warn('YOther-axis markup rendering failed, using Unicode fallback:', error);
+				text_markup.render_simple_markup(yOtherLabelText, yOtherLabel);
+			}
 		}
 	},
 	add_legend: () => {
 		if (!vis.series || vis.series.length <= 1) return; // No legend needed for single series
 		
+		const isMultiFile = vis.files && vis.files.length > 1;
+		
+		if (isMultiFile) {
+			vis.add_multi_file_legend();
+		} else {
+			vis.add_single_file_legend();
+		}
+	},
+	
+	// Single-file legend (existing behavior)
+	add_single_file_legend: () => {
 		const legendData = vis.series.map(series => ({
 			name: series.name,
-			color: series.color
+			color: series.color,
+			line_style: series.style.line_style || 'solid'
 		}));
 		
-		// Calculate legend dimensions based on content
+		vis.create_legend_ui(legendData, 'single');
+	},
+	
+	// Multi-file legend with two parts: data types + files
+	add_multi_file_legend: () => {
+		// Part 1: Data types (columns) with neutral gray color + linestyles
+		const columnLinestyles = style_manager.get_all_column_linestyles();
+		const dataTypeEntries = columnLinestyles.map(([columnName, linestyle]) => {
+			const metadata = metadata_manager.get_metadata(columnName);
+			return {
+				name: metadata.series_name,
+				color: style_manager.styles.global.neutral_legend_color,
+				line_style: linestyle,
+				type: 'data'
+			};
+		});
+		
+		// If no linestyle assignments exist yet, create them from current series
+		if (dataTypeEntries.length === 0 && vis.series && vis.series.length > 0) {
+			const uniqueColumns = [...new Set(vis.series.map(s => s.data_columns.y))];
+			uniqueColumns.forEach(columnName => {
+				const linestyle = style_manager.get_linestyle_for_column(columnName);
+				const metadata = metadata_manager.get_metadata(columnName);
+				dataTypeEntries.push({
+					name: metadata.series_name,
+					color: style_manager.styles.global.neutral_legend_color,
+					line_style: linestyle,
+					type: 'data'
+				});
+			});
+		}
+		
+		// Part 2: Files with their colors + solid lines
+		const fileEntries = vis.files.map((file, fileIndex) => {
+			const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
+			return {
+				name: file.local_name,
+				color: colors[fileIndex % colors.length],
+				line_style: 'solid',
+				type: 'file'
+			};
+		});
+		
+		// Combine data types and files (no separator)
+		const combinedData = [
+			...dataTypeEntries,
+			...fileEntries
+		];
+		
+		vis.create_legend_ui(combinedData, 'multi');
+	},
+	
+	// Common legend UI creation for both modes
+	create_legend_ui: (legendData, mode) => {
 		const fontSize = style_manager.styles.global.font_size;
 		const lineHeight = fontSize + 6; // Add some padding between lines
 		const leftPadding = 15; // Space before line starts
@@ -888,16 +1057,17 @@ vis = {
 			.attr('class', 'legend-entry')
 			.attr('transform', (d, i) => `translate(${leftPadding - legendWidth}, ${i * lineHeight + 10})`);
 		
-		// Add colored lines
+		// Add colored lines with linestyles
 		entries.append('line')
 			.attr('x1', 0)
 			.attr('x2', lineLength)
 			.attr('y1', 0)
 			.attr('y2', 0)
 			.attr('stroke', d => d.color)
-			.attr('stroke-width', 2);
+			.attr('stroke-width', 2)
+			.attr('stroke-dasharray', d => style_manager.styles.line_styles[d.line_style] || 'none');
 		
-		// Add text labels
+		// Add text labels with scan-and-replace markup rendering
 		entries.append('text')
 			.attr('x', textStartX)
 			.attr('y', 0)
@@ -905,7 +1075,14 @@ vis = {
 			.attr('fill', vis.axes.x.color)
 			.attr('font-family', 'sans-serif')
 			.attr('font-size', fontSize)
-			.text(d => d.name);
+			.each(function(d) {
+				const textElement = d3.select(this);
+				const parsedMarkup = text_markup.parse_markup(d.name);
+				text_markup.render_svg_markup(parsedMarkup, textElement, {
+					fontSize: fontSize,
+					fill: vis.axes.x.color
+				});
+			});
 	},
 	clear_plot: () => {
 		vis.svg.selectAll('*').remove();

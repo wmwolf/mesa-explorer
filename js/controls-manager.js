@@ -229,7 +229,7 @@ controls_manager = {
 			d3.select(`#${axis}-choices`)
 				.selectAll('a')
 				.classed('d-none', (d, i, nodes) => {
-					return !nodes[i].text.includes(query);
+					return !nodes[i].text.toLowerCase().includes(query.toLowerCase());
 				});
 		}
 		d3.selectAll(`#${axis}-choices a`).classed('active', false);
