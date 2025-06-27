@@ -377,7 +377,8 @@ const series_manager = {
 			.attr('data-name', d => d.key)
 			.html(d => {
 				// Get metadata for this column (includes isotope auto-detection)
-				const metadata = metadata_manager.get_metadata(d.key);
+				const currentFileType = file_manager.active_file ? file_manager.active_file.type : null;
+				const metadata = metadata_manager.get_metadata(d.key, currentFileType);
 				
 				// Create dual-line display: raw name + formatted name with units
 				let html = `<samp>${d.key}</samp>`;
@@ -409,7 +410,8 @@ const series_manager = {
 		seriesDefinition.column = columnData.key;
 		
 		// Get metadata for intelligent defaults
-		const metadata = metadata_manager.get_metadata(columnData.key);
+		const currentFileType = file_manager.active_file ? file_manager.active_file.type : null;
+		const metadata = metadata_manager.get_metadata(columnData.key, currentFileType);
 		
 		// Use metadata for series label (prefer formatted name over cleaned raw name)
 		seriesDefinition.label = metadata.series_name;
@@ -690,7 +692,8 @@ const series_manager = {
 		}
 		
 		// Get metadata from the first series to determine units and labels
-		const firstSeriesMetadata = metadata_manager.get_metadata(activeSeries[0].column);
+		const currentFileType = file_manager.active_file ? file_manager.active_file.type : null;
+		const firstSeriesMetadata = metadata_manager.get_metadata(activeSeries[0].column, currentFileType);
 		
 		let axisLabel;
 		if (activeSeries.length === 1) {
@@ -788,7 +791,8 @@ const series_manager = {
 		}
 		
 		// Get metadata from the first series to determine units and labels
-		const firstSeriesMetadata = metadata_manager.get_metadata(activeSeries[0].column);
+		const currentFileType = file_manager.active_file ? file_manager.active_file.type : null;
+		const firstSeriesMetadata = metadata_manager.get_metadata(activeSeries[0].column, currentFileType);
 		
 		let axisLabel;
 		if (activeSeries.length === 1) {

@@ -5,6 +5,7 @@ const metadata_manager = {
     // Metadata storage
     history_metadata: new Map(),
     profile_metadata: new Map(),
+    gyre_metadata: new Map(),
     loading_promise: null,
     
     // Loading state
@@ -33,7 +34,8 @@ const metadata_manager = {
         
         const loadPromises = [
             metadata_manager.load_history_metadata(),
-            metadata_manager.load_profile_metadata()
+            metadata_manager.load_profile_metadata(),
+            metadata_manager.load_gyre_metadata()
         ];
         
         const results = await Promise.allSettled(loadPromises);
@@ -41,7 +43,8 @@ const metadata_manager = {
         // Check for any failures
         results.forEach((result, index) => {
             if (result.status === 'rejected') {
-                const filename = index === 0 ? 'history_columns.csv' : 'profile_columns.csv';
+                const filenames = ['history_columns.csv', 'profile_columns.csv', 'gyre_summary_columns.csv'];
+                const filename = filenames[index];
                 const error = `Failed to load ${filename}: ${result.reason}`;
                 metadata_manager.load_errors.push(error);
                 console.warn('Metadata Manager:', error);
@@ -49,7 +52,7 @@ const metadata_manager = {
         });
         
         metadata_manager.is_loaded = true;
-        console.log(`Metadata Manager: Loaded ${metadata_manager.history_metadata.size} history columns and ${metadata_manager.profile_metadata.size} profile columns`);
+        console.log(`Metadata Manager: Loaded ${metadata_manager.history_metadata.size} history columns, ${metadata_manager.profile_metadata.size} profile columns, and ${metadata_manager.gyre_metadata.size} GYRE columns`);
         
         if (metadata_manager.load_errors.length > 0) {
             console.warn('Metadata Manager: Some metadata files failed to load. Using fallback behavior for unknown columns.');
@@ -106,6 +109,31 @@ const metadata_manager = {
         });
     },
     
+    // Load GYRE metadata from CSV
+    load_gyre_metadata: async function() {
+        return new Promise((resolve, reject) => {
+            d3.csv('/data/gyre_summary_columns.csv')
+                .then(data => {
+                    data.forEach(row => {
+                        const columnData = {
+                            data_logarithmic: row.data_logarithmic === 'true',
+                            display_logarithmic: row.display_logarithmic === 'true',
+                            series_name: row.series_name || row.column_name,
+                            units: row.units || '',
+                            axis_name: row.axis_name || ''
+                        };
+                        metadata_manager.gyre_metadata.set(row.column_name, columnData);
+                    });
+                    console.log(`Metadata Manager: Loaded ${data.length} GYRE column definitions`);
+                    resolve();
+                })
+                .catch(error => {
+                    console.error('Metadata Manager: Failed to load GYRE metadata:', error);
+                    reject(error);
+                });
+        });
+    },
+    
     // Wait for metadata to be loaded
     ensure_loaded: async function() {
         if (metadata_manager.loading_promise) {
@@ -120,12 +148,17 @@ const metadata_manager = {
             return metadata_manager.history_metadata.get(column_name) || metadata_manager.generate_fallback_metadata(column_name);
         } else if (file_type === 'profile') {
             return metadata_manager.profile_metadata.get(column_name) || metadata_manager.generate_fallback_metadata(column_name);
+        } else if (file_type === 'gyre') {
+            return metadata_manager.gyre_metadata.get(column_name) || metadata_manager.generate_fallback_metadata(column_name);
         }
         
-        // Try to find in either metadata store
+        // Try to find in any metadata store
         let metadata = metadata_manager.history_metadata.get(column_name);
         if (!metadata) {
             metadata = metadata_manager.profile_metadata.get(column_name);
+        }
+        if (!metadata) {
+            metadata = metadata_manager.gyre_metadata.get(column_name);
         }
         
         return metadata || metadata_manager.generate_fallback_metadata(column_name);
