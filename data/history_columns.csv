@@ -91,27 +91,27 @@ cz_top_zone,false,false,Convective Top Zone,,Zone Number
 cz_top_zone_logdq,true,true,Convective Top Zone Fractional Mass,,Mass Fraction
 cz_top_log_xa_h1,true,true,Convective Top ^{1}H Mass Fraction,,Mass Fraction
 cz_top_log_xa_he4,true,true,Convective Top ^{4}He Mass Fraction,,Mass Fraction
-power_h_burn,false,false,L_H,L_{☉},Luminosity
+power_h_burn,false,false,L_{H},L_{☉},Luminosity
 power_he_burn,false,false,L_He,L_{☉},Luminosity
 power_photo,false,false,L_photodisintegration,L_{☉},Luminosity
-power_z_burn,false,false,L_Z,L_{☉},Luminosity
+power_z_burn,false,false,L_{Z},L_{☉},Luminosity
 log_power_nuc_burn,true,true,L_nuc - L_photodisintegration,L_{☉},Luminosity
-log_LH,true,true,L_H,L_{☉},Luminosity
-log_LHe,true,true,L_He,L_{☉},Luminosity
-log_LZ,true,true,L_Z,L_{☉},Luminosity
-log_Lnuc,true,true,L_nuc,L_{☉},Luminosity
-log_Lnuc_ergs_s,true,true,L_nuc,erg/s,Luminosity
-log_Lnuc_sub_log_L,true,true,L_nuc - L,L_{☉},Luminosity
-lnuc_photo,false,false,L_photodisintegration,L_{☉},Luminosity
-extra_L,false,false,L_extra,L_{☉},Luminosity
-log_extra_L,true,true,L_extra,L_{☉},Luminosity
-log_Lneu,true,true,L_neu,L_{☉},Luminosity
-log_Lneu_nuc,true,true,L_neu (nuc),L_{☉},Luminosity
-log_Lneu_nonnuc,true,true,L_neu (thermal),L_{☉},Luminosity
+log_LH,true,true,L_{H},L_{☉},Luminosity
+log_LHe,true,true,L_{He},L_{☉},Luminosity
+log_LZ,true,true,L_{Z},L_{☉},Luminosity
+log_Lnuc,true,true,L_{nuc},L_{☉},Luminosity
+log_Lnuc_ergs_s,true,true,L_{nuc},erg/s,Luminosity
+log_Lnuc_sub_log_L,true,true,L_{nuc} - L,L_{☉},Luminosity
+lnuc_photo,false,false,L_{photodisintegration},L_{☉},Luminosity
+extra_L,false,false,L_{extra},L_{☉},Luminosity
+log_extra_L,true,true,L_{extra},L_{☉},Luminosity
+log_Lneu,true,true,L_{neu},L_{☉},Luminosity
+log_Lneu_nuc,true,true,L_{neu} (nuc),L_{☉},Luminosity
+log_Lneu_nonnuc,true,true,L_{neu} (thermal),L_{☉},Luminosity
 mass_loc_of_max_eps_nuc,false,false,Mass at Peak Nuclear Burning,M_{☉},Mass
 mass_ext_to_max_eps_nuc,false,false,Mass Exterior to Peak Nuclear Burning,M_{☉},Mass
 eps_grav_integral,false,false,Integrated Gravitational Luminosity,L_{☉},Luminosity
-log_abs_Lgrav,true,true,|L_grav|,L_{☉},Luminosity
+log_abs_Lgrav,true,true,|L_{grav}|,L_{☉},Luminosity
 pp,true,true,PP Chain Luminosity,L_{☉},Luminosity
 cno,true,true,CNO Cycle Luminosity,L_{☉},Luminosity
 tri_alfa,true,true,Triple Alpha Luminosity,L_{☉},Luminosity
@@ -187,17 +187,17 @@ co_rich_layer_mass,false,false,CO-Rich Layer Mass,M_{☉},Mass
 dynamic_timescale,false,false,Dynamic Timescale,s,Timescale
 kh_timescale,false,false,Kelvin-Helmholtz Timescale,yr,Timescale
 mdot_timescale,false,false,Mass Loss Timescale,yr,Timescale
-kh_div_mdot_timescales,false,false,t_KH/t_Ṁ,,Timescale Ratio
+kh_div_mdot_timescales,false,false,t_{KH}/t_{Ṁ},,Timescale Ratio
 nuc_timescale,false,false,Nuclear Timescale,yr,Timescale
 dt_cell_collapse,false,false,Cell Collapse Time,s,Timescale
 dt_div_dt_cell_collapse,false,false,dt/t_cell_collapse,,Timescale Ratio
 dt_div_max_tau_conv,false,false,dt/τ_conv_max,,Timescale Ratio
 dt_div_min_tau_conv,false,false,dt/τ_conv_min,,Timescale Ratio
-min_dr_div_cs,false,false,Minimum dr/c_s,s,Timescale
+min_dr_div_cs,false,false,Minimum dr/c_{s},s,Timescale
 min_dr_div_cs_k,false,false,Location of Minimum dr/c_s,,Zone Number
-log_min_dr_div_cs,true,true,Minimum dr/c_s,s,Timescale
-min_dr_div_cs_yr,false,false,Minimum dr/c_s,yr,Timescale
-log_min_dr_div_cs_yr,true,true,Minimum dr/c_s,yr,Timescale
+log_min_dr_div_cs,true,true,Minimum dr/c_{s},s,Timescale
+min_dr_div_cs_yr,false,false,Minimum dr/c_{s},yr,Timescale
+log_min_dr_div_cs_yr,true,true,Minimum dr/c_{s},yr,Timescale
 dt_div_min_dr_div_cs,false,false,dt/(dr/c_s)_min,,Timescale Ratio
 log_dt_div_min_dr_div_cs,true,true,dt/(dr/c_s)_min,,Timescale Ratio
 min_t_eddy,false,false,Minimum Eddy Timescale,s,Timescale
@@ -222,7 +222,7 @@ photosphere_column_density,false,false,Photosphere Column Density,g/cm²,Column 
 photosphere_csound,false,false,Photosphere Sound Speed,cm/s,Velocity
 photosphere_log_column_density,true,true,Photosphere Column Density,g/cm²,Column Density
 photosphere_opacity,false,false,Photosphere Opacity,cm²/g,Opacity
-photosphere_v_div_cs,false,false,Photosphere v/c_s,,Velocity Ratio
+photosphere_v_div_cs,false,false,Photosphere v/c_{s},,Velocity Ratio
 photosphere_xm,false,false,Photosphere Exterior Mass,M_{☉},Mass
 photosphere_cell_free_e,false,false,Photosphere Cell Free Electrons,,Number Density
 photosphere_cell_log_free_e,true,true,Photosphere Cell Free Electrons,,Number Density
@@ -253,34 +253,34 @@ log_surf_cell_z,true,true,Surface Cell Metallicity,,Metallicity
 surface_cell_entropy,false,false,Surface Cell Entropy,kerg/baryon,Entropy
 v_surf,false,false,Surface Velocity,cm/s,Velocity
 v_surf_km_s,false,false,Surface Velocity,km/s,Velocity
-v_div_csound_surf,false,false,Surface v/c_s,,Velocity Ratio
-v_div_csound_max,false,false,Maximum v/c_s,,Velocity Ratio
-v_div_vesc,false,false,v/v_escape,,Velocity Ratio
+v_div_csound_surf,false,false,Surface v/c_{s},,Velocity Ratio
+v_div_csound_max,false,false,Maximum v/c_{s},,Velocity Ratio
+v_div_vesc,false,false,v/v_{escape},,Velocity Ratio
 v_phot_km_s,false,false,Photosphere Velocity,km/s,Velocity
-v_surf_div_escape_v,false,false,v_surf/v_escape,,Velocity Ratio
-v_surf_div_v_kh,false,false,v_surf/v_KH,,Velocity Ratio
-surf_avg_j_rot,false,false,Surface Average j_rot,g·cm²/s,Angular Momentum
+v_surf_div_escape_v,false,false,v_{surf}/v_{escape},,Velocity Ratio
+v_surf_div_v_kh,false,false,v_{surf}/v_{KH},,Velocity Ratio
+surf_avg_j_rot,false,false,Surface Average j_{rot},g·cm²/s,Angular Momentum
 surf_avg_omega,false,false,Surface Average Ω,rad/s,Angular Velocity
 surf_avg_omega_crit,false,false,Surface Average Ω_crit,rad/s,Angular Velocity
 surf_avg_omega_div_omega_crit,false,false,Surface Average Ω/Ω_crit,,Angular Velocity Ratio
-surf_avg_v_rot,false,false,Surface Average v_rot,km/s,Velocity
-surf_avg_v_crit,false,false,Surface Average v_crit,km/s,Velocity
+surf_avg_v_rot,false,false,Surface Average v_{rot},km/s,Velocity
+surf_avg_v_crit,false,false,Surface Average v_{crit},km/s,Velocity
 surf_avg_v_div_v_crit,false,false,Surface Average v/v_crit,,Velocity Ratio
 surf_avg_Lrad_div_Ledd,false,false,Surface Average L_rad/L_Edd,,Luminosity Ratio
 surf_avg_logT,true,true,Surface Average Temperature,K,Temperature
 surf_avg_logRho,true,true,Surface Average Density,g/cm³,Density
 surf_avg_opacity,false,false,Surface Average Opacity,cm²/g,Opacity
-grav_dark_L_polar,false,false,Gravity Darkening L_polar,L_{☉},Luminosity
+grav_dark_L_polar,false,false,Gravity Darkening L_{polar},L_{☉},Luminosity
 grav_dark_Teff_polar,false,false,Gravity Darkening T_eff_polar,K,Temperature
-grav_dark_L_equatorial,false,false,Gravity Darkening L_equatorial,L_{☉},Luminosity
+grav_dark_L_equatorial,false,false,Gravity Darkening L_{equatorial},L_{☉},Luminosity
 grav_dark_Teff_equatorial,false,false,Gravity Darkening T_eff_equatorial,K,Temperature
 surf_escape_v,false,false,Surface Escape Velocity,cm/s,Velocity
 v_wind_Km_per_s,false,false,Wind Velocity,km/s,Velocity
 rotational_mdot_boost,false,false,Rotational Ṁ Boost,,Factor
 log_rotational_mdot_boost,true,true,Rotational Ṁ Boost,,Factor
-surf_r_equatorial_div_r_polar,false,false,r_eq/r_polar,,Radius Ratio
-surf_r_equatorial_div_r,false,false,r_eq/r,,Radius Ratio
-surf_r_polar_div_r,false,false,r_polar/r,,Radius Ratio
+surf_r_equatorial_div_r_polar,false,false,r_{eq}/r_{polar},,Radius Ratio
+surf_r_equatorial_div_r,false,false,r_{eq}/r,,Radius Ratio
+surf_r_polar_div_r,false,false,r_{polar}/r,,Radius Ratio
 log_center_T,true,true,Central Temperature,K,Temperature
 log_center_Rho,true,true,Central Density,g/cm³,Density
 log_center_P,true,true,Central Pressure,dyn/cm²,Pressure
@@ -344,7 +344,7 @@ shock_radius,false,false,Shock Radius,R_{☉},Radius
 shock_radius_cm,false,false,Shock Radius,cm,Radius
 shock_velocity,false,false,Shock Velocity,cm/s,Velocity
 shock_csound,false,false,Shock Sound Speed,cm/s,Velocity
-shock_v_div_cs,false,false,Shock v/c_s,,Velocity Ratio
+shock_v_div_cs,false,false,Shock v/c_{s},,Velocity Ratio
 shock_lgT,true,true,Shock Temperature,K,Temperature
 shock_lgRho,true,true,Shock Density,g/cm³,Density
 shock_lgP,true,true,Shock Pressure,dyn/cm²,Pressure
@@ -430,19 +430,19 @@ i_rot_total,false,false,Total Moment of Inertia,g·cm²,Moment of Inertia
 total_rotational_kinetic_energy,false,false,Total Rotational Kinetic Energy,erg,Energy
 log_total_rotational_kinetic_energy,true,true,Total Rotational Kinetic Energy,erg,Energy
 total_rotational_kinetic_energy_after_adjust_mass,false,false,Total Rotational Kinetic Energy (post-adjust),erg,Energy
-avg_abs_v_div_cs,false,false,Average |v|/c_s,,Velocity Ratio
-log_avg_abs_v_div_cs,true,true,Average |v|/c_s,,Velocity Ratio
-max_abs_v_div_cs,false,false,Maximum |v|/c_s,,Velocity Ratio
-log_max_abs_v_div_cs,true,true,Maximum |v|/c_s,,Velocity Ratio
+avg_abs_v_div_cs,false,false,Average |v|/c_{s},,Velocity Ratio
+log_avg_abs_v_div_cs,true,true,Average |v|/c_{s},,Velocity Ratio
+max_abs_v_div_cs,false,false,Maximum |v|/c_{s},,Velocity Ratio
+log_max_abs_v_div_cs,true,true,Maximum |v|/c_{s},,Velocity Ratio
 avg_abs_v,false,false,Average |v|,cm/s,Velocity
 log_avg_abs_v,true,true,Average |v|,cm/s,Velocity
 max_abs_v,false,false,Maximum |v|,cm/s,Velocity
 log_max_abs_v,true,true,Maximum |v|,cm/s,Velocity
 u_surf,false,false,Surface u,cm/s,Velocity
 u_surf_km_s,false,false,Surface u,km/s,Velocity
-u_div_csound_surf,false,false,Surface u/c_s,,Velocity Ratio
-u_div_csound_max,false,false,Maximum u/c_s,,Velocity Ratio
-infall_div_cs,false,false,Infall/c_s,,Velocity Ratio
+u_div_csound_surf,false,false,Surface u/c_{s},,Velocity Ratio
+u_div_csound_max,false,false,Maximum u/c_{s},,Velocity Ratio
+infall_div_cs,false,false,Infall/c_{s},,Velocity Ratio
 e_thermal,false,false,Thermal Energy,erg,Energy
 logQ_max,true,true,Maximum logQ,,EOS Parameter
 logQ_min,true,true,Minimum logQ,,EOS Parameter
@@ -465,7 +465,7 @@ dlnR_dlnM,false,false,d(ln R)/d(ln M),,Structure Parameter
 h1_czb_mass,false,false,H CZ Base Mass,M_{☉},Mass
 kh_mdot_limit,false,false,KH Ṁ Limit,M_{☉}/yr,Mass Change Rate
 log_cntr_dr_cm,true,true,Central dr,cm,Length
-min_Pgas_div_P,false,false,Minimum P_gas/P,,Pressure Ratio
+min_Pgas_div_P,false,false,Minimum P_{gas}/P,,Pressure Ratio
 surf_c12_minus_o16,false,false,Surface C12 - O16,,Mass Fraction Difference
 surf_num_c12_div_num_o16,false,false,Surface N(C12)/N(O16),,Number Ratio
 phase_of_evolution,false,false,Phase of Evolution,,Evolution Phase

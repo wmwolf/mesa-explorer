@@ -1,6 +1,6 @@
 column_name,data_logarithmic,display_logarithmic,series_name,units,axis_name
 zone,false,false,Zone Number,,Zone Number
-mass,false,false,Mass,M_{☉},Mass
+mass,false,false,Mass Coordinate,M_{☉},Mass
 logR,true,true,Radius,R_{☉},Radius
 logT,true,true,Temperature,K,Temperature
 logRho,true,true,Density,g/cm³,Density
@@ -109,8 +109,8 @@ csound,false,false,Sound Speed,cm/s,Velocity
 log_csound,true,true,Sound Speed,cm/s,Velocity
 csound_face,false,false,Face Sound Speed,cm/s,Velocity
 cs_at_cell_bdy,false,false,Cell Boundary Sound Speed,cm/s,Velocity
-v_div_cs,false,false,v/c_s,,Velocity Ratio
-v_div_csound,false,false,v/c_sound,,Velocity Ratio
+v_div_cs,false,false,v/c_{s},,Velocity Ratio
+v_div_csound,false,false,v/c_{sound},,Velocity Ratio
 div_v,false,false,Velocity Divergence,s⁻¹,Velocity Gradient
 thermal_time_to_surface,false,false,Thermal Time to Surface,s,Timescale
 log_thermal_time_to_surface,true,true,Thermal Time to Surface,s,Timescale
@@ -140,17 +140,17 @@ latent_ddlnRho,false,false,Latent Heat (density),erg/g,Latent Heat
 latent_ddlnT,false,false,Latent Heat (temperature),erg/g,Latent Heat
 log_P_face,true,true,Face Pressure,dyn/cm²,Pressure
 log_Ptrb,true,true,Turbulent Pressure,dyn/cm²,Pressure
-log_cp_T_div_t_sound,true,true,c_p T / t_sound,,Heat Capacity Ratio
+log_cp_T_div_t_sound,true,true,c_{p} T / t_{sound},,Heat Capacity Ratio
 QQ,false,false,Q Parameter,,EOS Parameter
 eps_grav,false,false,Gravitational Energy Generation,erg/g/s,Energy Generation
 log_abs_eps_grav_dm_div_L,true,true,|ε_grav| dm / L,,Energy Generation Ratio
 log_abs_v,true,true,|Velocity|,cm/s,Velocity
-log_mdot_cs,true,true,Ṁ c_s,,Mass Flow Rate
+log_mdot_cs,true,true,Ṁ c_{s},,Mass Flow Rate
 log_mdot_v,true,true,Ṁ v,,Mass Flow Rate
 eps_mdot,false,false,Mass Change Energy Generation,erg/g/s,Energy Generation
 env_eps_grav,false,false,Envelope Gravitational Energy,erg/g/s,Energy Generation
-xm_div_delta_m,false,false,x_m / Δm,,Mass Ratio
-log_xm_div_delta_m,true,true,x_m / Δm,,Mass Ratio
+xm_div_delta_m,false,false,x_{m} / Δm,,Mass Ratio
+log_xm_div_delta_m,true,true,x_{m} / Δm,,Mass Ratio
 signed_log_eps_grav,true,false,Gravitational Energy Generation (signed),erg/g/s,Energy Generation
 signed_log_eps_nuc,true,false,Nuclear Energy Generation (signed),erg/g/s,Energy Generation
 net_nuclear_energy,false,false,Net Nuclear Energy,erg/g/s,Energy Generation
@@ -286,7 +286,7 @@ ergs_error,false,false,Energy Error,erg,Energy
 ergs_error_integral,false,false,Integrated Energy Error,erg,Energy
 ergs_mdot,false,false,Mass Change Energy,erg,Energy
 ergs_rel_error_integral,false,false,Relative Integrated Energy Error,,Error
-dm_eps_grav,false,false,dm × ε_grav,erg/s,Power
+dm_eps_grav,false,false,dm × ε_{grav},erg/s,Power
 dE,false,false,Energy Change,erg/g,Specific Energy
 etrb,false,false,Turbulent Energy,erg/g,Specific Energy
 log_etrb,true,true,Turbulent Energy,erg/g,Specific Energy
@@ -322,8 +322,8 @@ gradT_sub_gradr,false,false,∇_T - ∇_r,,Temperature Gradient
 gradT_div_gradr,false,false,∇_T/∇_r,,Temperature Gradient Ratio
 log_gradT_div_gradr,true,true,∇_T/∇_r,,Temperature Gradient Ratio
 log_mlt_Gamma,true,true,MLT Γ,,MLT Parameter
-conv_vel_div_csound,false,false,v_conv/c_s,,Velocity Ratio
-conv_vel_div_L_vel,false,false,v_conv/v_L,,Velocity Ratio
+conv_vel_div_csound,false,false,v_{conv}/c_{s},,Velocity Ratio
+conv_vel_div_L_vel,false,false,v_{conv}/v_{L},,Velocity Ratio
 log_mlt_D_mix,true,true,MLT Diffusion Coefficient,cm²/s,Diffusion Coefficient
 gradr_div_grada,false,false,∇_r/∇_a,,Temperature Gradient Ratio
 gradr_sub_grada,false,false,∇_r - ∇_a,,Temperature Gradient
@@ -345,7 +345,7 @@ mlt_log_abs_Y,true,true,MLT |Y|,,MLT Parameter
 mlt_vc,false,false,MLT Convective Velocity,cm/s,Velocity
 log_mlt_vc,true,true,MLT Convective Velocity,cm/s,Velocity
 superad_reduction_factor,false,false,Superadiabatic Reduction Factor,,Factor
-conv_vel_div_mlt_vc,false,false,v_conv/v_c,,Velocity Ratio
+conv_vel_div_mlt_vc,false,false,v_{conv}/v_{c},,Velocity Ratio
 log_Lconv,true,true,Convective Luminosity,L_{☉},Luminosity
 log_Lconv_div_L,true,true,L_conv/L,,Luminosity Ratio
 mixing_type,false,false,Mixing Type,,Mixing Type
@@ -477,8 +477,8 @@ k_r_integral,false,false,∫k_r dr,cm,Length
 brunt_N2_sub_omega2,false,false,N² - Ω²,s⁻²,Frequency²
 sl2_sub_omega2,false,false,S_l² - Ω²,s⁻²,Frequency²
 v,false,false,Velocity,cm/s,Velocity
-v_div_v_escape,false,false,v/v_escape,,Velocity Ratio
-v_div_vesc,false,false,v/v_esc,,Velocity Ratio
+v_div_v_escape,false,false,v/v_{escape},,Velocity Ratio
+v_div_vesc,false,false,v/v_{esc},,Velocity Ratio
 v_kms,false,false,Velocity,km/s,Velocity
 log_v_escape,true,true,Escape Velocity,cm/s,Velocity
 u,false,false,Radial Velocity,cm/s,Velocity
