@@ -300,6 +300,7 @@ style_manager = {
 			line_style: 'solid',
 			marker_shape: 'circle',
 			marker_size: style_manager.styles.global.default_marker_size,
+			marker_every: 1,
 			opacity: style_manager.styles.global.default_opacity
 		};
 		
@@ -331,8 +332,9 @@ style_manager = {
 				style_manager.update_axis_label_colors();
 			}
 			
-			// Refresh plot
+			// Refresh plot and style panel
 			vis.update_plot();
+			style_manager.update_style_panel();
 		}
 	},
 
@@ -398,6 +400,7 @@ style_manager = {
 			color: colors[colorIndex],
 			line_width: style_manager.styles.global.default_line_width,
 			marker_size: style_manager.styles.global.default_marker_size,
+			marker_every: 1,
 			opacity: style_manager.styles.global.default_opacity,
 			show_line: true,
 			show_markers: false,

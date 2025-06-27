@@ -120,14 +120,6 @@ vis = {
 	// Stylistic choices; how much padding there is from the outside of the plot
 	// area to the axis lines. This depends on the width of the window
 	tick_padding: {
-		x: {
-			xs: 40,
-			sm: 35,
-			md: 40,
-			lg: 40,
-			xl: 50,
-			xxl: 60,
-		},
 		y: {
 			xs: 60,
 			sm: 50,
@@ -136,6 +128,21 @@ vis = {
 			xl: 70,
 			xxl: 90,
 		},
+	},
+	// Dynamic calculation of x-axis padding based on font size
+	// Components: 20px below label + label height + 10px gap + tick height
+	get_x_tick_padding: () => {
+		const fontSize = style_manager.styles.global.font_size;
+		return 30 + 2 * fontSize; // 20 + fontSize + 10 + fontSize
+	},
+	// Dynamic calculation of y-axis padding based on font size
+	// Components: tick label width + gap + axis label height
+	get_y_tick_padding: () => {
+		const fontSize = style_manager.styles.global.font_size;
+		const tickLabelWidth = fontSize * 4; // Estimate for typical tick labels
+		const gapBetweenTickAndAxisLabel = fontSize * 0.5;
+		const axisLabelHeight = fontSize;
+		return Math.max(60, tickLabelWidth + gapBetweenTickAndAxisLabel + axisLabelHeight);
 	},
 	// Helper functions to check if there are series for each axis
 	has_y_series: () => {
@@ -151,19 +158,19 @@ vis = {
 	min_display: axis => {
 		if (axis == 'x') {
 			if (vis.has_y_series()) {
-				return vis.tick_padding.y[vis.saved_bootstrap_size];
+				return vis.get_y_tick_padding();
 			} else {
 				return 10;
 			}
 		} else {
-			return vis.height() - vis.tick_padding.x[vis.saved_bootstrap_size];
+			return vis.height() - vis.get_x_tick_padding();
 		}
 	},
 	// pixel coordinates for right/top of data
 	max_display: axis => {
 		if (axis == 'x') {
 			if (vis.has_yOther_series()) {
-				return vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size];
+				return vis.width() - vis.get_y_tick_padding();
 			} else {
 				return vis.width() - 10;
 			}
@@ -397,8 +404,13 @@ vis = {
 				vis.pause = true;
 				d3.select(`#${axis}-label`).html(option.html());
 				
-				// Update axis label using metadata (prefer axis_name with units, fallback to series_name)
-				let axisLabel = metadata.axis_name || metadata.series_name;
+				// Update axis label using metadata (for x-axis use series_name, for y-axes prefer axis_name)
+				let axisLabel;
+				if (axis === 'x') {
+					axisLabel = metadata.series_name;
+				} else {
+					axisLabel = metadata.axis_name || metadata.series_name;
+				}
 				if (metadata.units && metadata.units.trim() !== '') {
 					axisLabel += ` [${metadata.units}]`;
 				}
@@ -570,7 +582,21 @@ vis = {
 			axisSpecificSeries.forEach((series, seriesIndex) => {
 				if (!series.style.show_markers) return;
 				
-				const reducedData = data_utils.reduced_data_for_series(yAxis, series);
+				// Apply marker interval filtering based on series-specific marker_every setting
+				const markerEvery = series.style.marker_every || 1;
+				const x_min = data_utils.min_data('x');
+				const x_max = data_utils.max_data('x');
+				const y_min = data_utils.min_data(yAxis);
+				const y_max = data_utils.max_data(yAxis);
+				
+				const reducedData = series.data.filter((d, i) => {
+					const x = data_utils.series_accessor(series, 'x')(d);
+					const y = data_utils.series_accessor(series, 'y')(d);
+					let res = i % markerEvery === 0;
+					res = res && x >= x_min && x <= x_max;
+					res = res && y >= y_min && y <= y_max;
+					return res;
+				});
 				const symbol = d3.symbol()
 					.type(style_manager.styles.marker_shapes[series.style.marker_shape])
 					.size(Math.pow(series.style.marker_size, 2));
@@ -696,7 +722,7 @@ vis = {
 			vis.svg
 				.append('g')
 				.call(yAxisLeft)
-				.attr('transform', `translate(${vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
+				.attr('transform', `translate(${vis.get_y_tick_padding()},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'end')
 				.attr('font-size', style_manager.styles.global.font_size)
@@ -734,7 +760,7 @@ vis = {
 			vis.svg
 				.append('g')
 				.call(yAxisRight)
-				.attr('transform', `translate(${vis.width() - vis.tick_padding.y[vis.saved_bootstrap_size]},0)`)
+				.attr('transform', `translate(${vis.width() - vis.get_y_tick_padding()},0)`)
 				.selectAll('text')
 				.attr('text-anchor', 'start')
 				.attr('font-size', style_manager.styles.global.font_size)
@@ -779,10 +805,15 @@ vis = {
 			});
 		}
 		if (vis.has_y_series()) {
+			// Simple positioning for axis label: 20px base + font height
+			// (The spine margin calculation is separate and more generous)
+			const fontSize = style_manager.styles.global.font_size;
+			const leftMargin = 20 + fontSize;
+			
 			// Create a group for rotation, then add text inside without rotation
 			const yLabelGroup = vis.svg
 				.append('g')
-				.attr('transform', `translate(15, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`);
+				.attr('transform', `translate(${leftMargin}, ${vis.max_display('y') + 0.5 * (vis.min_display('y') - vis.max_display('y'))}) rotate(-90)`);
 			
 			yLabelGroup
 				.append('text')
@@ -989,7 +1020,9 @@ vis = {
 		
 		const maxTextWidth = Math.max(...legendData.map(d => context.measureText(d.name).width));
 		const legendWidth = leftPadding + lineLength + lineToTextGap + maxTextWidth + rightPadding;
-		const legendHeight = legendData.length * lineHeight + 10;
+		const topPadding = 5;
+		const bottomPadding = 5;
+		const legendHeight = legendData.length * fontSize + topPadding + bottomPadding;
 		// Legend rectangle extends leftward from anchor, so anchor should be at right edge
 		// Add 15px margin from right spine
 		const legendX = vis.max_display('x') - 15;
@@ -1005,7 +1038,7 @@ vis = {
 		// Add background rectangle
 		legend.append('rect')
 			.attr('x', -legendWidth)
-			.attr('y', -5)
+			.attr('y', 0)
 			.attr('width', legendWidth)
 			.attr('height', legendHeight)
 			.attr('fill', vis.axes.x.color == 'Black' ? 'white' : 'rgb(34,37,41)')
@@ -1055,13 +1088,13 @@ vis = {
 			.enter()
 			.append('g')
 			.attr('class', 'legend-entry')
-			.attr('transform', (d, i) => `translate(${leftPadding - legendWidth}, ${i * lineHeight + 10})`);
+			.attr('transform', (d, i) => `translate(${leftPadding - legendWidth}, ${topPadding + (i + 0.5) * fontSize})`);
 		
-		// Add colored lines with linestyles
+		// Add colored lines with linestyles (at baseline of each entry)
 		entries.append('line')
 			.attr('x1', 0)
 			.attr('x2', lineLength)
-			.attr('y1', 0)
+			.attr('y1', 0) // Position at entry baseline
 			.attr('y2', 0)
 			.attr('stroke', d => d.color)
 			.attr('stroke-width', 2)
@@ -1070,8 +1103,8 @@ vis = {
 		// Add text labels with scan-and-replace markup rendering
 		entries.append('text')
 			.attr('x', textStartX)
-			.attr('y', 0)
-			.attr('dy', '0.35em')
+			.attr('y', 0) // Position at entry baseline  
+			.attr('dominant-baseline', 'middle') // Center text vertically on baseline
 			.attr('fill', vis.axes.x.color)
 			.attr('font-family', 'sans-serif')
 			.attr('font-size', fontSize)
