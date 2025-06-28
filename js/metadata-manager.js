@@ -62,7 +62,7 @@ const metadata_manager = {
     // Load history metadata from CSV
     load_history_metadata: async function() {
         return new Promise((resolve, reject) => {
-            d3.csv('/data/history_columns.csv')
+            d3.csv('/mesa-explorer/data/history_columns.csv')
                 .then(data => {
                     data.forEach(row => {
                         const columnData = {
@@ -87,7 +87,7 @@ const metadata_manager = {
     // Load profile metadata from CSV
     load_profile_metadata: async function() {
         return new Promise((resolve, reject) => {
-            d3.csv('/data/profile_columns.csv')
+            d3.csv('/mesa-explorer/data/profile_columns.csv')
                 .then(data => {
                     data.forEach(row => {
                         const columnData = {
@@ -112,7 +112,7 @@ const metadata_manager = {
     // Load GYRE metadata from CSV
     load_gyre_metadata: async function() {
         return new Promise((resolve, reject) => {
-            d3.csv('/data/gyre_summary_columns.csv')
+            d3.csv('/mesa-explorer/data/gyre_summary_columns.csv')
                 .then(data => {
                     data.forEach(row => {
                         const columnData = {
