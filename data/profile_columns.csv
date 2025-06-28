@@ -1,645 +1,497 @@
-key,scale,html_name,html_units
-zone,linear,,
-mass,linear,,
-logR,log,,
-logT,log,,
-logRho,log,,
-logP,log,,
-x_mass_fraction_H,linear,,
-y_mass_fraction_He,linear,,
-z_mass_fraction_metals,linear,,
-logM,log,,
-log_mass,log,,
-dm,linear,,
-dm_bar,linear,,
-logdq,log,,
-log_dq,log,,
-dq_ratio,linear,,
-q,linear,,
-log_q,log,,
-xq,linear,,
-grav,linear,,
-log_g,log,,
-g_div_r,linear,,
-r_div_g,linear,,
-cgrav_factor,linear,,
-vel_km_per_s,linear,,
-radius,linear,,
-radius_cm,linear,,
-radius_km,linear,,
-logR_cm,log,,
-rmid,linear,,
-r_div_R,linear,,
-velocity,linear,,
-v_div_r,linear,,
-v_times_t_div_r,linear,,
-rho_times_r3,linear,,
-log_rho_times_r3,log,,
-scale_height,linear,,
-pressure_scale_height,linear,,
-m_div_r,linear,,
-dmbar_m_div_r,linear,,
-log_dmbar_m_div_r,log,,
-mass_grams,linear,,
-mmid,linear,,
-m_grav,linear,,
-m_grav_div_m_baryonic,linear,,
-mass_correction_factor,linear,,
-xm,linear,,
-dq,linear,,
-logxq,log,,
-logxm,log,,
-xr,linear,,
-xr_cm,linear,,
-xr_div_R,linear,,
-log_xr,log,,
-log_xr_cm,log,,
-log_xr_div_R,log,,
-dr,linear,,
-log_dr,log,,
-dv,linear,,
-dt_dv_div_dr,linear,,
-dr_div_R,linear,,
-log_dr_div_R,log,,
-dr_div_rmid,linear,,
-log_dr_div_rmid,log,,
-dr_div_cs,linear,,
-log_dr_div_cs,log,,
-dr_div_cs_yr,linear,,
-log_dr_div_cs_yr,log,,
-acoustic_radius,linear,,
-log_acoustic_radius,log,,
-acoustic_depth,linear,,
-log_acoustic_depth,log,,
-acoustic_r_div_R_phot,linear,,
-cell_collapse_time,linear,,
-log_cell_collapse_time,log,,
-compression_gradient,linear,,
-temperature,linear,,
-logT_face,log,,
-logT_bb,log,,
-logT_face_div_logT_bb,log,,
-energy,linear,,
-logE,log,,
-rho,linear,,
-density,linear,,
-entropy,linear,,
-logS,log,,
-logS_per_baryon,log,,
-pressure,linear,,
-prad,linear,,
-pgas,linear,,
-logPgas,log,,
-pgas_div_ptotal,linear,,
-eta,linear,,
-mu,linear,,
-grada,linear,,
-dE_dRho,linear,,
-cv,linear,,
-cp,linear,,
-log_CpT,log,,
-gamma1,linear,,
-gamma3,linear,,
-gam,linear,,
-free_e,linear,,
-logfree_e,log,,
-chiRho,linear,,
-chiT,linear,,
-csound,linear,,
-log_csound,log,,
-csound_face,linear,,
-cs_at_cell_bdy,linear,,
-v_div_cs,linear,,
-v_div_csound,linear,,
-div_v,linear,,
-thermal_time_to_surface,linear,,
-log_thermal_time_to_surface,log,,
-t_rad,linear,,
-log_t_rad,log,,
-log_t_sound,log,,
-log_t_thermal,log,,
-eos_phase,linear,,
-eos_frac_OPAL_SCVH,linear,,
-eos_frac_HELM,linear,,
-eos_frac_Skye,linear,,
-eos_frac_PC,linear,,
-eos_frac_FreeEOS,linear,,
-eos_frac_CMS,linear,,
-eos_frac_ideal,linear,,
-pgas_div_p,linear,,
-prad_div_pgas,linear,,
-prad_div_pgas_div_L_div_Ledd,linear,,
-pressure_scale_height_cm,linear,,
-eps_grav_composition_term,linear,,
-eps_grav_plus_eps_mdot,linear,,
-chiRho_for_partials,linear,,
-chiT_for_partials,linear,,
-rel_diff_chiRho_for_partials,linear,,
-rel_diff_chiT_for_partials,linear,,
-latent_ddlnRho,linear,,
-latent_ddlnT,linear,,
-log_P_face,log,,
-log_Ptrb,log,,
-log_cp_T_div_t_sound,log,,
-QQ,linear,,
-eps_grav,linear,,
-log_abs_eps_grav_dm_div_L,log,,
-log_abs_v,log,,
-log_mdot_cs,log,,
-log_mdot_v,log,,
-eps_mdot,linear,,
-env_eps_grav,linear,,
-xm_div_delta_m,linear,,
-log_xm_div_delta_m,log,,
-signed_log_eps_grav,log,,
-signed_log_eps_nuc,log,,
-net_nuclear_energy,linear,,
-net_energy,linear,,
-eps_nuc_plus_nuc_neu,linear,,
-eps_nuc_minus_non_nuc_neu,linear,,
-eps_nuc_start,linear,,
-eps_nuc,linear,,
-log_abs_eps_nuc,log,,
-d_lnepsnuc_dlnd,linear,,
-d_epsnuc_dlnd,linear,,
-deps_dlnd_face,linear,,
-d_lnepsnuc_dlnT,linear,,
-d_epsnuc_dlnT,linear,,
-deps_dlnT_face,linear,,
-eps_nuc_neu_total,linear,,
-non_nuc_neu,linear,,
-nonnucneu_plas,linear,,
-nonnucneu_brem,linear,,
-nonnucneu_phot,linear,,
-nonnucneu_pair,linear,,
-nonnucneu_reco,linear,,
-add_reaction_categories,linear,,
-pp,linear,,
-cno,linear,,
-tri_alfa,linear,,
-c_alpha,linear,,
-n_alpha,linear,,
-o_alpha,linear,,
-ne_alpha,linear,,
-na_alpha,linear,,
-mg_alpha,linear,,
-si_alpha,linear,,
-s_alpha,linear,,
-ar_alpha,linear,,
-ca_alpha,linear,,
-ti_alpha,linear,,
-fe_co_ni,linear,,
-c12_c12,linear,,
-c12_o16,linear,,
-o16_o16,linear,,
-photo,linear,,
-pnhe4,linear,,
-other,linear,,
-add_raw_rates,linear,,
-raw_rate r_h1_h1_ec_h2,linear,,
-raw_rate r_h1_h1_wk_h2,linear,,
-burn_num_iters,linear,,
-burn_avg_epsnuc,linear,,
-log_burn_avg_epsnuc,log,,
-x_mass_fraction_H,linear,,
-y_mass_fraction_He,linear,,
-z_mass_fraction_metals,linear,,
-abar,linear,,
-zbar,linear,,
-z2bar,linear,,
-ye,linear,,
-x,linear,,
-log_x,log,,
-y,linear,,
-log_y,log,,
-z,linear,,
-log_z,log,,
-add_abundances,linear,,
-h1,linear,,
-he3,linear,,
-he4,linear,,
-c12,linear,,
-n14,linear,,
-o16,linear,,
-add_log_abundances,log,,
-log h1,log,,
-log he3,log,,
-log he4,log,,
-log c12,log,,
-log n14,log,,
-log o16,log,,
-log_concentration h1,log,,
-log_concentration he4,log,,
-typical_charge he4,linear,,
-typical_charge c12,linear,,
-typical_charge fe52,linear,,
-ionization he4,linear,,
-ionization c12,linear,,
-ionization fe52,linear,,
-cno_div_z,linear,,
-opacity,linear,,
-log_opacity,log,,
-dkap_dlnrho_face,linear,,
-dkap_dlnT_face,linear,,
-kap_frac_lowT,linear,,
-kap_frac_highT,linear,,
-kap_frac_Type2,linear,,
-kap_frac_Compton,linear,,
-kap_frac_op_mono,linear,,
-log_kap,log,,
-log_kap_times_factor,log,,
-log_c_div_tau,log,,
-xtau,linear,,
-xlogtau,linear,,
-logtau_sub_xlogtau,log,,
-luminosity,linear,,
-logL,log,,
-log_Lrad,log,,
-log_Ledd,log,,
-log_L_div_Ledd,log,,
-log_Lrad_div_Ledd,log,,
-log_Lrad_div_L,log,,
-signed_log_power,log,,
-lum_adv,linear,,
-lum_conv,linear,,
-lum_conv_MLT,linear,,
-lum_div_Ledd,linear,,
-lum_erg_s,linear,,
-lum_plus_lum_adv,linear,,
-lum_rad,linear,,
-log_L_div_CpTMdot,log,,
-log_abs_lum_erg_s,log,,
-L,linear,,
-Lc,linear,,
-Lc_div_L,linear,,
-Lr,linear,,
-Lr_div_L,linear,,
-Lt,linear,,
-Lt_div_L,linear,,
-total_energy,linear,,
-cell_specific_IE,linear,,
-cell_specific_KE,linear,,
-cell_IE_div_IE_plus_KE,linear,,
-cell_KE_div_IE_plus_KE,linear,,
-cell_ie_div_star_ie,linear,,
-cell_internal_energy_fraction,linear,,
-cell_internal_energy_fraction_start,linear,,
-cell_specific_PE,linear,,
-log_cell_ie_div_star_ie,log,,
-log_cell_specific_IE,log,,
-ergs_eps_grav_plus_eps_mdot,linear,,
-ergs_error,linear,,
-ergs_error_integral,linear,,
-ergs_mdot,linear,,
-ergs_rel_error_integral,linear,,
-dm_eps_grav,linear,,
-dE,linear,,
-etrb,linear,,
-log_etrb,log,,
-extra_grav,linear,,
-log_rel_E_err,log,,
-total_energy_sign,linear,,
-mlt_mixing_length,linear,,
-mlt_mixing_type,linear,,
-mlt_Pturb,linear,,
-alpha_mlt,linear,,
-conv_vel,linear,,
-log_conv_vel,log,,
-conv_L_div_L,linear,,
-log_conv_L_div_L,log,,
-lum_conv_div_lum_rad,linear,,
-lum_rad_div_L_Edd,linear,,
-lum_conv_div_lum_Edd,linear,,
-lum_conv_div_L,linear,,
-lum_rad_div_L,linear,,
-lum_rad_div_L_Edd_sub_fourPrad_div_PchiT,linear,,
-gradT,linear,,
-gradr,linear,,
-grad_temperature,linear,,
-grad_density,linear,,
-gradL,linear,,
-sch_stable,linear,,
-ledoux_stable,linear,,
-grada_sub_gradT,linear,,
-gradT_sub_grada,linear,,
-gradT_div_grada,linear,,
-gradr_sub_gradT,linear,,
-gradT_sub_gradr,linear,,
-gradT_div_gradr,linear,,
-log_gradT_div_gradr,log,,
-log_mlt_Gamma,log,,
-conv_vel_div_csound,linear,,
-conv_vel_div_L_vel,linear,,
-log_mlt_D_mix,log,,
-gradr_div_grada,linear,,
-gradr_sub_grada,linear,,
-gradL_sub_gradr,linear,,
-gradP_div_rho,linear,,
-gradT_excess_effect,linear,,
-gradT_rel_err,linear,,
-gradT_sub_a,linear,,
-grada_face,linear,,
-grada_sub_gradr,linear,,
-diff_grads,linear,,
-log_diff_grads,log,,
-mlt_D,linear,,
-mlt_Gamma,linear,,
-mlt_Y_face,linear,,
-mlt_Zeta,linear,,
-mlt_gradT,linear,,
-mlt_log_abs_Y,log,,
-mlt_vc,linear,,
-log_mlt_vc,log,,
-superad_reduction_factor,linear,,
-conv_vel_div_mlt_vc,linear,,
-log_Lconv,log,,
-log_Lconv_div_L,log,,
-mixing_type,linear,,
-log_D_mix,log,,
-log_D_mix_non_rotation,log,,
-log_D_mix_rotation,log,,
-log_D_conv,log,,
-log_D_leftover,log,,
-log_D_semi,log,,
-log_D_ovr,log,,
-log_D_thrm,log,,
-log_D_minimum,log,,
-log_D_rayleigh_taylor,log,,
-log_D_anon,log,,
-log_D_omega,log,,
-log_sig_mix,log,,
-dominant_isoA_for_thermohaline,linear,,
-dominant_isoZ_for_thermohaline,linear,,
-gradL_composition_term,linear,,
-mix_type,linear,,
-tau,linear,,
-log_column_depth,log,,
-log_radial_depth,log,,
-logtau,log,,
-tau_eff,linear,,
-tau_eff_div_tau,linear,,
-omega,linear,,
-log_omega,log,,
-log_j_rot,log,,
-log_J_div_M53,log,,
-log_J_inside,log,,
-shear,linear,,
-log_abs_shear,log,,
-richardson_number,linear,,
-i_rot,linear,,
-j_rot,linear,,
-v_rot,linear,,
-w_div_w_crit_roche !ratio of rotational velocity to keplerian at the equator,linear,,
-without the contribution from the Eddington factor,linear,,
-fp_rot,linear,,
-ft_rot,linear,,
-ft_rot_div_fp_rot,linear,,
-log_am_nu_non_rot,log,,
-log_am_nu_rot,log,,
-log_am_nu,log,,
-r_polar,linear,,
-log_r_polar,log,,
-r_equatorial,linear,,
-log_r_equatorial,log,,
-r_e_div_r_p,linear,,
-omega_crit,linear,,
-omega_div_omega_crit,linear,,
-am_log_nu_omega,log,,
-am_log_nu_j,log,,
-am_log_nu_rot,log,,
-am_log_nu_non_rot,log,,
-am_log_sig_omega,log,,
-am_log_sig_j,log,,
-am_log_sig,log,,
-am_log_D_visc,log,,
-am_log_D_DSI,log,,
-am_log_D_SH,log,,
-am_log_D_SSI,log,,
-am_log_D_ES,log,,
-am_log_D_GSF,log,,
-am_log_D_ST,log,,
-am_log_nu_ST,log,,
-dynamo_log_B_r,log,,
-dynamo_log_B_phi,log,,
-am_domega_dlnR,linear,,
-log_abs_dlnR_domega,log,,
-w_div_w_crit_roche2,linear,,
-e_field,linear,,
-log_e_field,log,,
-g_field_element_diffusion,linear,,
-log_g_field_element_diffusion,log,,
-eE_div_mg_element_diffusion,linear,,
-log_eE_div_mg_element_diffusion,log,,
-edv h1,linear,,
-edv he4,linear,,
-edv o16,linear,,
-eps_WD_sedimentation,linear,,
-log_eps_WD_sedimentation,log,,
-eps_diffusion,linear,,
-log_eps_diffusion,log,,
-diffusion_D h1,linear,,
-diffusion_dX h1,linear,,
-diffusion_dX he4,linear,,
-diffusion_dX n20,linear,,
-v_rad h1,linear,,
-v_rad he4,linear,,
-v_rad ne20,linear,,
-log_g_rad h1,log,,
-log_g_rad he4,log,,
-log_g_rad ne20,log,,
-eps_phase_separation,linear,,
-brunt_N2,linear,,
-brunt_N2_structure_term,linear,,
-brunt_N2_composition_term,linear,,
-log_brunt_N2_structure_term,log,,
-log_brunt_N2_composition_term,log,,
-brunt_A,linear,,
-brunt_A_div_x2,linear,,
-brunt_N2_dimensionless,linear,,
-brunt_N_dimensionless,linear,,
-brunt_frequency,linear,,
-brunt_N,linear,,
-log_brunt_N,log,,
-log_brunt_N2,log,,
-log_brunt_N2_dimensionless,log,,
-brunt_B,linear,,
-brunt_nonB,linear,,
-log_brunt_B,log,,
-log_brunt_nonB,log,,
-sign_brunt_N2,linear,,
-brunt_nu,linear,,
-log_brunt_nu,log,,
-lamb_S,linear,,
-lamb_S2,linear,,
-lamb_Sl1,linear,,
-lamb_Sl2,linear,,
-lamb_Sl3,linear,,
-lamb_Sl10,linear,,
-log_lamb_Sl1,log,,
-log_lamb_Sl2,log,,
-log_lamb_Sl3,log,,
-log_lamb_Sl10,log,,
-brunt_N_div_r_integral,linear,,
-k_r_integral,linear,,
-brunt_N2_sub_omega2,linear,,
-sl2_sub_omega2,linear,,
-rsp_Chi,linear,,
-rsp_Et,linear,,
-rsp_logEt,log,,
-rsp_erad,linear,,
-rsp_log_erad,log,,
-rsp_Hp_face,linear,,
-rsp_Lc,linear,,
-rsp_Lc_div_L,linear,,
-rsp_Lr,linear,,
-rsp_Lr_div_L,linear,,
-rsp_Lt,linear,,
-rsp_Lt_div_L,linear,,
-rsp_Pt,linear,,
-rsp_Uq,linear,,
-rsp_Eq,linear,,
-rsp_Pvsc,linear,,
-rsp_gradT,linear,,
-rsp_Y_face,linear,,
-rsp_damp,linear,,
-rsp_dampR,linear,,
-rsp_sink,linear,,
-rsp_src,linear,,
-rsp_src_snk,linear,,
-rsp_heat_exchange_timescale,linear,,
-rsp_log_heat_exchange_timescale,log,,
-rsp_log_dt_div_heat_exchange_timescale,log,,
-w,linear,,
-log_w,log,,
-COUPL,linear,,
-DAMP,linear,,
-DAMPR,linear,,
-SOURCE,linear,,
-Chi,linear,,
-Eq,linear,,
-Hp_face,linear,,
-PII_face,linear,,
-Ptrb,linear,,
-Pvsc,linear,,
-Uq,linear,,
-Y_face,linear,,
-RTI_du_diffusion_kick,linear,,
-alpha_RTI,linear,,
-boost_for_eta_RTI,linear,,
-dedt_RTI,linear,,
-dudt_RTI,linear,,
-eta_RTI,linear,,
-log_alpha_RTI,log,,
-log_boost_for_eta_RTI,log,,
-log_eta_RTI,log,,
-log_etamid_RTI,log,,
-log_lambda_RTI_div_Hrho,log,,
-log_sig_RTI,log,,
-log_sigmid_RTI,log,,
-log_source_RTI,log,,
-log_source_minus_alpha_RTI,log,,
-log_source_plus_alpha_RTI,log,,
-source_minus_alpha_RTI,linear,,
-source_plus_alpha_RTI,linear,,
-lambda_RTI,linear,,
-v,linear,,
-v_div_v_escape,linear,,
-v_div_vesc,linear,,
-v_kms,linear,,
-log_v_escape,log,,
-u,linear,,
-u_face,linear,,
-P_face,linear,,
-extra_heat,linear,,
-extra_L,linear,,
-log_extra_L,log,,
-log_irradiation_heat,log,,
-extra_jdot,linear,,
-extra_omegadot,linear,,
-extra_opacity_factor,linear,,
-extra_diffusion_factor h1,linear,,
-extra_diffusion_factor he4,linear,,
-extra_diffusion_factor o16,linear,,
-dlog_h1_dlogP,linear,,
-dlog_he3_dlogP,linear,,
-dlog_he4_dlogP,linear,,
-dlog_c12_dlogP,linear,,
-dlog_c13_dlogP,linear,,
-dlog_n14_dlogP,linear,,
-dlog_o16_dlogP,linear,,
-dlog_ne20_dlogP,linear,,
-dlog_mg24_dlogP,linear,,
-dlog_si28_dlogP,linear,,
-dlog_pp_dlogP,linear,,
-dlog_cno_dlogP,linear,,
-dlog_3alf_dlogP,linear,,
-dlog_burn_c_dlogP,linear,,
-dlog_burn_n_dlogP,linear,,
-dlog_burn_o_dlogP,linear,,
-dlog_burn_ne_dlogP,linear,,
-dlog_burn_na_dlogP,linear,,
-dlog_burn_mg_dlogP,linear,,
-dlog_cc_dlogP,linear,,
-dlog_co_dlogP,linear,,
-dlog_oo_dlogP,linear,,
-dlog_burn_si_dlogP,linear,,
-dlog_burn_s_dlogP,linear,,
-dlog_burn_ar_dlogP,linear,,
-dlog_burn_ca_dlogP,linear,,
-dlog_burn_ti_dlogP,linear,,
-dlog_burn_cr_dlogP,linear,,
-dlog_burn_fe_dlogP,linear,,
-dlog_pnhe4_dlogP,linear,,
-dlog_photo_dlogP,linear,,
-dlog_other_dlogP,linear,,
-logR_kap,log,,
-logW,log,,
-logQ,log,,
-logV,log,,
-log_CpT_absMdot_div_L,log,,
-delta_r,linear,,
-delta_L,linear,,
-delta_cell_vol,linear,,
-delta_entropy,linear,,
-delta_T,linear,,
-delta_rho,linear,,
-delta_eps_nuc,linear,,
-delta_mu,linear,,
-zFe,linear,,
-log_zFe,log,,
-dPdr_dRhodr_info,linear,,
-log_sig_raw_mix,log,,
-d_u_div_rmid,linear,,
-d_u_div_rmid_start,linear,,
-d_v_div_r_dm,linear,,
-d_v_div_r_dr,linear,,
-dlnP_dlnR,linear,,
-dlnRho_dlnR,linear,,
-dlnRho_dr,linear,,
-dlnX_dr,linear,,
-dlnY_dr,linear,,
-dlogR,linear,,
-dPdr_div_grav,linear,,
-dPdr_info,linear,,
-dRhodr_info,linear,,
-dRstar_div_dr,linear,,
-dr_ratio,linear,,
-dm_eps_grav,linear,,
-dr_ratio,linear,,
-dt_cs_div_dr,linear,,
-dt_div_tau_conv,linear,,
-dt_times_conv_vel_div_mixing_length,linear,,
-log_dt_cs_div_dr,log,,
-log_dt_div_tau_conv,log,,
-log_dt_times_conv_vel_div_mixing_length,log,,
-log_du_kick_div_du,log,,
-du,linear,,
-dvdt_dPdm,linear,,
-dvdt_grav,linear,,
-tau_conv,linear,,
-tau_cool,linear,,
-tau_epsnuc,linear,,
-tau_qhse,linear,,
-max_abs_xa_corr,linear,,
-tdc_num_iters,linear,,
-k,linear,,
+column_name,data_logarithmic,display_logarithmic,series_name,units,axis_name
+zone,false,false,Zone Number,,Zone Number
+mass,false,false,Mass Coordinate,M_{☉},Mass
+logR,true,true,Radius,R_{☉},Radius
+logT,true,true,Temperature,K,Temperature
+logRho,true,true,Density,g/cm³,Density
+logP,true,true,Pressure,dyn/cm²,Pressure
+x_mass_fraction_H,false,false,Hydrogen Mass Fraction,,Mass Fraction
+y_mass_fraction_He,false,false,Helium Mass Fraction,,Mass Fraction
+z_mass_fraction_metals,false,false,Metal Mass Fraction,,Mass Fraction
+logM,true,true,Mass,M_{☉},Mass
+log_mass,true,true,Mass,M_{☉},Mass
+dm,false,false,Cell Mass,g,Mass
+dm_bar,false,false,Boundary Mass,g,Mass
+logdq,true,true,Mass Fraction Width,,Mass Fraction
+log_dq,true,true,Mass Fraction Width,,Mass Fraction
+dq_ratio,false,false,dq Ratio,,Mass Fraction Ratio
+q,false,false,Mass Coordinate,,Mass Coordinate
+log_q,true,true,Mass Coordinate,,Mass Coordinate
+xq,false,false,Exterior Mass Coordinate,,Mass Coordinate
+grav,false,false,Gravitational Acceleration,cm/s²,Acceleration
+log_g,true,true,Gravitational Acceleration,cm/s²,Acceleration
+g_div_r,false,false,g/r,s⁻²,Acceleration per Radius
+r_div_g,false,false,r/g,s²,Radius per Acceleration
+cgrav_factor,false,false,Gravitational Constant Factor,,Factor
+vel_km_per_s,false,false,Velocity,km/s,Velocity
+radius,false,false,Radius,R_{☉},Radius
+radius_cm,false,false,Radius,cm,Radius
+radius_km,false,false,Radius,km,Radius
+logR_cm,true,true,Radius,cm,Radius
+rmid,false,false,Midpoint Radius,R_{☉},Radius
+r_div_R,false,false,Fractional Radius,,Radius Fraction
+velocity,false,false,Velocity,cm/s,Velocity
+v_div_r,false,false,v/r,s⁻¹,Velocity per Radius
+v_times_t_div_r,false,false,vt/r,,Dimensionless Velocity
+rho_times_r3,false,false,ρr³,g/cm³ · (R_{☉})³,Density × Radius³
+log_rho_times_r3,true,true,ρr³,g/cm³ · (R_{☉})³,Density × Radius³
+scale_height,false,false,Scale Height,R_{☉},Length
+pressure_scale_height,false,false,Pressure Scale Height,R_{☉},Length
+m_div_r,false,false,m/r,g/cm,Mass per Radius
+dmbar_m_div_r,false,false,dmbar·m/r,g²/cm,Mass Product per Radius
+log_dmbar_m_div_r,true,true,dmbar·m/r,g²/cm,Mass Product per Radius
+mass_grams,false,false,Mass,g,Mass
+mmid,false,false,Midpoint Mass,M_{☉},Mass
+m_grav,false,false,Gravitational Mass,M_{☉},Mass
+m_grav_div_m_baryonic,false,false,Gravitational/Baryonic Mass,,Mass Ratio
+mass_correction_factor,false,false,Mass Correction Factor,,Factor
+xm,false,false,Exterior Mass,M_{☉},Mass
+dq,false,false,Mass Fraction Width,,Mass Fraction
+logxq,true,true,Exterior Mass Coordinate,,Mass Coordinate
+logxm,true,true,Exterior Mass,M_{☉},Mass
+xr,false,false,Distance to Surface,R_{☉},Radius
+xr_cm,false,false,Distance to Surface,cm,Radius
+xr_div_R,false,false,Fractional Distance to Surface,,Radius Fraction
+log_xr,true,true,Distance to Surface,R_{☉},Radius
+log_xr_cm,true,true,Distance to Surface,cm,Radius
+log_xr_div_R,true,true,Fractional Distance to Surface,,Radius Fraction
+dr,false,false,Cell Width,cm,Length
+log_dr,true,true,Cell Width,cm,Length
+dv,false,false,Velocity Difference,cm/s,Velocity
+dt_dv_div_dr,false,false,Courant Number,,Dimensionless Number
+dr_div_R,false,false,Fractional Cell Width,,Length Fraction
+log_dr_div_R,true,true,Fractional Cell Width,,Length Fraction
+dr_div_rmid,false,false,Cell Width/Midpoint Radius,,Length Ratio
+log_dr_div_rmid,true,true,Cell Width/Midpoint Radius,,Length Ratio
+dr_div_cs,false,false,Sound Crossing Time,s,Timescale
+log_dr_div_cs,true,true,Sound Crossing Time,s,Timescale
+dr_div_cs_yr,false,false,Sound Crossing Time,yr,Timescale
+log_dr_div_cs_yr,true,true,Sound Crossing Time,yr,Timescale
+acoustic_radius,false,false,Acoustic Radius,s,Timescale
+log_acoustic_radius,true,true,Acoustic Radius,s,Timescale
+acoustic_depth,false,false,Acoustic Depth,s,Timescale
+log_acoustic_depth,true,true,Acoustic Depth,s,Timescale
+acoustic_r_div_R_phot,false,false,Acoustic Radius/Photosphere Radius,,Radius Ratio
+cell_collapse_time,false,false,Cell Collapse Time,s,Timescale
+log_cell_collapse_time,true,true,Cell Collapse Time,s,Timescale
+compression_gradient,false,false,Compression Gradient,,Gradient
+temperature,false,false,Temperature,K,Temperature
+logT_face,true,true,Face Temperature,K,Temperature
+logT_bb,true,true,Black Body Temperature,K,Temperature
+logT_face_div_logT_bb,true,true,Face/Black Body Temperature,,Temperature Ratio
+energy,false,false,Internal Energy,erg/g,Specific Energy
+logE,true,true,Internal Energy,erg/g,Specific Energy
+rho,false,false,Density,g/cm³,Density
+density,false,false,Density,g/cm³,Density
+entropy,false,false,Entropy,kerg/baryon,Entropy
+logS,true,true,Entropy,kerg/baryon,Entropy
+logS_per_baryon,true,true,Entropy per Baryon,kerg/baryon,Entropy
+pressure,false,false,Pressure,dyn/cm²,Pressure
+prad,false,false,Radiation Pressure,dyn/cm²,Pressure
+pgas,false,false,Gas Pressure,dyn/cm²,Pressure
+logPgas,true,true,Gas Pressure,dyn/cm²,Pressure
+pgas_div_ptotal,false,false,Gas/Total Pressure,,Pressure Ratio
+eta,false,false,Degeneracy Parameter,,Degeneracy Parameter
+mu,false,false,Mean Molecular Weight,,Mean Molecular Weight
+grada,false,false,Adiabatic Temperature Gradient,,Temperature Gradient
+dE_dRho,false,false,∂E/∂ρ,erg/g / (g/cm³),Energy Derivative
+cv,false,false,Specific Heat (constant volume),erg/g/K,Specific Heat
+cp,false,false,Specific Heat (constant pressure),erg/g/K,Specific Heat
+log_CpT,true,true,CpT,erg/g,Heat Capacity × Temperature
+gamma1,false,false,First Adiabatic Index,,Adiabatic Index
+gamma3,false,false,Third Adiabatic Index,,Adiabatic Index
+gam,false,false,Plasma Parameter,,Plasma Parameter
+free_e,false,false,Free Electrons per Nucleon,,Number Ratio
+logfree_e,true,true,Free Electrons per Nucleon,,Number Ratio
+chiRho,false,false,∂ln P/∂ln ρ,,Pressure Derivative
+chiT,false,false,∂ln P/∂ln T,,Pressure Derivative
+csound,false,false,Sound Speed,cm/s,Velocity
+log_csound,true,true,Sound Speed,cm/s,Velocity
+csound_face,false,false,Face Sound Speed,cm/s,Velocity
+cs_at_cell_bdy,false,false,Cell Boundary Sound Speed,cm/s,Velocity
+v_div_cs,false,false,v/c_{s},,Velocity Ratio
+v_div_csound,false,false,v/c_{sound},,Velocity Ratio
+div_v,false,false,Velocity Divergence,s⁻¹,Velocity Gradient
+thermal_time_to_surface,false,false,Thermal Time to Surface,s,Timescale
+log_thermal_time_to_surface,true,true,Thermal Time to Surface,s,Timescale
+t_rad,false,false,Radiative Timescale,s,Timescale
+log_t_rad,true,true,Radiative Timescale,s,Timescale
+log_t_sound,true,true,Sound Timescale,s,Timescale
+log_t_thermal,true,true,Thermal Timescale,s,Timescale
+eos_phase,false,false,EOS Phase,,EOS Phase
+eos_frac_OPAL_SCVH,false,false,OPAL_SCVH Fraction,,EOS Fraction
+eos_frac_HELM,false,false,HELM Fraction,,EOS Fraction
+eos_frac_Skye,false,false,Skye Fraction,,EOS Fraction
+eos_frac_PC,false,false,PC Fraction,,EOS Fraction
+eos_frac_FreeEOS,false,false,FreeEOS Fraction,,EOS Fraction
+eos_frac_CMS,false,false,CMS Fraction,,EOS Fraction
+eos_frac_ideal,false,false,Ideal Gas Fraction,,EOS Fraction
+pgas_div_p,false,false,Gas/Total Pressure,,Pressure Ratio
+prad_div_pgas,false,false,Radiation/Gas Pressure,,Pressure Ratio
+prad_div_pgas_div_L_div_Ledd,false,false,(P_rad/P_gas)/(L/L_Edd),,Pressure-Luminosity Ratio
+pressure_scale_height_cm,false,false,Pressure Scale Height,cm,Length
+eps_grav_composition_term,false,false,Gravitational Energy (composition),erg/g/s,Energy Generation
+eps_grav_plus_eps_mdot,false,false,Gravitational + Mass Change Energy,erg/g/s,Energy Generation
+chiRho_for_partials,false,false,∂ln P/∂ln ρ (partials),,Pressure Derivative
+chiT_for_partials,false,false,∂ln P/∂ln T (partials),,Pressure Derivative
+rel_diff_chiRho_for_partials,false,false,Relative Difference χ_ρ,,Relative Difference
+rel_diff_chiT_for_partials,false,false,Relative Difference χ_T,,Relative Difference
+latent_ddlnRho,false,false,Latent Heat (density),erg/g,Latent Heat
+latent_ddlnT,false,false,Latent Heat (temperature),erg/g,Latent Heat
+log_P_face,true,true,Face Pressure,dyn/cm²,Pressure
+log_Ptrb,true,true,Turbulent Pressure,dyn/cm²,Pressure
+log_cp_T_div_t_sound,true,true,c_{p} T / t_{sound},,Heat Capacity Ratio
+QQ,false,false,Q Parameter,,EOS Parameter
+eps_grav,false,false,Gravitational Energy Generation,erg/g/s,Energy Generation
+log_abs_eps_grav_dm_div_L,true,true,|ε_grav| dm / L,,Energy Generation Ratio
+log_abs_v,true,true,|Velocity|,cm/s,Velocity
+log_mdot_cs,true,true,Ṁ c_{s},,Mass Flow Rate
+log_mdot_v,true,true,Ṁ v,,Mass Flow Rate
+eps_mdot,false,false,Mass Change Energy Generation,erg/g/s,Energy Generation
+env_eps_grav,false,false,Envelope Gravitational Energy,erg/g/s,Energy Generation
+xm_div_delta_m,false,false,x_{m} / Δm,,Mass Ratio
+log_xm_div_delta_m,true,true,x_{m} / Δm,,Mass Ratio
+signed_log_eps_grav,true,false,Gravitational Energy Generation (signed),erg/g/s,Energy Generation
+signed_log_eps_nuc,true,false,Nuclear Energy Generation (signed),erg/g/s,Energy Generation
+net_nuclear_energy,false,false,Net Nuclear Energy,erg/g/s,Energy Generation
+net_energy,false,false,Net Energy,erg/g/s,Energy Generation
+eps_nuc_plus_nuc_neu,false,false,Nuclear + Nuclear Neutrino Energy,erg/g/s,Energy Generation
+eps_nuc_minus_non_nuc_neu,false,false,Nuclear - Non-Nuclear Neutrino Energy,erg/g/s,Energy Generation
+eps_nuc_start,false,false,Nuclear Energy (start),erg/g/s,Energy Generation
+eps_nuc,false,false,Nuclear Energy Generation,erg/g/s,Energy Generation
+log_abs_eps_nuc,true,true,|Nuclear Energy Generation|,erg/g/s,Energy Generation
+d_lnepsnuc_dlnd,false,false,∂ln ε_nuc/∂ln ρ,,Energy Generation Derivative
+d_epsnuc_dlnd,false,false,∂ε_nuc/∂ln ρ,erg/g/s,Energy Generation Derivative
+deps_dlnd_face,false,false,Face ∂ε/∂ln ρ,erg/g/s,Energy Generation Derivative
+d_lnepsnuc_dlnT,false,false,∂ln ε_nuc/∂ln T,,Energy Generation Derivative
+d_epsnuc_dlnT,false,false,∂ε_nuc/∂ln T,erg/g/s,Energy Generation Derivative
+deps_dlnT_face,false,false,Face ∂ε/∂ln T,erg/g/s,Energy Generation Derivative
+eps_nuc_neu_total,false,false,Total Nuclear Neutrino Energy,erg/g/s,Energy Generation
+non_nuc_neu,false,false,Non-Nuclear Neutrino Losses,erg/g/s,Energy Generation
+nonnucneu_plas,false,false,Plasmon Neutrino Losses,erg/g/s,Energy Generation
+nonnucneu_brem,false,false,Bremsstrahlung Neutrino Losses,erg/g/s,Energy Generation
+nonnucneu_phot,false,false,Photon Neutrino Losses,erg/g/s,Energy Generation
+nonnucneu_pair,false,false,Pair Neutrino Losses,erg/g/s,Energy Generation
+nonnucneu_reco,false,false,Recombination Neutrino Losses,erg/g/s,Energy Generation
+pp,false,false,PP Chain Energy Generation,erg/g/s,Energy Generation
+cno,false,false,CNO Cycle Energy Generation,erg/g/s,Energy Generation
+tri_alpha,false,false,Triple Alpha Energy Generation,erg/g/s,Energy Generation
+c_alpha,false,false,Carbon Alpha Energy Generation,erg/g/s,Energy Generation
+n_alpha,false,false,Nitrogen Alpha Energy Generation,erg/g/s,Energy Generation
+o_alpha,false,false,Oxygen Alpha Energy Generation,erg/g/s,Energy Generation
+ne_alpha,false,false,Neon Alpha Energy Generation,erg/g/s,Energy Generation
+na_alpha,false,false,Sodium Alpha Energy Generation,erg/g/s,Energy Generation
+mg_alpha,false,false,Magnesium Alpha Energy Generation,erg/g/s,Energy Generation
+si_alpha,false,false,Silicon Alpha Energy Generation,erg/g/s,Energy Generation
+s_alpha,false,false,Sulfur Alpha Energy Generation,erg/g/s,Energy Generation
+ar_alpha,false,false,Argon Alpha Energy Generation,erg/g/s,Energy Generation
+ca_alpha,false,false,Calcium Alpha Energy Generation,erg/g/s,Energy Generation
+ti_alpha,false,false,Titanium Alpha Energy Generation,erg/g/s,Energy Generation
+fe_co_ni,false,false,Iron/Cobalt/Nickel Energy Generation,erg/g/s,Energy Generation
+c12_c12,false,false,^{12}C + ^{12}C Energy Generation,erg/g/s,Energy Generation
+c12_o16,false,false,^{12}C + ^{16}O Energy Generation,erg/g/s,Energy Generation
+o16_o16,false,false,^{16}O + ^{16}O Energy Generation,erg/g/s,Energy Generation
+photo,false,false,Photodisintegration Energy Generation,erg/g/s,Energy Generation
+pnhe4,false,false,Proton-Neutron-^{4}He Energy Generation,erg/g/s,Energy Generation
+other,false,false,Other Nuclear Energy Generation,erg/g/s,Energy Generation
+burn_num_iters,false,false,Burn Iterations,,Iteration Count
+burn_avg_epsnuc,false,false,Average Nuclear Energy Generation,erg/g/s,Energy Generation
+log_burn_avg_epsnuc,true,true,Average Nuclear Energy Generation,erg/g/s,Energy Generation
+x_mass_fraction_H,false,false,Hydrogen Mass Fraction,,Mass Fraction
+y_mass_fraction_He,false,false,Helium Mass Fraction,,Mass Fraction
+z_mass_fraction_metals,false,false,Metal Mass Fraction,,Mass Fraction
+abar,false,false,Average Atomic Weight,,Atomic Weight
+zbar,false,false,Average Charge,,Charge
+z2bar,false,false,Average Charge Squared,,Charge Squared
+ye,false,false,Electron Fraction,,Electron Fraction
+x,false,false,Hydrogen Mass Fraction,,Mass Fraction
+log_x,true,false,Hydrogen Mass Fraction,,Mass Fraction
+y,false,false,Helium Mass Fraction,,Mass Fraction
+log_y,true,false,Helium Mass Fraction,,Mass Fraction
+z,false,false,Metal Mass Fraction,,Mass Fraction
+log_z,true,false,Metal Mass Fraction,,Mass Fraction
+h1,false,false,^{1}H,,Mass Fraction
+he3,false,false,^{3}He,,Mass Fraction
+he4,false,false,^{4}He,,Mass Fraction
+c12,false,false,^{12}C,,Mass Fraction
+n14,false,false,^{14}N,,Mass Fraction
+o16,false,false,^{16}O,,Mass Fraction
+log_h1,true,false,^{1}H,,Mass Fraction
+log_he3,true,false,^{3}He,,Mass Fraction
+log_he4,true,false,^{4}He,,Mass Fraction
+log_c12,true,false,^{12}C,,Mass Fraction
+log_n14,true,false,^{14}N,,Mass Fraction
+log_o16,true,false,^{16}O,,Mass Fraction
+log_concentration_h1,true,true,^{1}H Concentration,,Concentration
+log_concentration_he4,true,true,^{4}He Concentration,,Concentration
+typical_charge_he4,false,false,^{4}He Typical Charge,,Charge
+typical_charge_c12,false,false,^{12}C Typical Charge,,Charge
+typical_charge_fe52,false,false,^{52}Fe Typical Charge,,Charge
+ionization_he4,false,false,^{4}He Ionization,,Ionization
+ionization_c12,false,false,^{12}C Ionization,,Ionization
+ionization_fe52,false,false,^{52}Fe Ionization,,Ionization
+cno_div_z,false,false,CNO/Z,,CNO Fraction
+opacity,false,false,Opacity,cm²/g,Opacity
+log_opacity,true,true,Opacity,cm²/g,Opacity
+dkap_dlnrho_face,false,false,Face ∂κ/∂ln ρ,cm²/g,Opacity Derivative
+dkap_dlnT_face,false,false,Face ∂κ/∂ln T,cm²/g,Opacity Derivative
+kap_frac_lowT,false,false,Low-T Opacity Fraction,,Opacity Fraction
+kap_frac_highT,false,false,High-T Opacity Fraction,,Opacity Fraction
+kap_frac_Type2,false,false,Type2 Opacity Fraction,,Opacity Fraction
+kap_frac_Compton,false,false,Compton Opacity Fraction,,Opacity Fraction
+kap_frac_op_mono,false,false,OP Mono Opacity Fraction,,Opacity Fraction
+log_kap,true,true,Opacity,cm²/g,Opacity
+log_kap_times_factor,true,true,Opacity × Factor,cm²/g,Opacity
+log_c_div_tau,true,true,c/τ,cm/s,Velocity
+xtau,false,false,Optical Depth Coordinate,,Optical Depth
+xlogtau,false,false,Log Optical Depth Coordinate,,Optical Depth
+logtau_sub_xlogtau,true,true,log τ - x log τ,,Optical Depth
+luminosity,false,false,Luminosity,L_{☉},Luminosity
+logL,true,true,Luminosity,L_{☉},Luminosity
+log_Lrad,true,true,Radiative Luminosity,L_{☉},Luminosity
+log_Ledd,true,true,Eddington Luminosity,L_{☉},Luminosity
+log_L_div_Ledd,true,true,L/L_Edd,,Luminosity Ratio
+log_Lrad_div_Ledd,true,true,L_rad/L_Edd,,Luminosity Ratio
+log_Lrad_div_L,true,true,L_rad/L,,Luminosity Ratio
+signed_log_power,true,false,Power (signed),L_{☉},Luminosity
+lum_adv,false,false,Advective Luminosity,L_{☉},Luminosity
+lum_conv,false,false,Convective Luminosity,L_{☉},Luminosity
+lum_conv_MLT,false,false,MLT Convective Luminosity,L_{☉},Luminosity
+lum_div_Ledd,false,false,L/L_Edd,,Luminosity Ratio
+lum_erg_s,false,false,Luminosity,erg/s,Luminosity
+lum_plus_lum_adv,false,false,Luminosity + Advective,L_{☉},Luminosity
+lum_rad,false,false,Radiative Luminosity,L_{☉},Luminosity
+log_L_div_CpTMdot,true,true,L/(C_p T Ṁ),,Luminosity Ratio
+log_abs_lum_erg_s,true,true,|Luminosity|,erg/s,Luminosity
+L,false,false,Luminosity,L_{☉},Luminosity
+Lc,false,false,Convective Luminosity,L_{☉},Luminosity
+Lc_div_L,false,false,L_c/L,,Luminosity Ratio
+Lr,false,false,Radiative Luminosity,L_{☉},Luminosity
+Lr_div_L,false,false,L_r/L,,Luminosity Ratio
+Lt,false,false,Turbulent Luminosity,L_{☉},Luminosity
+Lt_div_L,false,false,L_t/L,,Luminosity Ratio
+total_energy,false,false,Total Energy,erg/g,Specific Energy
+cell_specific_IE,false,false,Cell Specific Internal Energy,erg/g,Specific Energy
+cell_specific_KE,false,false,Cell Specific Kinetic Energy,erg/g,Specific Energy
+cell_IE_div_IE_plus_KE,false,false,IE/(IE+KE),,Energy Ratio
+cell_KE_div_IE_plus_KE,false,false,KE/(IE+KE),,Energy Ratio
+cell_ie_div_star_ie,false,false,Cell IE / Star IE,,Energy Fraction
+cell_internal_energy_fraction,false,false,Cell Internal Energy Fraction,,Energy Fraction
+cell_internal_energy_fraction_start,false,false,Cell Internal Energy Fraction (start),,Energy Fraction
+cell_specific_PE,false,false,Cell Specific Potential Energy,erg/g,Specific Energy
+log_cell_ie_div_star_ie,true,true,Cell IE / Star IE,,Energy Fraction
+log_cell_specific_IE,true,true,Cell Specific Internal Energy,erg/g,Specific Energy
+ergs_eps_grav_plus_eps_mdot,false,false,Gravitational + Mass Change Energy,erg,Energy
+ergs_error,false,false,Energy Error,erg,Energy
+ergs_error_integral,false,false,Integrated Energy Error,erg,Energy
+ergs_mdot,false,false,Mass Change Energy,erg,Energy
+ergs_rel_error_integral,false,false,Relative Integrated Energy Error,,Error
+dm_eps_grav,false,false,dm × ε_{grav},erg/s,Power
+dE,false,false,Energy Change,erg/g,Specific Energy
+etrb,false,false,Turbulent Energy,erg/g,Specific Energy
+log_etrb,true,true,Turbulent Energy,erg/g,Specific Energy
+extra_grav,false,false,Extra Gravitational Energy,erg/g/s,Energy Generation
+log_rel_E_err,true,true,Relative Energy Error,,Error
+total_energy_sign,false,false,Total Energy Sign,,Sign
+mlt_mixing_length,false,false,MLT Mixing Length,cm,Length
+mlt_mixing_type,false,false,MLT Mixing Type,,Mixing Type
+mlt_Pturb,false,false,MLT Turbulent Pressure,dyn/cm²,Pressure
+alpha_mlt,false,false,MLT Alpha Parameter,,MLT Parameter
+conv_vel,false,false,Convective Velocity,cm/s,Velocity
+log_conv_vel,true,true,Convective Velocity,cm/s,Velocity
+conv_L_div_L,false,false,L_conv/L,,Luminosity Ratio
+log_conv_L_div_L,true,true,L_conv/L,,Luminosity Ratio
+lum_conv_div_lum_rad,false,false,L_conv/L_rad,,Luminosity Ratio
+lum_rad_div_L_Edd,false,false,L_rad/L_Edd,,Luminosity Ratio
+lum_conv_div_lum_Edd,false,false,L_conv/L_Edd,,Luminosity Ratio
+lum_conv_div_L,false,false,L_conv/L,,Luminosity Ratio
+lum_rad_div_L,false,false,L_rad/L,,Luminosity Ratio
+lum_rad_div_L_Edd_sub_fourPrad_div_PchiT,false,false,L_rad/L_Edd - 4P_rad/(Pχ_T),,Luminosity Ratio
+gradT,false,false,Temperature Gradient,,Temperature Gradient
+gradr,false,false,Radiative Temperature Gradient,,Temperature Gradient
+grad_temperature,false,false,Temperature Gradient (smoothed),,Temperature Gradient
+grad_density,false,false,Density Gradient,,Density Gradient
+gradL,false,false,Ledoux Temperature Gradient,,Temperature Gradient
+sch_stable,false,false,Schwarzschild Stable,,Stability
+ledoux_stable,false,false,Ledoux Stable,,Stability
+grada_sub_gradT,false,false,∇_a - ∇_T,,Temperature Gradient
+gradT_sub_grada,false,false,∇_T - ∇_a,,Temperature Gradient
+gradT_div_grada,false,false,∇_T/∇_a,,Temperature Gradient Ratio
+gradr_sub_gradT,false,false,∇_r - ∇_T,,Temperature Gradient
+gradT_sub_gradr,false,false,∇_T - ∇_r,,Temperature Gradient
+gradT_div_gradr,false,false,∇_T/∇_r,,Temperature Gradient Ratio
+log_gradT_div_gradr,true,true,∇_T/∇_r,,Temperature Gradient Ratio
+log_mlt_Gamma,true,true,MLT Γ,,MLT Parameter
+conv_vel_div_csound,false,false,v_{conv}/c_{s},,Velocity Ratio
+conv_vel_div_L_vel,false,false,v_{conv}/v_{L},,Velocity Ratio
+log_mlt_D_mix,true,true,MLT Diffusion Coefficient,cm²/s,Diffusion Coefficient
+gradr_div_grada,false,false,∇_r/∇_a,,Temperature Gradient Ratio
+gradr_sub_grada,false,false,∇_r - ∇_a,,Temperature Gradient
+gradL_sub_gradr,false,false,∇_L - ∇_r,,Temperature Gradient
+gradP_div_rho,false,false,∇P/ρ,cm/s²,Acceleration
+gradT_excess_effect,false,false,∇T Excess Effect,,Temperature Gradient Effect
+gradT_rel_err,false,false,∇T Relative Error,,Error
+gradT_sub_a,false,false,∇_T - ∇_a,,Temperature Gradient
+grada_face,false,false,Face ∇_a,,Temperature Gradient
+grada_sub_gradr,false,false,∇_a - ∇_r,,Temperature Gradient
+diff_grads,false,false,Gradient Difference,,Temperature Gradient
+log_diff_grads,true,true,Gradient Difference,,Temperature Gradient
+mlt_D,false,false,MLT Diffusion Coefficient,cm²/s,Diffusion Coefficient
+mlt_Gamma,false,false,MLT Γ,,MLT Parameter
+mlt_Y_face,false,false,MLT Y (face),,MLT Parameter
+mlt_Zeta,false,false,MLT ζ,,MLT Parameter
+mlt_gradT,false,false,MLT ∇_T,,Temperature Gradient
+mlt_log_abs_Y,true,true,MLT |Y|,,MLT Parameter
+mlt_vc,false,false,MLT Convective Velocity,cm/s,Velocity
+log_mlt_vc,true,true,MLT Convective Velocity,cm/s,Velocity
+superad_reduction_factor,false,false,Superadiabatic Reduction Factor,,Factor
+conv_vel_div_mlt_vc,false,false,v_{conv}/v_{c},,Velocity Ratio
+log_Lconv,true,true,Convective Luminosity,L_{☉},Luminosity
+log_Lconv_div_L,true,true,L_conv/L,,Luminosity Ratio
+mixing_type,false,false,Mixing Type,,Mixing Type
+log_D_mix,true,true,Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_mix_non_rotation,true,true,Non-Rotation Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_mix_rotation,true,true,Rotation Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_conv,true,true,Convective Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_leftover,true,true,Leftover Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_semi,true,true,Semiconvective Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_ovr,true,true,Overshoot Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_thrm,true,true,Thermohaline Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_minimum,true,true,Minimum Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_rayleigh_taylor,true,true,Rayleigh-Taylor Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_anon,true,true,Anonymous Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_D_omega,true,true,Rotation Diffusion Coefficient,cm²/s,Diffusion Coefficient
+log_sig_mix,true,true,Mixing Flow,g/s,Mass Flow Rate
+dominant_isoA_for_thermohaline,false,false,Dominant A for Thermohaline,,Mass Number
+dominant_isoZ_for_thermohaline,false,false,Dominant Z for Thermohaline,,Atomic Number
+gradL_composition_term,false,false,∇_L Composition Term,,Temperature Gradient
+mix_type,false,false,Mixing Type,,Mixing Type
+tau,false,false,Optical Depth,,Optical Depth
+log_column_depth,true,true,Column Depth,g/cm²,Column Depth
+log_radial_depth,true,true,Radial Depth,cm,Radial Depth
+logtau,true,true,Optical Depth,,Optical Depth
+tau_eff,false,false,Effective Optical Depth,,Optical Depth
+tau_eff_div_tau,false,false,τ_eff/τ,,Optical Depth Ratio
+omega,false,false,Angular Velocity,rad/s,Angular Velocity
+log_omega,true,true,Angular Velocity,rad/s,Angular Velocity
+log_j_rot,true,true,Specific Angular Momentum,cm²/s,Specific Angular Momentum
+log_J_div_M53,true,true,J/M^(5/3),,Angular Momentum Ratio
+log_J_inside,true,true,Interior Angular Momentum,g·cm²/s,Angular Momentum
+shear,false,false,Shear,,Shear
+log_abs_shear,true,true,|Shear|,,Shear
+richardson_number,false,false,Richardson Number,,Richardson Number
+i_rot,false,false,Specific Moment of Inertia,cm²,Specific Moment of Inertia
+j_rot,false,false,Specific Angular Momentum,cm²/s,Specific Angular Momentum
+v_rot,false,false,Rotational Velocity,km/s,Velocity
+w_div_w_crit_roche,false,false,Ω/Ω_crit (Roche),,Angular Velocity Ratio
+fp_rot,false,false,Rotation Pressure Factor,,Factor
+ft_rot,false,false,Rotation Temperature Factor,,Factor
+ft_rot_div_fp_rot,false,false,Temperature/Pressure Rotation Factor,,Factor Ratio
+log_am_nu_non_rot,true,true,Non-Rotation Viscosity,cm²/s,Viscosity
+log_am_nu_rot,true,true,Rotation Viscosity,cm²/s,Viscosity
+log_am_nu,true,true,Total Viscosity,cm²/s,Viscosity
+r_polar,false,false,Polar Radius,R_{☉},Radius
+log_r_polar,true,true,Polar Radius,R_{☉},Radius
+r_equatorial,false,false,Equatorial Radius,R_{☉},Radius
+log_r_equatorial,true,true,Equatorial Radius,R_{☉},Radius
+r_e_div_r_p,false,false,r_eq/r_polar,,Radius Ratio
+omega_crit,false,false,Critical Angular Velocity,rad/s,Angular Velocity
+omega_div_omega_crit,false,false,Ω/Ω_crit,,Angular Velocity Ratio
+am_log_nu_omega,true,true,Ω Viscosity,cm²/s,Viscosity
+am_log_nu_j,true,true,j Viscosity,cm²/s,Viscosity
+am_log_nu_rot,true,true,Rotation Viscosity,cm²/s,Viscosity
+am_log_nu_non_rot,true,true,Non-Rotation Viscosity,cm²/s,Viscosity
+am_log_sig_omega,true,true,Ω Mixing Flow,g/s,Mass Flow Rate
+am_log_sig_j,true,true,j Mixing Flow,g/s,Mass Flow Rate
+am_log_sig,true,true,Mixing Flow,g/s,Mass Flow Rate
+am_log_D_visc,true,true,Viscous Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_D_DSI,true,true,DSI Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_D_SH,true,true,Solberg-Hoiland Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_D_SSI,true,true,SSI Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_D_ES,true,true,Eddington-Sweet Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_D_GSF,true,true,GSF Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_D_ST,true,true,Spruit Dynamo Diffusion Coefficient,cm²/s,Diffusion Coefficient
+am_log_nu_ST,true,true,Spruit Dynamo Viscosity,cm²/s,Viscosity
+dynamo_log_B_r,true,true,Radial Magnetic Field,G,Magnetic Field
+dynamo_log_B_phi,true,true,Toroidal Magnetic Field,G,Magnetic Field
+am_domega_dlnR,false,false,∂Ω/∂ln R,,Angular Velocity Gradient
+log_abs_dlnR_domega,true,true,|∂ln R/∂Ω|,,Angular Velocity Gradient
+w_div_w_crit_roche2,false,false,Ω/Ω_crit (Roche, alternative),,Angular Velocity Ratio
+e_field,false,false,Electric Field,statV/cm,Electric Field
+log_e_field,true,true,Electric Field,statV/cm,Electric Field
+g_field_element_diffusion,false,false,Gravitational Field (diffusion),cm/s²,Acceleration
+log_g_field_element_diffusion,true,true,Gravitational Field (diffusion),cm/s²,Acceleration
+eE_div_mg_element_diffusion,false,false,eE/(mg) (diffusion),,Electric/Gravitational Ratio
+log_eE_div_mg_element_diffusion,true,true,eE/(mg) (diffusion),,Electric/Gravitational Ratio
+edv_h1,false,false,^{1}H Diffusion Velocity,cm/s,Velocity
+edv_he4,false,false,^{4}He Diffusion Velocity,cm/s,Velocity
+edv_o16,false,false,^{16}O Diffusion Velocity,cm/s,Velocity
+eps_WD_sedimentation,false,false,WD Sedimentation Energy,erg/g/s,Energy Generation
+log_eps_WD_sedimentation,true,true,WD Sedimentation Energy,erg/g/s,Energy Generation
+eps_diffusion,false,false,Diffusion Energy,erg/g/s,Energy Generation
+log_eps_diffusion,true,true,Diffusion Energy,erg/g/s,Energy Generation
+diffusion_D_h1,false,false,^{1}H Self-Diffusion Coefficient,cm²/s,Diffusion Coefficient
+diffusion_dX_h1,false,false,^{1}H Mass Fraction Change,,Mass Fraction Change
+diffusion_dX_he4,false,false,^{4}He Mass Fraction Change,,Mass Fraction Change
+diffusion_dX_n20,false,false,^{20}Ne Mass Fraction Change,,Mass Fraction Change
+v_rad_h1,false,false,^{1}H Radiative Velocity,cm/s,Velocity
+v_rad_he4,false,false,^{4}He Radiative Velocity,cm/s,Velocity
+v_rad_ne20,false,false,^{20}Ne Radiative Velocity,cm/s,Velocity
+log_g_rad_h1,true,true,^{1}H Radiative Acceleration,cm/s²,Acceleration
+log_g_rad_he4,true,true,^{4}He Radiative Acceleration,cm/s²,Acceleration
+log_g_rad_ne20,true,true,^{20}Ne Radiative Acceleration,cm/s²,Acceleration
+eps_phase_separation,false,false,Phase Separation Energy,erg/g/s,Energy Generation
+brunt_N2,false,false,Brunt-Väisälä Frequency²,s⁻²,Frequency²
+brunt_N2_structure_term,false,false,Brunt N² (structure),s⁻²,Frequency²
+brunt_N2_composition_term,false,false,Brunt N² (composition),s⁻²,Frequency²
+log_brunt_N2_structure_term,true,true,Brunt N² (structure),s⁻²,Frequency²
+log_brunt_N2_composition_term,true,true,Brunt N² (composition),s⁻²,Frequency²
+brunt_A,false,false,Brunt A Parameter,,Brunt Parameter
+brunt_A_div_x2,false,false,Brunt A/x²,,Brunt Parameter
+brunt_N2_dimensionless,false,false,Brunt N² (dimensionless),,Frequency²
+brunt_N_dimensionless,false,false,Brunt N (dimensionless),,Frequency
+brunt_frequency,false,false,Brunt Frequency,cyc/d,Frequency
+brunt_N,false,false,Brunt-Väisälä Frequency,s⁻¹,Frequency
+log_brunt_N,true,true,Brunt-Väisälä Frequency,s⁻¹,Frequency
+log_brunt_N2,true,true,Brunt-Väisälä Frequency²,s⁻²,Frequency²
+log_brunt_N2_dimensionless,true,true,Brunt N² (dimensionless),,Frequency²
+brunt_B,false,false,Brunt B Parameter,,Brunt Parameter
+brunt_nonB,false,false,Brunt Non-B Parameter,,Brunt Parameter
+log_brunt_B,true,true,Brunt B Parameter,,Brunt Parameter
+log_brunt_nonB,true,true,Brunt Non-B Parameter,,Brunt Parameter
+sign_brunt_N2,false,false,Sign of Brunt N²,,Sign
+brunt_nu,false,false,Brunt Frequency,μHz,Frequency
+log_brunt_nu,true,true,Brunt Frequency,μHz,Frequency
+lamb_S,false,false,Lamb Frequency (l=1),rad/s,Frequency
+lamb_S2,false,false,Lamb Frequency² (l=1),rad²/s²,Frequency²
+lamb_Sl1,false,false,Lamb Frequency (l=1),μHz,Frequency
+lamb_Sl2,false,false,Lamb Frequency (l=2),μHz,Frequency
+lamb_Sl3,false,false,Lamb Frequency (l=3),μHz,Frequency
+lamb_Sl10,false,false,Lamb Frequency (l=10),μHz,Frequency
+log_lamb_Sl1,true,true,Lamb Frequency (l=1),μHz,Frequency
+log_lamb_Sl2,true,true,Lamb Frequency (l=2),μHz,Frequency
+log_lamb_Sl3,true,true,Lamb Frequency (l=3),μHz,Frequency
+log_lamb_Sl10,true,true,Lamb Frequency (l=10),μHz,Frequency
+brunt_N_div_r_integral,false,false,∫(N/r)dr,,Integral
+k_r_integral,false,false,∫k_r dr,cm,Length
+brunt_N2_sub_omega2,false,false,N² - Ω²,s⁻²,Frequency²
+sl2_sub_omega2,false,false,S_l² - Ω²,s⁻²,Frequency²
+v,false,false,Velocity,cm/s,Velocity
+v_div_v_escape,false,false,v/v_{escape},,Velocity Ratio
+v_div_vesc,false,false,v/v_{esc},,Velocity Ratio
+v_kms,false,false,Velocity,km/s,Velocity
+log_v_escape,true,true,Escape Velocity,cm/s,Velocity
+u,false,false,Radial Velocity,cm/s,Velocity
+u_face,false,false,Face Radial Velocity,cm/s,Velocity
+P_face,false,false,Face Pressure,dyn/cm²,Pressure
+extra_heat,false,false,Extra Heat,erg/g/s,Energy Generation
+extra_L,false,false,Extra Luminosity,L_{☉},Luminosity
+log_extra_L,true,true,Extra Luminosity,L_{☉},Luminosity
+log_irradiation_heat,true,true,Irradiation Heat,erg/g/s,Energy Generation
+extra_jdot,false,false,Extra Angular Momentum Change,g·cm²/s²,Torque
+extra_omegadot,false,false,Extra Angular Velocity Change,rad/s²,Angular Acceleration
+extra_opacity_factor,false,false,Extra Opacity Factor,,Factor
+extra_diffusion_factor_h1,false,false,^{1}H Extra Diffusion Factor,,Factor
+extra_diffusion_factor_he4,false,false,^{4}He Extra Diffusion Factor,,Factor
+extra_diffusion_factor_o16,false,false,^{16}O Extra Diffusion Factor,,Factor
+k,false,false,Zone Number,,Zone Number

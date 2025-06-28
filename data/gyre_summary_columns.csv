@@ -1,0 +1,60 @@
+column_name,data_logarithmic,display_logarithmic,series_name,units,axis_name
+id,false,false,Mode ID,,Mode ID
+l,false,false,Harmonic Degree,,Harmonic Degree
+m,false,false,Azimuthal Order,,Azimuthal Order
+n_p,false,false,Acoustic Winding Number,,Winding Number
+n_g,false,false,Gravity Winding Number,,Winding Number
+n_pg,false,false,Radial Order,,Radial Order
+omega_re,false,false,Dimensionless Frequency (Real),,Frequency
+omega_im,false,false,Dimensionless Frequency (Imag),,Frequency
+freq_re,false,false,Frequency (Real),μHz,Frequency
+freq_im,false,false,Frequency (Imag),μHz,Frequency
+freq,false,false,Frequency,μHz,Frequency
+log_freq,true,true,Frequency,μHz,Frequency
+f_T,false,false,Temperature Perturbation Amplitude,,Perturbation
+f_g,false,false,Gravity Perturbation Amplitude,,Perturbation
+psi_T,false,false,Temperature Perturbation Phase,rad,Phase
+psi_g,false,false,Gravity Perturbation Phase,rad,Phase
+eta,false,false,Normalized Growth Rate,,Growth Rate
+log_eta,true,true,Normalized Growth Rate,,Growth Rate
+E,false,false,Mode Inertia,M_{☉} R_{☉}²,Inertia
+log_E,true,true,Mode Inertia,M_{☉} R_{☉}²,Inertia
+E_p,false,false,Acoustic Mode Inertia,M_{☉} R_{☉}²,Inertia
+log_E_p,true,true,Acoustic Mode Inertia,M_{☉} R_{☉}²,Inertia
+E_g,false,false,Gravity Mode Inertia,M_{☉} R_{☉}²,Inertia
+log_E_g,true,true,Gravity Mode Inertia,M_{☉} R_{☉}²,Inertia
+E_norm,false,false,Normalized Inertia,,Inertia
+E_ratio,false,false,Inertia Ratio,,Ratio
+H,false,false,Mode Energy,GM_{☉}²/R_{☉},Energy
+log_H,true,true,Mode Energy,GM_{☉}²/R_{☉},Energy
+W,false,false,Mode Work,GM_{☉}²/R_{☉},Work
+log_W,true,true,Mode Work,GM_{☉}²/R_{☉},Work
+W_eps,false,false,Energy Generation Work,GM_{☉}²/R_{☉},Work
+xi_r_ref,false,false,Radial Displacement,R_{☉},Displacement
+log_xi_r_ref,true,true,Radial Displacement,R_{☉},Displacement
+xi_h_ref,false,false,Horizontal Displacement,R_{☉},Displacement
+log_xi_h_ref,true,true,Horizontal Displacement,R_{☉},Displacement
+eul_Phi_ref,false,false,Eulerian Potential,GM_{☉}/R_{☉},Potential
+lag_S_ref,false,false,Lagrangian Entropy Perturbation,c_p,Perturbation
+lag_L_ref,false,false,Lagrangian Luminosity Perturbation,L_{☉},Perturbation
+Omega_rot_ref,false,false,Rotation Frequency,rad/s,Rotation
+domega_rot,false,false,Rotational Splitting,,Splitting
+dfreq_rot,false,false,Rotational Splitting,μHz,Splitting
+beta,false,false,Rotation Splitting Coefficient,,Coefficient
+M_star,false,false,Stellar Mass,M_{☉},Mass
+log_M_star,true,true,Stellar Mass,M_{☉},Mass
+R_star,false,false,Stellar Radius,R_{☉},Radius
+log_R_star,true,true,Stellar Radius,R_{☉},Radius
+L_star,false,false,Stellar Luminosity,L_{☉},Luminosity
+log_L_star,true,true,Stellar Luminosity,L_{☉},Luminosity
+Delta_p,false,false,Large Frequency Separation,μHz,Frequency Separation
+log_Delta_p,true,true,Large Frequency Separation,μHz,Frequency Separation
+Delta_g,false,false,Buoyancy Frequency Separation,s,Period Separation
+log_Delta_g,true,true,Buoyancy Frequency Separation,s,Period Separation
+dPi_1,false,false,Dipole Period Spacing,s,Period Spacing
+log_dPi_1,true,true,Dipole Period Spacing,s,Period Spacing
+q,false,false,Acoustic Cutoff Parameter,,Parameter
+lambda,false,false,Spin Parameter,,Parameter
+x_ref,false,false,Reference Fractional Radius,,Radius
+tau_ss,false,false,Steady-State Torque,GM_{☉}²/R_{☉},Torque
+tau_tr,false,false,Transient Torque,GM_{☉}²/R_{☉},Torque

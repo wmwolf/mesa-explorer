@@ -12,14 +12,29 @@
 				fill: var(--bs-body-color);
 				stroke: var(--bs-body-color);
 			}
-			</style>
+		</style>
 	</head>
+
 	<!-- Development -->
 	<!-- <script src="/js/color-modes.js"></script> -->
 	<!-- Production -->
 	<script src="/mesa-explorer/js/color-modes.js"></script>
 
 	<body onload="setup()">
+		<!-- Toast notification container -->
+		<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+			<div id="preferencesToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+				<div class="toast-header">
+					<i class="bi bi-gear-fill me-2 text-primary"></i>
+					<strong class="me-auto">Preferences Loaded</strong>
+					<button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+				<div class="toast-body">
+					Your saved style preferences have been applied.
+				</div>
+			</div>
+		</div>
+
 		<nav class="navbar navbar-expand-lg border-bottom border-bottom-dark z-index-3">
 			<div class="container">
 				<a class="navbar-brand" href="#">
@@ -80,7 +95,15 @@
 								Column References
 							</a>
 							<ul class="dropdown-menu">
-								<li><h6 class="dropdown-header">MESA r24.03.1</h6></li>
+								<li><h6 class="dropdown-header">MESA r24.08.1</h6></li>
+								<li><a class="dropdown-item" href="https://raw.githubusercontent.com/MESAHub/mesa/release/r24.08.1/star/defaults/history_columns.list" target="_blank"><i class="bi bi-clock-fill"></i><span class='ms-1'>History</span></a></li>
+								<li><a class="dropdown-item" href="https://raw.githubusercontent.com/MESAHub/mesa/release/r24.08.1/star/defaults/profile_columns.list" target="_blank"><i class="bi bi-star-half"></i><span class='ms-1'>Profile</span></a></li>
+								<li><hr class="dropdown-divider"></li>
+								<li><h6 class="dropdown-header">GYRE 8.0</h6></li>
+								<li><a class="dropdown-item" href="https://gyre.readthedocs.io/en/v8.0/ref-guide/output-files/summary-files.html" target="_blank"><i class="bi bi-broadcast"></i><span class='ms-1'>GYRE Summary</span></a></li>
+																<li><hr class="dropdown-divider"></li>
+
+																<li><h6 class="dropdown-header">MESA r24.03.1</h6></li>
 								<li><a class="dropdown-item" href="https://raw.githubusercontent.com/MESAHub/mesa/release/r24.03.1/star/defaults/history_columns.list" target="_blank"><i class="bi bi-clock-fill"></i><span class='ms-1'>History</span></a></li>
 								<li><a class="dropdown-item" href="https://raw.githubusercontent.com/MESAHub/mesa/release/r24.03.1/star/defaults/profile_columns.list" target="_blank"><i class="bi bi-star-half"></i><span class='ms-1'>Profile</span></a></li>
 								<li><hr class="dropdown-divider"></li>
@@ -125,9 +148,14 @@
 			</div>
 		</nav>
 		<div class="container-sm mt-3">
-			<div class="row">
-				<div class="col-sm-4">
-					<h1>Files</h1>
+			<div class="row" id="main-layout">
+				<div class="col-sm-4" id="files-column">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<h1>Files</h1>
+						<button class="btn btn-outline-secondary btn-sm" type="button" id="files-hide-toggle">
+							<i class="bi bi-eye-slash"></i>
+						</button>
+					</div>
 					<div class="my-2">
 						<label for="mesa-input" class="form-label" onchange="file_manager.load_file(this)">Input File(s) (history, profile, or GYRE summary)</label>
 						<input class="form-control form-control" id="mesa-input" type="file" multiple />
@@ -139,430 +167,377 @@
 							Note that you can use shift and control/command keys to select multiple files to import at once within the file selector.
 						</p>
 					</div>
+					<div class="mb-2">
+						<div class="btn-group w-100" role="group" aria-label="File selection mode">
+							<button type="button" class="btn btn-outline-primary" id="single-file-mode">
+								Single File
+							</button>
+							<button type="button" class="btn btn-outline-primary active" id="multi-file-mode">
+								Multi-File
+							</button>
+						</div>
+					</div>
+					<div class="mb-2">
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="select-all-files">
+							<label class="form-check-label" for="select-all-files">
+								Select All Files
+							</label>
+						</div>
+					</div>
 					<div class="list-group" id="file-list"></div>
 				</div>
-				<div class="col-sm-8">
+				<div class="col-sm-8" id="visualization-column">
 					<h1>Visualization</h1>
-					<div class="bg-body py-2 rounded border border-2 ratio object-fit-contain sticky-top mb-2" style="--bs-aspect-ratio: 61.8%;">
+					<div class="bg-body py-2 rounded border border-2 ratio object-fit-contain mb-2" style="--bs-aspect-ratio: 61.8%;" id="main-plot-container">
 						<svg id="plot" class="object-fit-contain pt-2" width="100%" height="100%"></svg>
+					</div>
+					
+					<!-- Tool Palette for Plot Interaction -->
+					<div class="btn-group w-100 mt-2" role="group" aria-label="Plot interaction tools" id="plot-tools">
+						<button type="button" class="btn btn-outline-secondary active" id="inspector-tool">
+							<i class="bi bi-info-circle"></i> Inspector
+						</button>
+						<button type="button" class="btn btn-outline-secondary" id="box-zoom-tool">
+							<i class="bi bi-zoom-in"></i> Box Zoom
+						</button>
+						<button type="button" class="btn btn-outline-secondary" id="pan-tool">
+							<i class="bi bi-arrows-move"></i> Pan
+						</button>
+						<button type="button" class="btn btn-outline-secondary" id="reset-view-tool">
+							<i class="bi bi-arrow-counterclockwise"></i> Reset View
+						</button>
+					</div>
+					
+					<!-- Miniature floating plot -->
+					<div id="mini-plot-container" class="position-fixed bg-body border border-2 rounded shadow" style="top: 20px; right: 20px; width: 300px; height: 185px; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+						<svg id="mini-plot" width="100%" height="100%"></svg>
+					</div>
+
+					<!-- Files Summary Bar (shown when files panel is hidden) -->
+					<div class="alert alert-info d-none mt-3" id="files-summary-bar" role="alert">
+						<div class="d-flex justify-content-between align-items-center">
+							<div>
+								<i class="bi bi-file-earmark-text me-2"></i>
+								<span id="files-summary-text">No files loaded</span>
+							</div>
+							<div>
+								<button class="btn btn-outline-info btn-sm me-2" onclick="document.getElementById('mesa-input').click()">
+									<i class="bi bi-upload"></i> Add Files
+								</button>
+								<button class="btn btn-info btn-sm" id="files-show-toggle">
+									<i class="bi bi-eye"></i> Show Files Panel
+								</button>
+							</div>
+						</div>
 					</div>
 
 					<div class="text-center mt-4">
 						<!-- <button class="btn btn-secondary btn-lg" type="button" id="redraw">Redraw</button> -->
-						<button class="btn btn-success btn-lg" type="button" id="download">Download SVG</button>
+						<button class="btn btn-primary btn-lg" type="button" data-bs-toggle="offcanvas" data-bs-target="#styleOffcanvas" aria-controls="styleOffcanvas">
+							<i class="bi bi-palette"></i> Style Controls
+						</button>
+						<div class="btn-group ms-2">
+							<button class="btn btn-success btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+								<i class="bi bi-download"></i> Download
+							</button>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#" id="download-svg">
+									<i class="bi bi-filetype-svg"></i> Download SVG
+								</a></li>
+								<li><a class="dropdown-item" href="#" id="download-png">
+									<i class="bi bi-image"></i> Download PNG
+								</a></li>
+							</ul>
+						</div>
 					</div>
 
 					<div id="basics" class="my-4">
 						<h2>Basic Information</h2>
 						<div class="border rounded p-3">
-							<div class="row align-items-center" id="x-data">
-								<h3><var>x</var>-axis</h3>
-							</div>
-							<form action="javascript:void(0);">
-								<div class="row">
-
-									<div class="col-md-8">
-										<div class="dropdown d-grid mt-2">
-											<button id="x-label" class="btn btn-primary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select <var>x</var> quantity</button>
-											<div class="dropdown-menu">
-												<div class="form-floating mb-2 mx-2">
-													<input class="form-control" type="text" id="x-search" placeholder="Search" />
-													<label for="x-search">Search</label>
+							<div class="row" id="axis-controls-container">
+								<div class="col-12" id="x-axis-container">
+									<div class="row align-items-center" id="x-data">
+										<h3><var>x</var>-axis</h3>
+									</div>
+							
+							<!-- Axis Controls Section -->
+							<div class="bg-body-tertiary border rounded p-3 mb-3" id="x-axis-controls-section">
+								<h5>
+									<button class="btn btn-link p-0 text-decoration-none text-dark text-body-emphasis fw-normal d-flex align-items-center w-100" type="button" data-bs-toggle="collapse" data-bs-target="#x-axis-settings-collapse" aria-expanded="false" aria-controls="x-axis-settings-collapse">
+										<i class="bi bi-chevron-right me-2" id="x-axis-chevron"></i>
+										Axis Settings
+									</button>
+								</h5>
+								<div class="collapse mb-3" id="x-axis-settings-collapse">
+									<form id="x-axis-controls" action="javascript:void(0);">
+									<div class="row">
+										<div class="col-md-4 axis-rescale">
+											<h6>Scale</h6>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type="linear" checked />
+												<label class="form-check-label" for="x-scale-linear">Linear</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type="log" />
+												<label class="form-check-label" for="x-scale-log">Logarithmic</label>
+											</div>
+										</div>
+										<div class="col-md-8 limits">
+											<h6>Limits</h6>
+											<div class="row">
+												<div class="col">
+													<div class="form-floating">
+														<input type="number" class="form-control" id="x-axis-left" data-axis="x" data-lim="min" aria-label="Left limit for x-axis" />
+														<label for="x-axis-left">Left Limit</label>
+													</div>
 												</div>
-												<hr class="dropdown-divider" />
-												<div id="x-choices"></div>
+												<div class="col">
+													<div class="form-floating">
+														<input type="number" class="form-control" id="x-axis-right" data-axis="x" data-lim="max" aria-label="Right limit for x-axis" />
+														<label for="x-axis-right">Right Limit</label>
+													</div>
+												</div>
+												<div class="col-auto d-flex align-items-end">
+													<button type="button" class="btn btn-outline-secondary" id="x-invert-button" title="Invert axis direction" aria-label="Invert x-axis direction" style="height: 58px;">
+														<i class="bi bi-arrow-left-right"></i>
+													</button>
+												</div>
 											</div>
 										</div>
 									</div>
-									<div class="col-md-8 mt-2">
+								</form>
+							</div>
+							
+							<form action="javascript:void(0);">
+								<!-- X-axis Label Field -->
+								<div class="row mb-2">
+									<div class="col-md-8">
 										<div class="form-floating">
-											<input type="text" class="form-control axis-label-field" id="x-axis-label" placeholder="<var>x</var>-axis label" />
+											<input type="text" class="form-control axis-label-field" id="x-axis-label" placeholder="x-axis label" />
 											<label for="x-axis-label"><var>x</var>-axis label</label>
 										</div>
 									</div>
 								</div>
-
-							</form>
-							<div class="row mt-3">
-								<h3>Left <var>y</var>-axis</h3>
-							</div>
-							<form action="javascript:void(0);">
-								<div class="row align-items-end" id="y-data">
-									<div class="col-md-8">
-										<div class="dropdown d-grid mt-2">
-											<button id="y-label" class="btn btn-primary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select <var>y</var> quantity</button>
-
-											<div class="dropdown-menu" id="y-choices">
-												<div class="form-floating mb-2 mx-2">
-													<input class="form-control" type="text" id="y-search" placeholder="Search" />
-													<label for="y-search">Search</label>
-												</div>
-												<hr class="dropdown-divider" />
-												<div id="y-choices"></div>
-											</div>
-										</div>
-										<div class="form-floating mt-2">
-											<input type="text" class="form-control axis-label-field" id="y-axis-label" placeholder="<var>y</var>-axis label" />
-											<label for="y-axis-label"><var>y</var>-axis label</label>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-check form-check-inline">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="y" data-style="line" id="y-plot-line" checked />
-											<label class="form-check-label" for="y-plot-line">Line Plot</label>
-										</div>
-										<div class="form-check form-check-inline mb-2">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="y" data-style="scatter" id="y-plot-scatter" />
-											<label class="form-check-label" for="y-plot-scatter">Scatter Plot</label>
-										</div>
-										<div class="form-floating">
-											<input type="number" class="form-control mark-every" data-axis="y" id="y-mark-every" disabled />
-											<label for="y-mark-every">Marker every <var>n</var> points</label>
-										</div>
-									</div>
-								</div>
-							</form>
-
-							<div class="row mt-3">
-								<div class="col-xs-12">
-									<h3>Right <var>y</var>-axis</h3>
-								</div>
-							</div>
-							<form action="javascript:void(0);">
-								<div class="row align-items-end" id="yOther-data">
-									<div class="col-md-8">
-										<div class="dropdown d-grid mt-2">
-											<button id="yOther-label" class="btn btn-primary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select other <var>y</var> quantity</button>
-
-											<div class="dropdown-menu" id="y-choices">
-												<form action="javascript:void(0);">
+								
+								<!-- X-axis Column Selection and Data Transformation -->
+								<div class="border rounded p-3 mb-2 mt-3" id="x-series-container">
+									<div class="row">
+										<div class="col-md-8">
+											<div class="dropdown d-grid mb-2">
+												<button id="x-label" class="btn btn-primary btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Select <var>x</var> quantity</button>
+												<div class="dropdown-menu">
 													<div class="form-floating mb-2 mx-2">
-														<input class="form-control" type="text" id="yOther-search" placeholder="Search" />
-														<label for="yOther-search">Search</label>
+														<input class="form-control" type="text" id="x-search" placeholder="Search" />
+														<label for="x-search">Search</label>
 													</div>
-												</form>
-												<hr class="dropdown-divider" />
-												<div id="yOther-choices"></div>
+													<hr class="dropdown-divider" />
+													<div id="x-choices"></div>
+												</div>
 											</div>
 										</div>
-										<div class="form-floating mt-2">
-											<input type="text" class="form-control axis-label-field" id="yOther-axis-label" placeholder="Other <var>y</var>-axis label" />
-											<label for="yOther-axis-label">Other <var>y</var>-axis label</label>
-										</div>
 									</div>
-									<div class="col-md-4">
-										<div class="form-check form-check-inline">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="yOther" data-style="line" id="yOther-plot-line" checked />
-											<label class="form-check-label" for="yOther-plot-line">Line Plot</label>
+									
+									<!-- Data Transformation Controls -->
+									<div class="row mt-2">
+										<div class="col-md-6">
+											<h6>Rescale</h6>
+											<div class="form-check form-check-inline">
+												<input class="form-check-input x-data-transformation" type="radio" name="x-data-trans" id="x-data-trans-linear" data-axis="x" value="linear" checked />
+												<label class="form-check-label small" for="x-data-trans-linear"><em>x</em></label>
+											</div>
+											<div class="form-check form-check-inline">
+												<input class="form-check-input x-data-transformation" type="radio" name="x-data-trans" id="x-data-trans-log" data-axis="x" value="log" />
+												<label class="form-check-label small" for="x-data-trans-log">log<sub>10</sub>(<em>x</em>)</label>
+											</div>
+											<div class="form-check form-check-inline">
+												<input class="form-check-input x-data-transformation" type="radio" name="x-data-trans" id="x-data-trans-exp" data-axis="x" value="exp" />
+												<label class="form-check-label small" for="x-data-trans-exp">10<sup><em>x</em></sup></label>
+											</div>
 										</div>
-										<div class="form-check form-check-inline mb-2">
-											<input type="checkbox" class="form-check-input plot-style" data-axis="yOther" data-style="scatter" id="yOther-plot-scatter" />
-											<label class="form-check-label" for="yOther-plot-scatter">Scatter Plot</label>
-										</div>
-										<div class="form-floating">
-											<input type="number" class="form-control mark-every" data-axis="yOther" id="yOther-mark-every" disabled />
-											<label for="yOther-mark-every">Marker every <var>n</var> points</label>
+										<div class="col-md-6">
+											<div class="row">
+												<div class="col-6">
+													<div class="form-floating">
+														<input type="number" class="form-control x-data-transformation" id="x-data-zero" aria-label="Zero point for x-data." value="0" data-axis="x" />
+														<label for="x-data-zero" class="small">Zero-point</label>
+													</div>
+												</div>
+												<div class="col-6">
+													<div class="form-check mt-2">
+														<input class="form-check-input x-data-transformation" type="checkbox" value="" id="x-absval" data-axis="x" />
+														<label class="form-check-label small" for="x-absval">Absolute Value</label>
+													</div>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
-							</form>
-						</div>
-					</div>
-					<div class="my-4">
-						<h2>More Details</h2>
-						<div class="card">
-							<div class="card-header">
-								<ul class="nav nav-tabs nav-fill card-header-tabs" id="detail-tabs" role="tablist">
-									<li class="nav-item" role="presentation">
-										<button aria-current="true" class="nav-link active" id="x-detail" data-bs-toggle="tab" data-bs-target="#x-detail-pane" type="button" role="tab" aria-controls="x-detail-pane">
-											<var>x</var>-axis
-										</button>
-									</li>
-									<li class="nav-item" role="presentation">
-										<button aria-current="false" class="nav-link" id="y-detail" data-bs-toggle="tab" data-bs-target="#y-detail-pane" type="button" role="tab" aria-controls="y-detail-pane">
-											Left <var>y</var>-axis
-										</button>
-									</li>
-									<li class="nav-item" role="presentation">
-										<button aria-current="false" class="nav-link" id="yOther-detail" data-bs-toggle="tab" data-bs-target="#yOther-detail-pane" type="button" role="tab" aria-controls="yOther-detail-pane">
-											Right <var>y</var>-axis
-										</button>
-									</li>
-								</ul>
+									</form>
+								</div>
 							</div>
-							<div class="card-body tab-content">
-								<div class="tab-pane fade show active" id="x-detail-pane" aria-labelledby="#x-detail" tabindex="0">
-									<h4>Data Transformations</h3>
-									<form id="x-data-controls" action="javascript:void(0);">
-										<div class="row mb-3">
-											<div class="col-md-6">
-												<fieldset>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-linear" data-axis="x" value="linear" checked />
-														<label class="form-check-label" for="x-data-trans-linear"> Linear: <var>x</var> </label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-log" data-axis="x" value="log" />
-														<label class="form-check-label" for="x-data-trans-log">
-															Take log: log<sub>10</sub>(<var>x</var>)
-														</label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-logabs" data-axis="x" value="logabs" />
-														<label class="form-check-label" for="x-data-trans-logabs">
-															Take log of |<var>x</var>|: log<sub>10</sub>(|<var>x</var>|)
-														</label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="x-data-trans" id="x-data-trans-exp" data-axis="x" value="exp" />
-														<label class="form-check-label" for="x-data-trans-exp">
-															Exponentiate: 10<sup><var>x</var></sup>
-														</label>
-													</div>
-												</fieldset>
-											</div>
-											<div class="col-md-6">
-												<div class="form-floating mb-2 data-rezero">
-													<input type="number" class="form-control" id="x-data-zero" aria-label="Zero point for x-data." value="0" data-axis="x" />
-													<label for="x-data-zero">Zero-point</label>
-												</div>
-												<div class="form-floating mb-2 data-modulo">
-													<input type="number" class="form-control" id="x-data-modulo" aria-label="Modulo divisor for x-data." value="0" data-axis="x" />
-													<label for="x-data-modulo">Modulo</label>
-												</div>
-												<div class="form-check mb-2 data-absval">
-													<input class="form-check-input" type="checkbox" value="" id="x-absval" data-axis="x" />
-													<label class="form-check-label" for="x-absval">
-														Absolute Value
-													</label>
-												</div>
-												<!-- <div class="form-check mb-2 data-normalize">
-													<input class="form-check-input" type="checkbox" value="" id="x-normalize" data-axis="x" />
-													<label class="form-check-label" for="x-normalize">
-														Normalize
-													</label>
-												</div> -->
-											</div>
-										</div>
-									</form>
-									<form id="x-axis-controls" action="javascript:void(0);">
-										<div class="row">
-											<div class="col-md-4 axis-rescale">
-												<h4>Axis Scale</h4>
-												<div class="form-check">
-													<input class="form-check-input" type="radio" name="x-scale" id="x-scale-linear" data-scale="x" data-scale-type="linear" checked />
-													<label class="form-check-label" for="x-scale-linear">
-														Linear
-													</label>
-												</div>
-												<div class="form-check">
-													<input class="form-check-input" type="radio" name="x-scale" id="x-scale-log" data-scale="x" data-scale-type="log" />
-													<label class="form-check-label" for="x-scale-log">
-														Logarithmic
-													</label>
-												</div>
-											</div>
-											<div class="col-md-8 limits">
-												<h4>Axis Limits</h4>
-												<div class="row">
-													<div class="col">
-														<div class="form-floating">
-															<input type="number" class="form-control" id="x-axis-left" data-axis="x" data-lim="min" aria-label="Left limit for x-axis" />
-															<label for="x-axis-left">Left Limit</label>
-														</div>
-													</div>
-													<div class="col">
-														<div class="form-floating">
-															<input type="number" class="form-control" id="x-axis-right" data-axis="x" data-lim="max" aria-label="Right limit for x-axis" />
-															<label for="x-axis-right">Right Limit</label>
-														</div>
-													</div>
-												</div>
-											</div>
-										</div>
-									</form>
-								</div>
-								<div class="tab-pane fade" id="y-detail-pane" aria-labelledby="#y-detail" tabindex="0">
-									<h4>Data Transformations</h4>
-									<form id="y-data-controls" action="javascript:void(0);">
-										<div class="row mb-3">
-											<div class="col-md-6">
-												<fieldset>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-linear" data-axis="y" value="linear" checked />
-														<label class="form-check-label" for="y-data-trans-linear"> Linear: <var>y</var> </label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-log" data-axis="y" value="log" />
-														<label class="form-check-label" for="y-data-trans-log">
-															Take log: log<sub>10</sub>(<var>y</var>)
-														</label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-logabs" data-axis="y" value="logabs" />
-														<label class="form-check-label" for="y-data-trans-logabs">
-															Take log of |<var>y</var>|: log<sub>10</sub>(|<var>y</var>|)
-														</label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="y-data-trans" id="y-data-trans-exp" data-axis="y" value="exp" />
-														<label class="form-check-label" for="y-data-trans-exp">
-															Exponentiate: 10<sup><var>y</var></sup>
-														</label>
-													</div>
-												</fieldset>
-											</div>
-											<div class="col-md-6">
-												<div class="form-floating mb-2 data-rezero">
-													<input type="number" class="form-control" id="y-data-zero" aria-label="Zero point for y-data." value="0" data-axis="y" />
-													<label for="y-data-zero">Zero-point</label>
-												</div>
-												<div class="form-floating mb-2 data-modulo">
-													<input type="number" class="form-control" id="y-data-modulo" aria-label="Modulo divisor for y-data." value="0" data-axis="y" />
-													<label for="y-data-modulo">Modulo</label>
-												</div>
-												<div class="form-check mb-2 data-absval">
-													<input class="form-check-input" type="checkbox" value="" id="y-absval" data-axis="y" />
-													<label class="form-check-label" for="y-absval">
-														Absolute Value
-													</label>
-												</div>
-												<!-- <div class="form-check mb-2 data-normalize">
-													<input class="form-check-input" type="checkbox" value="" id="y-normalize" data-axis="y" />
-													<label class="form-check-label" for="y-normalize">
-														Normalize
-													</label>
-												</div> -->
-											</div>
-										</div>
-									</form>
+								<div class="col-12" id="y-axes-container">
+									<div class="row">
+										<h3>Left <var>y</var>-axis</h3>
+									</div>
+							
+							<!-- Axis Controls Section -->
+							<div class="bg-body-tertiary border rounded p-3 mb-3" id="y-axis-controls-section">
+								<h5>
+									<button class="btn btn-link p-0 text-decoration-none text-dark text-body-emphasis fw-normal d-flex align-items-center w-100" type="button" data-bs-toggle="collapse" data-bs-target="#y-axis-settings-collapse" aria-expanded="false" aria-controls="y-axis-settings-collapse">
+										<i class="bi bi-chevron-right me-2" id="y-axis-chevron"></i>
+										Axis Settings
+									</button>
+								</h5>
+								<div class="collapse mb-3" id="y-axis-settings-collapse">
 									<form id="y-axis-controls" action="javascript:void(0);">
-										<div class="row">
-											<div class="col-md-4 axis-rescale">
-												<h4>Axis Scale</h4>
-												<div class="form-check">
-													<input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type="linear" checked />
-													<label class="form-check-label" for="y-scale-linear">
-														Linear
-													</label>
-												</div>
-												<div class="form-check">
-													<input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type="log" />
-													<label class="form-check-label" for="y-scale-log">
-														Logarithmic
-													</label>
-												</div>
+									<div class="row">
+										<div class="col-md-4 axis-rescale">
+											<h6>Scale</h6>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" name="y-scale" id="y-scale-linear" data-scale="y" data-scale-type="linear" checked />
+												<label class="form-check-label" for="y-scale-linear">Linear</label>
 											</div>
-											<div class="col-md-8 limits">
-												<h4>Axis Limits</h4>
-												<div class="row">
-													<div class="col">
-														<div class="form-floating">
-															<input type="number" class="form-control" id="y-axis-bottom" data-axis="y" data-lim="min" aria-label="Bottom limit for y-axis" />
-															<label for="y-axis-bottom">Bottom Limit</label>
-														</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" name="y-scale" id="y-scale-log" data-scale="y" data-scale-type="log" />
+												<label class="form-check-label" for="y-scale-log">Logarithmic</label>
+											</div>
+										</div>
+										<div class="col-md-8 limits">
+											<h6>Limits</h6>
+											<div class="row">
+												<div class="col">
+													<div class="form-floating">
+														<input type="number" class="form-control" id="y-axis-bottom" data-axis="y" data-lim="min" aria-label="Bottom limit for y-axis" />
+														<label for="y-axis-bottom">Bottom Limit</label>
 													</div>
-													<div class="col">
-														<div class="form-floating">
-															<input type="number" class="form-control" id="y-axis-top" data-axis="y" data-lim="max" aria-label="Top limit for y-axis" />
-															<label for="y-axis-top">Top Limit</label>
-														</div>
+												</div>
+												<div class="col">
+													<div class="form-floating">
+														<input type="number" class="form-control" id="y-axis-top" data-axis="y" data-lim="max" aria-label="Top limit for y-axis" />
+														<label for="y-axis-top">Top Limit</label>
 													</div>
+												</div>
+												<div class="col-auto d-flex align-items-end">
+													<button type="button" class="btn btn-outline-secondary" id="y-invert-button" title="Invert axis direction" aria-label="Invert y-axis direction" style="height: 58px;">
+														<i class="bi bi-arrow-down-up"></i>
+													</button>
 												</div>
 											</div>
 										</div>
+									</div>
+								</form>
+							</div>
+							
+							<form action="javascript:void(0);">
+								<div id="y-data">
+									<!-- Axis Label -->
+									<div class="row mb-3">
+										<div class="col-md-8">
+											<div class="form-floating">
+												<input type="text" class="form-control axis-label-field" id="y-axis-label" placeholder="Left y-axis label" />
+												<label for="y-axis-label">Left <var>y</var>-axis label</label>
+											</div>
+										</div>
+									</div>
+									
+									<!-- Series Container -->
+									<div id="y-series-container" class="mt-3">
+										<!-- Series will be dynamically added here -->
+									</div>
+									
+									<!-- Add Series Button -->
+									<div class="row mt-2">
+										<div class="col-12">
+											<button type="button" class="btn btn-outline-primary w-100" id="y-add-series">
+												<i class="bi bi-plus-circle"></i> Add Series to Left Axis
+											</button>
+										</div>
+									</div>
+								</div>
 									</form>
 								</div>
-								<div class="tab-pane fade" id="yOther-detail-pane" aria-labelledby="#yOther-detail" tabindex="0">
-									<h4>Data Transformations</h4>
-									<form id="yOther-data-controls" action="javascript:void(0);">
-										<div class="row mb-3">
-											<div class="col-md-6">
-												<fieldset>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-linear" data-axis="yOther" value="linear" checked />
-														<label class="form-check-label" for="yOther-data-trans-linear"> Linear: <var>y</var> </label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-log" data-axis="yOther" value="log" />
-														<label class="form-check-label" for="yOther-data-trans-log">
-															Take log: log<sub>10</sub>(<var>y</var>)
-														</label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-logabs" data-axis="yOther" value="logabs" />
-														<label class="form-check-label" for="yOther-data-trans-logabs">
-															Take log of |<var>y</var>|: log<sub>10</sub>(|<var>y</var>|)
-														</label>
-													</div>
-													<div class="form-check mb-2 data-rescale">
-														<input class="form-check-input" type="radio" name="yOther-data-trans" id="yOther-data-trans-exp" data-axis="yOther" value="exp" />
-														<label class="form-check-label" for="yOther-data-trans-exp">
-															Exponentiate: 10<sup><var>y</var></sup>
-														</label>
-													</div>
-												</fieldset>
-											</div>
-											<div class="col-md-6">
-												<div class="form-floating mb-2 data-rezero">
-													<input type="number" class="form-control" id="yOther-data-zero" aria-label="Zero point for other y-data." value="0" data-axis="yOther" />
-													<label for="yOther-data-zero">Zero-point</label>
-												</div>
-												<div class="form-floating mb-2 data-modulo">
-													<input type="number" class="form-control" id="yOther-data-modulo" aria-label="Modulo divisor for other y-data." value="0" data-axis="yOther" />
-													<label for="yOther-data-modulo">Modulo</label>
-												</div>
-												<div class="form-check mb-2 data-absval">
-													<input class="form-check-input" type="checkbox" value="" id="yOther-absval" data-axis="yOther" />
-													<label class="form-check-label" for="yOther-absval">
-														Absolute Value
-													</label>
-												</div>
-												<!-- <div class="form-check mb-2 data-normalize">
-													<input class="form-check-input" type="checkbox" value="" id="yOther-normalize" data-axis="yOther" />
-													<label class="form-check-label" for="yOther-normalize">
-														Normalize
-													</label>
-												</div> -->
-											</div>
-										</div>
-									</form>
+
+									<div class="row mt-3">
+										<h3>Right <var>y</var>-axis</h3>
+									</div>
+							
+							<!-- Axis Controls Section -->
+							<div class="bg-body-tertiary border rounded p-3 mb-3" id="yOther-axis-controls-section">
+								<h5>
+									<button class="btn btn-link p-0 text-decoration-none text-dark text-body-emphasis fw-normal d-flex align-items-center w-100" type="button" data-bs-toggle="collapse" data-bs-target="#yOther-axis-settings-collapse" aria-expanded="false" aria-controls="yOther-axis-settings-collapse">
+										<i class="bi bi-chevron-right me-2" id="yOther-axis-chevron"></i>
+										Axis Settings
+									</button>
+								</h5>
+								<div class="collapse mb-3" id="yOther-axis-settings-collapse">
 									<form id="yOther-axis-controls" action="javascript:void(0);">
-										<div class="row">
-											<div class="col-md-4 axis-rescale">
-												<h4>Axis Scale</h4>
-												<div class="form-check">
-													<input class="form-check-input" type="radio" name="yOther-scale" id="yOther-scale-linear" data-scale="yOther" data-scale-type="linear" checked />
-													<label class="form-check-label" for="yOther-scale-linear">
-														Linear
-													</label>
-												</div>
-												<div class="form-check">
-													<input class="form-check-input" type="radio" name="yOther-scale" id="yOther-scale-log" data-scale="yOther" data-scale-type="log" />
-													<label class="form-check-label" for="yOther-scale-log">
-														Logarithmic
-													</label>
-												</div>
+									<div class="row">
+										<div class="col-md-4 axis-rescale">
+											<h6>Scale</h6>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" name="yOther-scale" id="yOther-scale-linear" data-scale="yOther" data-scale-type="linear" checked />
+												<label class="form-check-label" for="yOther-scale-linear">Linear</label>
 											</div>
-											<div class="col-md-8 limits">
-												<h4>Axis Limits</h4>
-												<div class="row">
-													<div class="col">
-														<div class="form-floating">
-															<input type="number" class="form-control" id="yOther-axis-bottom" data-axis="yOther" data-lim="min" aria-label="Bottom limit for y-axis" />
-															<label for="y-axis-bottom">Bottom Limit</label>
-														</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" name="yOther-scale" id="yOther-scale-log" data-scale="yOther" data-scale-type="log" />
+												<label class="form-check-label" for="yOther-scale-log">Logarithmic</label>
+											</div>
+										</div>
+										<div class="col-md-8 limits">
+											<h6>Limits</h6>
+											<div class="row">
+												<div class="col">
+													<div class="form-floating">
+														<input type="number" class="form-control" id="yOther-axis-bottom" data-axis="yOther" data-lim="min" aria-label="Bottom limit for yOther-axis" />
+														<label for="yOther-axis-bottom">Bottom Limit</label>
 													</div>
-													<div class="col">
-														<div class="form-floating">
-															<input type="number" class="form-control" id="yOther-axis-top" data-axis="yOther" data-lim="max" aria-label="Top limit for y-axis" />
-															<label for="yOther-axis-top">Top Limit</label>
-														</div>
+												</div>
+												<div class="col">
+													<div class="form-floating">
+														<input type="number" class="form-control" id="yOther-axis-top" data-axis="yOther" data-lim="max" aria-label="Top limit for yOther-axis" />
+														<label for="yOther-axis-top">Top Limit</label>
 													</div>
+												</div>
+												<div class="col-auto d-flex align-items-end">
+													<button type="button" class="btn btn-outline-secondary" id="yOther-invert-button" title="Invert axis direction" aria-label="Invert right y-axis direction" style="height: 58px;">
+														<i class="bi bi-arrow-down-up"></i>
+													</button>
 												</div>
 											</div>
 										</div>
+									</div>
+								</form>
+							</div>
+							
+							<form action="javascript:void(0);">
+								<div id="yOther-data">
+									<!-- Axis Label -->
+									<div class="row mb-3">
+										<div class="col-md-8">
+											<div class="form-floating">
+												<input type="text" class="form-control axis-label-field" id="yOther-axis-label" placeholder="Right y-axis label" />
+												<label for="yOther-axis-label">Right <var>y</var>-axis label</label>
+											</div>
+										</div>
+									</div>
+									
+									<!-- Series Container -->
+									<div id="yOther-series-container" class="mt-3">
+										<!-- Series will be dynamically added here -->
+									</div>
+									
+									<!-- Add Series Button -->
+									<div class="row mt-2">
+										<div class="col-12">
+											<button type="button" class="btn btn-outline-primary w-100" id="yOther-add-series">
+												<i class="bi bi-plus-circle"></i> Add Series to Right Axis
+											</button>
+										</div>
+									</div>
+								</div>
 									</form>
+								</div>
 								</div>
 							</div>
 						</div>
@@ -575,17 +550,115 @@
       <div class="container py-5">
         <div class="text-center">
           <p>Written and designed by <a href="https://billwolf.space" target=_blank>Bill Wolf</a></p>
-		  <p><a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fbillwolf.space%2Fmesa-explorer&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/></a></p>
           <p>This material is based upon work supported by the National Science Foundation under Grant No. 2238851.</p>
           
         </div>
       </div>
     </section>
+
+		<!-- Style Controls Offcanvas -->
+		<div class="offcanvas offcanvas-end" tabindex="-1" id="styleOffcanvas" aria-labelledby="styleOffcanvasLabel">
+			<div class="offcanvas-header">
+				<h5 class="offcanvas-title" id="styleOffcanvasLabel">
+					<i class="bi bi-palette"></i> Style Controls
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+			</div>
+			<div class="offcanvas-body">
+				<!-- Global Style Settings -->
+				<div class="mb-4">
+					<h6>Global Settings</h6>
+					<div class="border rounded p-3">
+						<div class="mb-3">
+							<label for="colorSchemeSelect" class="form-label">Color Scheme</label>
+							<div class="dropdown">
+								<button class="btn btn-outline-secondary dropdown-toggle w-100 d-flex justify-content-between align-items-center" type="button" id="colorSchemeSelect" data-bs-toggle="dropdown" aria-expanded="false">
+									<div class="d-flex align-items-center">
+										<div id="colorSchemePreview" class="d-flex me-2"></div>
+										<span id="colorSchemeName">Tableau 10</span>
+									</div>
+								</button>
+								<ul class="dropdown-menu w-100" id="colorSchemeDropdown" aria-labelledby="colorSchemeSelect">
+									<!-- Color scheme options will be populated by JavaScript -->
+								</ul>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<div class="col-6">
+								<label for="defaultLineWidth" class="form-label">Default Line Width</label>
+								<input type="number" class="form-control" id="defaultLineWidth" min="0.5" max="10" step="0.5" value="2">
+							</div>
+							<div class="col-6">
+								<label for="defaultMarkerSize" class="form-label">Default Marker Size</label>
+								<input type="number" class="form-control" id="defaultMarkerSize" min="1" max="20" step="1" value="4">
+							</div>
+						</div>
+						<div class="mb-3">
+							<label for="defaultOpacity" class="form-label">Default Opacity</label>
+							<input type="range" class="form-range" id="defaultOpacity" min="0.1" max="1" step="0.1" value="1">
+							<div class="text-center small text-muted">
+								<span id="defaultOpacityValue">1.0</span>
+							</div>
+						</div>
+						<div class="mb-3">
+							<label for="globalFontSize" class="form-label">Font Size</label>
+							<input type="range" class="form-range" id="globalFontSize" min="8" max="24" step="1" value="16">
+							<div class="text-center small text-muted">
+								<span id="globalFontSizeValue">16px</span>
+							</div>
+						</div>
+						<div class="d-grid gap-2">
+							<button class="btn btn-outline-success" id="saveDefaultPreferences">Save Styles as My Defaults</button>
+							<button class="btn btn-outline-primary" id="resetToMyDefaults">Reset to My Defaults</button>
+							<button class="btn btn-outline-secondary" id="resetToSystemDefaults">Reset to System Defaults</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Individual Series Controls -->
+				<div id="seriesStylesContainer">
+					<h6>Series Styles</h6>
+					<div id="seriesStylesList">
+						<!-- Individual series controls will be dynamically generated here -->
+					</div>
+				</div>
+
+			</div>
+		</div>
+
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 		<script src="https://d3js.org/d3.v7.min.js"></script>
 		<!-- Development -->
+		<!-- Core utilities -->
+		<!-- <script src="/js/file-manager.js"></script>
+		<script src="/js/ui-utils.js"></script>
+		<script src="/js/style-manager.js"></script>
+		<script src="/js/metadata-manager.js"></script>
+		<script src="/js/text-markup.js"></script> -->
+		
+		<!-- Data processing layer -->
+		<!-- <script src="/js/data-utils.js"></script> -->
+		
+		<!-- UI management -->
+		<!-- <script src="/js/series-manager.js"></script>
+		<script src="/js/interaction-manager.js"></script>
+		<script src="/js/download-manager.js"></script>
+		<script src="/js/controls-manager.js"></script> -->
+		
+		<!-- Core visualization engine -->
 		<!-- <script src="/js/mesa-explorer.js"></script> -->
 		<!-- Production -->
+		<script src="/mesa-explorer/js/file-manager.js"></script>
+		<script src="/mesa-explorer/js/ui-utils.js"></script>
+		<script src="/mesa-explorer/js/style-manager.js"></script>
+		<script src="/mesa-explorer/js/metadata-manager.js"></script>
+		<script src="/mesa-explorer/js/text-markup.js"></script>
+		<script src="/mesa-explorer/js/data-utils.js"></script>
+		<script src="/mesa-explorer/js/series-manager.js"></script>
+		<script src="/mesa-explorer/js/interaction-manager.js"></script>
+		<script src="/mesa-explorer/js/download-manager.js"></script>
+		<script src="/mesa-explorer/js/controls-manager.js"></script>
 		<script src="/mesa-explorer/js/mesa-explorer.js"></script>
+		<script data-goatcounter="https://wmwolf.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 	</body>
 </html>
