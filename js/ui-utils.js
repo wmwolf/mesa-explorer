@@ -252,12 +252,8 @@ show_mini_plot = () => {
 	miniPlotContainer.style.opacity = '0.9';
 	miniPlotContainer.style.pointerEvents = 'auto';
 	
-	// Adjust position based on whether files panel is hidden
-	if (files_panel_hidden) {
-		miniPlotContainer.style.right = '20px';
-	} else {
-		miniPlotContainer.style.right = '20px';
-	}
+	// Set position of mini plot container
+	miniPlotContainer.style.right = '20px';
 	
 	mini_plot_visible = true;
 	
