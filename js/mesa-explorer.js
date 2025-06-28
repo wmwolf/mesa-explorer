@@ -54,7 +54,27 @@ vis = {
 		if (smaller.length == 0) return 'xs';
 		else return smaller[smaller.length - 1];
 	},
-	
+	apply_search: axis => {
+		let query = d3.select(`#${axis}-search`).property('value');
+		if (query.length == 0) {
+			d3.select(`#${axis}-choices`)
+				.selectAll('a')
+				.classed('d-none', false);
+		} else {
+			d3.select(`#${axis}-choices`)
+				.selectAll('a')
+				.classed('d-none', (d, i, nodes) => {
+					return !nodes[i].text.includes(query);
+				});
+		}
+		d3.selectAll(`#${axis}-choices a`).classed('active', false);
+		d3.select(`#${axis}-choices a:not(.d-none)`).classed('active', true);
+	},
+	load_known_columns: () => {
+		// Load data for known history/profile columns
+		d3.csv('/mesa-explorer/data/history_columns.csv').then(data => (vis.known_history_names = data));
+		d3.csv('/mesa-explorer/data/profile_columns.csv').then(data => (vis.known_profile_names = data));
+	},
 	// These variables and methods deal with the plot area and axis scaling,
 	// irrespective of the actual data being plotted
 
