@@ -1,5 +1,5 @@
 // Helper functions
-safe_log = val => {
+const safe_log = val => {
 	if (val <= 0) {
 		return -99;
 	} else {
