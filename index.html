@@ -15,6 +15,11 @@
 		</style>
 	</head>
 
+	<script>
+		// Auto-detect base path for production vs development
+		window.BASE_PATH = window.location.pathname.includes('/mesa-explorer') ? '/mesa-explorer' : '';
+	</script>
+
 	<!-- Development -->
 	<!-- <script src="/js/color-modes.js"></script> -->
 	<!-- Production -->

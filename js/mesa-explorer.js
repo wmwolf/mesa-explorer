@@ -72,8 +72,8 @@ vis = {
 	},
 	load_known_columns: () => {
 		// Load data for known history/profile columns
-		d3.csv('/mesa-explorer/data/history_columns.csv').then(data => (vis.known_history_names = data));
-		d3.csv('/mesa-explorer/data/profile_columns.csv').then(data => (vis.known_profile_names = data));
+		d3.csv(`${window.BASE_PATH}/data/history_columns.csv`).then(data => (vis.known_history_names = data));
+		d3.csv(`${window.BASE_PATH}/data/profile_columns.csv`).then(data => (vis.known_profile_names = data));
 	},
 	// These variables and methods deal with the plot area and axis scaling,
 	// irrespective of the actual data being plotted
