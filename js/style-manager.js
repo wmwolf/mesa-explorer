@@ -341,8 +341,15 @@ style_manager = {
 
 	// New flexible series creation system
 	create_axis_series: (file, fileIndex, targetAxis) => {
-		// Generate unique series ID based on file and axis
-		const series_id = `${file.local_name}_${targetAxis}_${fileIndex}`;
+		// Generate mode-appropriate series ID
+		let series_id;
+		if (vis.files && vis.files.length > 1) {
+			// Multi-file mode: include file info to distinguish between files
+			series_id = `${file.local_name}_${targetAxis}_${fileIndex}`;
+		} else {
+			// Single-file mode: use only axis to maintain consistent identity across files
+			series_id = `single_file_${targetAxis}_series`;
+		}
 		
 		// Get axis-specific styling
 		const style = style_manager.get_axis_specific_style(targetAxis, fileIndex);
@@ -376,7 +383,16 @@ style_manager = {
 
 	get_axis_specific_style: (axis, fileIndex) => {
 		const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
-		const series_id = `${vis.files[fileIndex]?.local_name}_${axis}_${fileIndex}`;
+		
+		// Create mode-appropriate series_id
+		let series_id;
+		if (vis.files && vis.files.length > 1) {
+			// Multi-file mode: include file info to distinguish between files
+			series_id = `${vis.files[fileIndex]?.local_name}_${axis}_${fileIndex}`;
+		} else {
+			// Single-file mode: use only axis to maintain consistent identity across files
+			series_id = `single_file_${axis}_series`;
+		}
 		
 		// Check if we have persistent styling for this series
 		if (style_manager.styles.persistent_styles[series_id]) {
