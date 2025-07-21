@@ -295,37 +295,13 @@ const interaction_manager = {
 
 	// Execute pan operation and update axis limits
 	execute_pan: () => {
-		// Calculate visual movement for consistent dual y-axis behavior
+		const pixelDx = interaction_manager.interaction.drag_end.x - interaction_manager.interaction.drag_start.x;
 		const pixelDy = interaction_manager.interaction.drag_end.y - interaction_manager.interaction.drag_start.y;
 		
-		// Calculate data coordinate changes
+		// Calculate data coordinate changes for each axis
 		Object.keys(vis.axes).forEach(axis => {
 			if (vis.axes[axis].scale && vis.axes[axis].data_name) {
-				let deltaData;
-				if (axis === 'x') {
-					deltaData = vis.axes[axis].scale.invert(interaction_manager.interaction.drag_start.x) - 
-					           vis.axes[axis].scale.invert(interaction_manager.interaction.drag_end.x);
-				} else {
-					// For y-axes, calculate the visual percentage movement and apply to each axis's range
-					const currentMin = vis.axes[axis].min || vis.axes[axis].scale.domain()[0];
-					const currentMax = vis.axes[axis].max || vis.axes[axis].scale.domain()[1];
-					const currentRange = currentMax - currentMin;
-					
-					// Calculate what percentage of the visual height we moved
-					const plotHeight = vis.axes[axis].scale.range()[0] - vis.axes[axis].scale.range()[1]; // range is [bottom, top]
-					const visualPercent = pixelDy / plotHeight; // SVG coordinate to data coordinate mapping
-					
-					// Apply this percentage to the current data range
-					deltaData = visualPercent * currentRange;
-				}
-				
-				// Validate deltaData to prevent invalid values
-				if (!isFinite(deltaData) || isNaN(deltaData)) {
-					console.warn(`Invalid deltaData for axis ${axis}:`, deltaData);
-					return;
-				}
-				
-				// Update axis limits
+				// Get current limits
 				const currentMin = vis.axes[axis].min || vis.axes[axis].scale.domain()[0];
 				const currentMax = vis.axes[axis].max || vis.axes[axis].scale.domain()[1];
 				
@@ -335,23 +311,75 @@ const interaction_manager = {
 					return;
 				}
 				
-				const newMin = currentMin + deltaData;
-				const newMax = currentMax + deltaData;
+				const isLogScale = vis.axes[axis].type === 'log';
+				let workingMin, workingMax;
 				
-				// Special validation for logarithmic axes
-				if (vis.axes[axis].type === 'log') {
-					if (newMin <= 0 || newMax <= 0) {
-						console.warn(`Log axis ${axis} pan would create non-positive limits:`, newMin, newMax);
-						return; // Skip this axis - can't have non-positive values on log scale
+				// Step 1: Convert to working space (log space if logarithmic, regular space if linear)
+				if (isLogScale) {
+					if (currentMin <= 0 || currentMax <= 0) {
+						console.warn(`Log axis ${axis} has non-positive limits:`, currentMin, currentMax);
+						return;
 					}
+					workingMin = Math.log10(currentMin);
+					workingMax = Math.log10(currentMax);
+				} else {
+					workingMin = currentMin;
+					workingMax = currentMax;
 				}
 				
-				// Validate new limits
-				if (!isFinite(newMin) || !isFinite(newMax) || isNaN(newMin) || isNaN(newMax)) {
-					console.warn(`Invalid new limits for axis ${axis}:`, newMin, newMax);
+				// Step 2: Calculate pixel-to-data conversion using working space limits
+				let deltaData;
+				if (axis === 'x') {
+					// For x-axis, use horizontal pixel movement
+					const plotWidth = vis.axes[axis].scale.range()[1] - vis.axes[axis].scale.range()[0];
+					const workingRange = workingMax - workingMin;
+					deltaData = -(pixelDx / plotWidth) * workingRange; // Negative because right drag should move data left
+				} else {
+					// For y-axes, use vertical pixel movement
+					const plotHeight = vis.axes[axis].scale.range()[0] - vis.axes[axis].scale.range()[1]; // range is [bottom, top]
+					const workingRange = workingMax - workingMin;
+					deltaData = (pixelDy / plotHeight) * workingRange; // Positive because down drag should move data down
+				}
+				
+				// Validate deltaData
+				if (!isFinite(deltaData) || isNaN(deltaData)) {
+					console.warn(`Invalid deltaData for axis ${axis}:`, deltaData);
 					return;
 				}
 				
+				// Step 3: Apply the change in working space
+				const newWorkingMin = workingMin + deltaData;
+				const newWorkingMax = workingMax + deltaData;
+				
+				// Validate new working limits
+				if (!isFinite(newWorkingMin) || !isFinite(newWorkingMax) || isNaN(newWorkingMin) || isNaN(newWorkingMax)) {
+					console.warn(`Invalid new working limits for axis ${axis}:`, newWorkingMin, newWorkingMax);
+					return;
+				}
+				
+				// Step 4: Convert back to real space
+				let newMin, newMax;
+				if (isLogScale) {
+					newMin = Math.pow(10, newWorkingMin);
+					newMax = Math.pow(10, newWorkingMax);
+					
+					// Additional validation for log scale
+					if (newMin <= 0 || newMax <= 0 || !isFinite(newMin) || !isFinite(newMax)) {
+						console.warn(`Log axis ${axis} pan would create invalid limits:`, newMin, newMax);
+						return;
+					}
+				} else {
+					newMin = newWorkingMin;
+					newMax = newWorkingMax;
+				}
+				
+				// Final validation
+				if (!isFinite(newMin) || !isFinite(newMax) || isNaN(newMin) || isNaN(newMax)) {
+					console.warn(`Invalid final limits for axis ${axis}:`, newMin, newMax);
+					return;
+				}
+				
+				// Step 5: Update axis limits
 				vis.axes[axis].min = newMin;
 				vis.axes[axis].max = newMax;
 				

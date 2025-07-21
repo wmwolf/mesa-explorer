@@ -82,6 +82,22 @@ This is a client-side web application with no build process. To develop locally:
 2. Use browser developer tools for debugging
 3. Files can be edited directly and refreshed in browser
 
+### Development vs Production Mode Switching
+
+Use these scripts to quickly switch between development and production JavaScript paths:
+
+**Switch to Development Mode:**
+```bash
+python3 switch-to-dev.py
+```
+
+**Switch to Production Mode:**
+```bash
+python3 switch-to-prod.py
+```
+
+**IMPORTANT**: Always switch to production mode before committing changes to ensure production paths are active in the repository.
+
 For generating column metadata (requires MESA installation):
 
 ```bash
