@@ -383,17 +383,32 @@ style_manager = {
 			return { ...style_manager.styles.persistent_styles[series_id] };
 		}
 		
-		// Create new style with axis-specific color logic
+		// Create new style with mode-specific color logic
 		let colorIndex;
-		if (axis === 'y') {
-			// Left axis: use normal color cycling starting with blue
-			colorIndex = fileIndex % colors.length;
-		} else if (axis === 'yOther') {
-			// Right axis: start with orange (second color) for better differentiation
-			colorIndex = (fileIndex + 1) % colors.length;
+		if (vis.files && vis.files.length > 1) {
+			// Multi-file mode: color by file index so each file is distinct
+			if (axis === 'y') {
+				// Left axis: use normal color cycling starting with blue
+				colorIndex = fileIndex % colors.length;
+			} else if (axis === 'yOther') {
+				// Right axis: start with orange (second color) for better differentiation
+				colorIndex = (fileIndex + 1) % colors.length;
+			} else {
+				// Future axes: continue cycling
+				colorIndex = fileIndex % colors.length;
+			}
 		} else {
-			// Future axes: continue cycling
-			colorIndex = fileIndex % colors.length;
+			// Single-file mode: consistent color cycling regardless of which file is selected
+			if (axis === 'y') {
+				// Left axis: always start with first color (blue)
+				colorIndex = 0;
+			} else if (axis === 'yOther') {
+				// Right axis: always start with second color (orange) for differentiation
+				colorIndex = 1 % colors.length;
+			} else {
+				// Future axes: continue cycling from beginning
+				colorIndex = 0;
+			}
 		}
 		
 		const style = {
