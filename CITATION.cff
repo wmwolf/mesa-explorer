@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "MESA Explorer: Interactive Visualization for MESA Output"
+version: 1.0.0
+authors:
+  - family-names: Wolf
+    given-names: William
+    affiliation: "Department of Physics and Astronomy, University of Wisconsin–Eau Claire"
+    orcid: https://orcid.org/0000-0002-6828-0630
+date-released: 2025-07-21
+# doi: 10.5281/zenodo.XXXXXXX
+repository: https://github.com/wmwolf/mesa-explorer
+license: MIT
