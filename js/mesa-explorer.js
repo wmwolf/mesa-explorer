@@ -974,36 +974,45 @@ vis = {
 		vis.create_legend_ui(legendData, 'single');
 	},
 	
-	// Multi-file legend with two parts: data types + files
+	// Multi-file legend with smart behavior: show data types only when there are multiple unique columns
 	add_multi_file_legend: () => {
-		// Part 1: Data types (columns) with neutral gray color + linestyles
-		const columnLinestyles = style_manager.get_all_column_linestyles();
-		const dataTypeEntries = columnLinestyles.map(([columnName, linestyle]) => {
-			const metadata = metadata_manager.get_metadata(columnName);
-			return {
-				name: metadata.series_name,
-				color: style_manager.styles.global.neutral_legend_color,
-				line_style: linestyle,
-				type: 'data'
-			};
-		});
+		// Determine unique data columns across all series
+		const uniqueColumns = vis.series && vis.series.length > 0 
+			? [...new Set(vis.series.map(s => s.data_columns.y))]
+			: [];
 		
-		// If no linestyle assignments exist yet, create them from current series
-		if (dataTypeEntries.length === 0 && vis.series && vis.series.length > 0) {
-			const uniqueColumns = [...new Set(vis.series.map(s => s.data_columns.y))];
-			uniqueColumns.forEach(columnName => {
-				const linestyle = style_manager.get_linestyle_for_column(columnName);
+		let dataTypeEntries = [];
+		
+		// Only show data type entries if there are 2 or more unique columns
+		if (uniqueColumns.length > 1) {
+			// Part 1: Data types (columns) with neutral gray color + linestyles
+			const columnLinestyles = style_manager.get_all_column_linestyles();
+			dataTypeEntries = columnLinestyles.map(([columnName, linestyle]) => {
 				const metadata = metadata_manager.get_metadata(columnName);
-				dataTypeEntries.push({
+				return {
 					name: metadata.series_name,
 					color: style_manager.styles.global.neutral_legend_color,
 					line_style: linestyle,
 					type: 'data'
-				});
+				};
 			});
+			
+			// If no linestyle assignments exist yet, create them from current series
+			if (dataTypeEntries.length === 0) {
+				uniqueColumns.forEach(columnName => {
+					const linestyle = style_manager.get_linestyle_for_column(columnName);
+					const metadata = metadata_manager.get_metadata(columnName);
+					dataTypeEntries.push({
+						name: metadata.series_name,
+						color: style_manager.styles.global.neutral_legend_color,
+						line_style: linestyle,
+						type: 'data'
+					});
+				});
+			}
 		}
 		
-		// Part 2: Files with their colors + solid lines
+		// Part 2: Files with their colors + solid lines (always shown in multi-file mode)
 		const fileEntries = vis.files.map((file, fileIndex) => {
 			const colors = style_manager.styles.color_schemes[style_manager.styles.global.color_scheme];
 			return {
@@ -1014,7 +1023,7 @@ vis = {
 			};
 		});
 		
-		// Combine data types and files (no separator)
+		// Combine data types (if any) and files
 		const combinedData = [
 			...dataTypeEntries,
 			...fileEntries
